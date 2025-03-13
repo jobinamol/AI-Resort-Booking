@@ -261,21 +261,59 @@
 			<div class="container">
 				<div class="row no-gutters">
 					<div class="col-md-7 order-md-last d-flex">
-						<div class="video-container" style="width: 100%; height: 100%; position: relative;">
+						<div class="video-container position-relative" style="width: 100%; height: 600px; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
 							<video autoplay muted loop style="width: 100%; height: 100%; object-fit: cover;">
 								<source src="{% static 'videos/about.mp4' %}" type="video/mp4">
 								Your browser does not support the video tag.
 							</video>
-							<div class="overlay" style="background: rgba(0, 0, 0, 0.5);"></div>
+							<div class="overlay" style="background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.3));"></div>
+							<div class="play-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2;">
+								<div class="icon" style="width: 80px; height: 80px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;">
+									<span class="icon-play" style="color: white; font-size: 30px;"></span>
+								</div>
+							</div>
 						</div>
 					</div>
 					<div class="col-md-5 wrap-about pb-md-3 ftco-animate pr-md-5 pb-md-5 pt-md-4">
 	          <div class="heading-section mb-4 my-5 my-md-0">
-	          	<span class="subheading">About Harbor Lights Hotel</span>
-	            <h2 class="mb-4">Harbor Lights Hotel the Most Recommended Hotel All Over the World</h2>
+	          	<span class="subheading" style="color: #00c6ff; font-size: 1.2em; letter-spacing: 2px;">DISCOVER LUXAI</span>
+	            <h2 class="mb-4" style="font-size: 2.5em; font-weight: 600;">Redefining Luxury with AI Innovation</h2>
 	          </div>
-	          <p>Far far away, behind the word mountains, far from the countries Vokalia and Consonantia, there live the blind texts. Separated they live in Bookmarksgrove right at the coast of the Semantics, a large language ocean.</p>
-	          <p><a href="#" class="btn btn-secondary rounded">Reserve Your Room Now</a></p>
+						<div class="about-features">
+							<div class="feature-item mb-4">
+								<div class="d-flex align-items-center mb-2">
+									<div class="icon mr-3" style="width: 50px; height: 50px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+										<span class="flaticon-luxury" style="color: white; font-size: 24px;"></span>
+									</div>
+									<h3 class="m-0" style="font-size: 1.3em; font-weight: 600;">Luxury Redefined</h3>
+								</div>
+								<p style="color: #666; line-height: 1.8;">Experience unparalleled luxury enhanced by cutting-edge AI technology, creating personalized moments of excellence.</p>
+							</div>
+							<div class="feature-item mb-4">
+								<div class="d-flex align-items-center mb-2">
+									<div class="icon mr-3" style="width: 50px; height: 50px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+										<span class="flaticon-shield" style="color: white; font-size: 24px;"></span>
+									</div>
+									<h3 class="m-0" style="font-size: 1.3em; font-weight: 600;">Smart Security</h3>
+								</div>
+								<p style="color: #666; line-height: 1.8;">State-of-the-art AI security systems ensuring a safe and seamless stay for all our guests.</p>
+							</div>
+							<div class="feature-item">
+								<div class="d-flex align-items-center mb-2">
+									<div class="icon mr-3" style="width: 50px; height: 50px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+										<span class="flaticon-support" style="color: white; font-size: 24px;"></span>
+									</div>
+									<h3 class="m-0" style="font-size: 1.3em; font-weight: 600;">24/7 AI Concierge</h3>
+								</div>
+								<p style="color: #666; line-height: 1.8;">Round-the-clock intelligent assistance tailored to your preferences and needs.</p>
+							</div>
+						</div>
+						<div class="mt-5">
+							<a href="#" class="btn btn-primary rounded-pill px-4 py-3" style="background: linear-gradient(45deg, #00c6ff, #0072ff); border: none; font-weight: 500; letter-spacing: 1px;">
+								Discover More
+								<span class="icon-long-arrow-right ml-2"></span>
+							</a>
+						</div>
 					</div>
 				</div>
 			</div>
