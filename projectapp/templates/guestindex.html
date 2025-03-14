@@ -1,0 +1,841 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>LuxAI Resorts - AI-Powered Luxury Stays</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:200,300,400,600,700&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{% static 'css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animate.css' %}">
+    
+    <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/magnific-popup.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/aos.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/ionicons.min.css' %}">
+
+    <link rel="stylesheet" href="{% static 'css/bootstrap-datepicker.css' %}">
+    <link rel="stylesheet" href="{% static 'css/jquery.timepicker.css' %}">
+
+    
+    <link rel="stylesheet" href="{% static 'css/flaticon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/icomoon.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+      .card-hover {
+        transform: translateY(0);
+        transition: all 0.3s ease !important;
+      }
+      .card-hover:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
+      }
+      .card-hover:hover .icon {
+        transform: scale(1.1);
+        background: linear-gradient(45deg, #0072ff, #00c6ff) !important;
+      }
+      .services-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+        padding: 7em 0;
+      }
+      .services .heading {
+        font-weight: 600;
+        color: #2c3e50;
+      }
+      .services p {
+        color: #666;
+        line-height: 1.8;
+      }
+      .ftco-animate {
+        opacity: 0;
+        visibility: hidden;
+      }
+      .ftco-animated {
+        opacity: 1;
+        visibility: visible;
+      }
+      .feature-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(45deg, #00c6ff, #0072ff);
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0, 198, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+      .feature-icon:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, #0072ff, #00c6ff);
+        opacity: 0;
+        transition: all 0.3s ease;
+      }
+      .feature-icon:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 198, 255, 0.3);
+      }
+      .feature-icon:hover:before {
+        opacity: 1;
+      }
+      .feature-icon span {
+        color: white;
+        font-size: 28px;
+        position: relative;
+        z-index: 1;
+        transition: all 0.3s ease;
+      }
+      .feature-icon:hover span {
+        transform: scale(1.1);
+      }
+      .feature-item {
+        transition: all 0.3s ease;
+      }
+      .feature-item:hover h3 {
+        color: #00c6ff;
+      }
+    </style>
+  </head>
+  <body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+	    <div class="container">
+	      <a class="navbar-brand" href="{% url 'index' %}">Lux<span style="color: #00c6ff;">AI</span> <small style="font-size: 0.5em; letter-spacing: 2px;">RESORTS</small></a>
+	      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+	        <span class="oi oi-menu"></span> Menu
+	      </button>
+
+	      <div class="collapse navbar-collapse" id="ftco-nav">
+	        <ul class="navbar-nav ml-auto">
+	          <li class="nav-item active"><a href="{% url 'index' %}" class="nav-link">Home</a></li>
+	          <li class="nav-item"><a href="{% url 'rooms' %}" class="nav-link">Our Rooms</a></li>
+	          <li class="nav-item"><a href="{% url 'restaurants' %}" class="nav-link">Restaurant</a></li>
+	          <li class="nav-item"><a href="{% url 'about' %}" class="nav-link">About Us</a></li>
+	          <li class="nav-item"><a href="{% url 'blog' %}" class="nav-link">Blog</a></li>
+	          <li class="nav-item"><a href="{% url 'contact' %}" class="nav-link">Contact</a></li>
+	        </ul>
+	      </div>
+	    </div>
+	  </nav>
+    <!-- END nav -->
+		<div class="hero-wrap position-relative">
+			<div class="video-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
+				<video autoplay muted loop playsinline style="min-width: 100%; min-height: 100%; width: auto; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); object-fit: cover;">
+					<source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
+					Your browser does not support the video tag.
+				</video>
+				<div class="overlay" style="background: rgba(0, 0, 0, 0.5);"></div>
+			</div>
+	    <div class="container position-relative" style="z-index: 2;">
+	      <div class="row no-gutters slider-text d-flex align-itemd-center justify-content-center">
+	        <div class="col-md-9 ftco-animate text-center d-flex align-items-end justify-content-center">
+	          <div class="text">
+	            <h1 class="mb-4 bread text-white">LuxAI Resorts</h1>
+                <p class="sub-text text-white mb-4" style="font-size: 1.5rem;">Where Luxury Meets Intelligence</p>
+	          </div>
+	        </div>
+	      </div>
+	    </div>
+	  </div>
+
+    <section class="ftco-booking ftco-section ftco-no-pt ftco-no-pb">
+    	<div class="container">
+    		<div class="row no-gutters">
+    			<div class="col-lg-12">
+    				<form action="#" class="booking-form aside-stretch">
+	        		<div class="row">
+	        			<div class="col-md d-flex py-md-4">
+	        				<div class="form-group align-self-stretch d-flex align-items-end">
+	        					<div class="wrap align-self-stretch py-3 px-4">
+				    					<label for="#">Check-in Date</label>
+				    					<input type="text" class="form-control checkin_date" placeholder="Check-in date">
+			    					</div>
+			    				</div>
+	        			</div>
+	        			<div class="col-md d-flex py-md-4">
+	        				<div class="form-group align-self-stretch d-flex align-items-end">
+	        					<div class="wrap align-self-stretch py-3 px-4">
+				    					<label for="#">Check-out Date</label>
+				    					<input type="text" class="form-control checkout_date" placeholder="Check-out date">
+			    					</div>
+			    				</div>
+	        			</div>
+	        			<div class="col-md d-flex py-md-4">
+	        				<div class="form-group align-self-stretch d-flex align-items-end">
+	        					<div class="wrap align-self-stretch py-3 px-4">
+			      					<label for="#">Room</label>
+			      					<div class="form-field">
+			        					<div class="select-wrap">
+			                    <div class="icon"><span class="ion-ios-arrow-down"></span></div>
+			                    <select name="" id="" class="form-control">
+			                    	<option value="">Suite</option>
+			                      <option value="">Family Room</option>
+			                      <option value="">Deluxe Room</option>
+			                      <option value="">Classic Room</option>
+			                      <option value="">Superior Room</option>
+			                      <option value="">Luxury Room</option>
+			                    </select>
+			                  </div>
+				              </div>
+				            </div>
+		              </div>
+	        			</div>
+	        			<div class="col-md d-flex py-md-4">
+	        				<div class="form-group align-self-stretch d-flex align-items-end">
+	        					<div class="wrap align-self-stretch py-3 px-4">
+			      					<label for="#">Guests</label>
+			      					<div class="form-field">
+			        					<div class="select-wrap">
+			                    <div class="icon"><span class="ion-ios-arrow-down"></span></div>
+			                    <select name="" id="" class="form-control">
+			                    	<option value="">1 Adult</option>
+			                      <option value="">2 Adult</option>
+			                      <option value="">3 Adult</option>
+			                      <option value="">4 Adult</option>
+			                      <option value="">5 Adult</option>
+			                      <option value="">6 Adult</option>
+			                    </select>
+			                  </div>
+				              </div>
+				            </div>
+		              </div>
+	        			</div>
+	        			<div class="col-md d-flex">
+	        				<div class="form-group d-flex align-self-stretch">
+			              <a href="#" class="btn btn-primary py-5 py-md-3 px-4 align-self-stretch d-block"><span>Check Availability <small>Best Price Guaranteed!</small></span></a>
+			            </div>
+	        			</div>
+	        		</div>
+	        	</form>
+	    		</div>
+    		</div>
+    	</div>
+    </section>
+
+
+		<section class="ftco-section services-section bg-light">
+      <div class="container">
+      	<div class="row justify-content-center mb-5">
+          <div class="col-md-7 heading-section text-center ftco-animate">
+          	<span class="subheading" style="color: #00c6ff; font-size: 1.2em; letter-spacing: 2px;">INTELLIGENT FEATURES</span>
+            <h2 class="mb-4" style="font-size: 2.5em; font-weight: 600;">Experience Next-Gen Luxury</h2>
+            <p class="lead">Where cutting-edge AI technology meets unparalleled hospitality</p>
+          </div>
+        </div>  
+        <div class="row d-flex">
+          <div class="col-md pr-md-1 d-flex align-self-stretch ftco-animate">
+            <div class="media block-6 services py-4 d-block text-center card-hover" style="background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+              <div class="d-flex justify-content-center mb-4">
+              	<div class="icon d-flex align-items-center justify-content-center" style="width: 90px; height: 90px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 50%; transition: all 0.3s ease;">
+              		<span class="flaticon-artificial-intelligence" style="font-size: 35px; color: white;"></span>
+              	</div>
+              </div>
+              <div class="media-body px-4">
+                <h3 class="heading mb-3">Smart Recommendations</h3>
+                <p>Personalized suggestions powered by advanced AI algorithms to match your perfect stay</p>
+              </div>
+            </div>      
+          </div>
+          <div class="col-md px-md-1 d-flex align-self-stretch ftco-animate">
+            <div class="media block-6 services py-4 d-block text-center card-hover" style="background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+              <div class="d-flex justify-content-center mb-4">
+              	<div class="icon d-flex align-items-center justify-content-center" style="width: 90px; height: 90px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 50%; transition: all 0.3s ease;">
+              		<span class="flaticon-price-tag" style="font-size: 35px; color: white;"></span>
+              	</div>
+              </div>
+              <div class="media-body px-4">
+                <h3 class="heading mb-3">Dynamic Pricing</h3>
+                <p>Real-time rate optimization ensuring you get the best value for your luxury experience</p>
+              </div>
+            </div>    
+          </div>
+          <div class="col-md px-md-1 d-flex align-self-stretch ftco-animate">
+            <div class="media block-6 services py-4 d-block text-center card-hover" style="background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+              <div class="d-flex justify-content-center mb-4">
+              	<div class="icon d-flex align-items-center justify-content-center" style="width: 90px; height: 90px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 50%; transition: all 0.3s ease;">
+              		<span class="flaticon-shield" style="font-size: 35px; color: white;"></span>
+              	</div>
+              </div>
+              <div class="media-body px-4">
+                <h3 class="heading mb-3">Smart Security</h3>
+                <p>State-of-the-art AI security systems ensuring a safe and seamless stay</p>
+              </div>
+            </div>      
+          </div>
+          <div class="col-md px-md-1 d-flex align-self-stretch ftco-animate">
+            <div class="media block-6 services py-4 d-block text-center card-hover" style="background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+              <div class="d-flex justify-content-center mb-4">
+              	<div class="icon d-flex align-items-center justify-content-center" style="width: 90px; height: 90px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 50%; transition: all 0.3s ease;">
+              		<span class="flaticon-support" style="font-size: 35px; color: white;"></span>
+              	</div>
+              </div>
+              <div class="media-body px-4">
+                <h3 class="heading mb-3">24/7 AI Support</h3>
+                <p>Instant intelligent assistance available round-the-clock for your convenience</p>
+              </div>
+            </div>      
+          </div>
+          <div class="col-md pl-md-1 d-flex align-self-stretch ftco-animate">
+            <div class="media block-6 services py-4 d-block text-center card-hover" style="background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+              <div class="d-flex justify-content-center mb-4">
+              	<div class="icon d-flex align-items-center justify-content-center" style="width: 90px; height: 90px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 50%; transition: all 0.3s ease;">
+              		<span class="ion-ios-trending-up" style="font-size: 35px; color: white;"></span>
+              	</div>
+              </div>
+              <div class="media-body px-4">
+                <h3 class="heading mb-3">Smart Analytics</h3>
+                <p>Data-driven insights to continuously enhance your luxury experience</p>
+              </div>
+            </div>      
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ftco-section ftco-wrap-about ftco-no-pt ftco-no-pb">
+			<div class="container">
+				<div class="row no-gutters">
+					<div class="col-md-7 order-md-last d-flex">
+						<div class="video-container position-relative" style="width: 100%; height: 600px; border-radius: 20px; overflow: hidden; box-shadow: 0 15px 35px rgba(0,0,0,0.2);">
+							<video autoplay muted loop style="width: 100%; height: 100%; object-fit: cover;">
+								<source src="{% static 'videos/about.mp4' %}" type="video/mp4">
+								Your browser does not support the video tag.
+							</video>
+							<div class="overlay" style="background: linear-gradient(to right, rgba(0,0,0,0.7), rgba(0,0,0,0.3));"></div>
+							<div class="play-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2;">
+								<div class="icon" style="width: 80px; height: 80px; background: linear-gradient(45deg, #00c6ff, #0072ff); border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;">
+									<span class="icon-play" style="color: white; font-size: 30px;"></span>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-5 wrap-about pb-md-3 ftco-animate pr-md-5 pb-md-5 pt-md-4">
+	          <div class="heading-section mb-4 my-5 my-md-0">
+	          	<span class="subheading" style="color: #00c6ff; font-size: 1.2em; letter-spacing: 2px;">DISCOVER LUXAI</span>
+	            <h2 class="mb-4" style="font-size: 2.5em; font-weight: 600;">Redefining Luxury with AI Innovation</h2>
+	          </div>
+						<div class="about-features">
+							<div class="feature-item mb-4">
+								<div class="d-flex align-items-center mb-3">
+									<div class="feature-icon mr-4">
+										<span class="flaticon-luxury"></span>
+									</div>
+									<h3 class="m-0" style="font-size: 1.4em; font-weight: 600; transition: all 0.3s ease;">Luxury Redefined</h3>
+								</div>
+								<p style="color: #666; line-height: 1.8; font-size: 1.1em;">Experience unparalleled luxury enhanced by cutting-edge AI technology, creating personalized moments of excellence.</p>
+							</div>
+							<div class="feature-item mb-4">
+								<div class="d-flex align-items-center mb-3">
+									<div class="feature-icon mr-4">
+										<span class="flaticon-shield"></span>
+									</div>
+									<h3 class="m-0" style="font-size: 1.4em; font-weight: 600; transition: all 0.3s ease;">Smart Security</h3>
+								</div>
+								<p style="color: #666; line-height: 1.8; font-size: 1.1em;">State-of-the-art AI security systems ensuring a safe and seamless stay for all our guests.</p>
+							</div>
+							<div class="feature-item">
+								<div class="d-flex align-items-center mb-3">
+									<div class="feature-icon mr-4">
+										<span class="flaticon-support"></span>
+									</div>
+									<h3 class="m-0" style="font-size: 1.4em; font-weight: 600; transition: all 0.3s ease;">24/7 AI Concierge</h3>
+								</div>
+								<p style="color: #666; line-height: 1.8; font-size: 1.1em;">Round-the-clock intelligent assistance tailored to your preferences and needs.</p>
+							</div>
+						</div>
+						<div class="mt-5">
+							<a href="#" class="btn btn-primary rounded-pill px-4 py-3" style="background: linear-gradient(45deg, #00c6ff, #0072ff); border: none; font-weight: 500; letter-spacing: 1px;">
+								Discover More
+								<span class="icon-long-arrow-right ml-2"></span>
+							</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+    <section class="testimony-section">
+      <div class="container">
+        <div class="row no-gutters ftco-animate justify-content-center">
+        	<div class="col-md-5 d-flex">
+        		<div class="testimony-img aside-stretch-2" style="background-image: url({% static 'images/testimony-img.jpg' %});"></div>
+        	</div>
+          <div class="col-md-7 py-5 pl-md-5">
+          	<div class="py-md-5">
+	          	<div class="heading-section ftco-animate mb-4">
+	          		<span class="subheading">Testimony</span>
+			          <h2 class="mb-0">Happy Customer</h2>
+			        </div>
+	            <div class="carousel-testimony owl-carousel ftco-animate">
+	              <div class="item">
+	                <div class="testimony-wrap pb-4">
+	                  <div class="text">
+	                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
+	                  </div>
+	                  <div class="d-flex">
+		                  <div class="user-img" style="background-image: url({% static 'images/person_1.jpg' %});">
+		                  </div>
+		                  <div class="pos ml-3">
+		                  	<p class="name">Gerald Hodson</p>
+		                    <span class="position">Businessman</span>
+		                  </div>
+		                </div>
+	                </div>
+	              </div>
+	              <div class="item">
+	                <div class="testimony-wrap pb-4">
+	                  <div class="text">
+	                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
+	                  </div>
+	                  <div class="d-flex">
+		                  <div class="user-img" style="background-image: url({% static 'images/person_2.jpg' %});">
+		                  </div>
+		                  <div class="pos ml-3">
+		                  	<p class="name">Gerald Hodson</p>
+		                    <span class="position">Businessman</span>
+		                  </div>
+		                </div>
+	                </div>
+	              </div>
+	              <div class="item">
+	                <div class="testimony-wrap pb-4">
+	                  <div class="text">
+	                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
+	                  </div>
+	                  <div class="d-flex">
+		                  <div class="user-img" style="background-image: url({% static 'images/person_3.jpg' %});">
+		                  </div>
+		                  <div class="pos ml-3">
+		                  	<p class="name">Gerald Hodson</p>
+		                    <span class="position">Businessman</span>
+		                  </div>
+		                </div>
+	                </div>
+	              </div>
+	              <div class="item">
+	                <div class="testimony-wrap pb-4">
+	                  <div class="text">
+	                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
+	                  </div>
+	                  <div class="d-flex">
+		                  <div class="user-img" style="background-image: url({% static 'images/person_4.jpg' %});">
+		                  </div>
+		                  <div class="pos ml-3">
+		                  	<p class="name">Gerald Hodson</p>
+		                    <span class="position">Businessman</span>
+		                  </div>
+		                </div>
+	                </div>
+	              </div>
+	            </div>
+	          </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ftco-section ftco-no-pb ftco-room">
+    	<div class="container-fluid px-0">
+    		<div class="row no-gutters justify-content-center mb-5 pb-3">
+          <div class="col-md-7 heading-section text-center ftco-animate">
+          	<span class="subheading">Harbor Lights Rooms</span>
+            <h2 class="mb-4">Hotel Master's Rooms</h2>
+          </div>
+        </div>  
+    		<div class="row no-gutters">
+    			<div class="col-lg-6">
+    				<div class="room-wrap d-md-flex ftco-animate">
+    					<a href="#" class="img" style="background-image: url({% static 'images/room-6.jpg' %});"></a>
+    					<div class="half left-arrow d-flex align-items-center">
+    						<div class="text p-4 text-center">
+    							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
+    							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
+	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">King Room</a></h3>
+	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
+    						</div>
+    					</div>
+    				</div>
+    			</div>
+    			<div class="col-lg-6">
+    				<div class="room-wrap d-md-flex ftco-animate">
+    					<a href="#" class="img" style="background-image: url({% static 'images/room-1.jpg' %});"></a>
+    					<div class="half left-arrow d-flex align-items-center">
+    						<div class="text p-4 text-center">
+    							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
+    							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
+	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Suite Room</a></h3>
+	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
+    						</div>
+    					</div>
+    				</div>
+    			</div>
+
+    			<div class="col-lg-6">
+    				<div class="room-wrap d-md-flex ftco-animate">
+    					<a href="#" class="img order-md-last" style="background-image: url({% static 'images/room-2.jpg' %});"></a>
+    					<div class="half right-arrow d-flex align-items-center">
+    						<div class="text p-4 text-center">
+    							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
+    							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
+	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Family Room</a></h3>
+	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
+    						</div>
+    					</div>
+    				</div>
+    			</div>
+    			<div class="col-lg-6">
+    				<div class="room-wrap d-md-flex ftco-animate">
+    					<a href="#" class="img order-md-last" style="background-image: url({% static 'images/room-3.jpg' %});"></a>
+    					<div class="half right-arrow d-flex align-items-center">
+    						<div class="text p-4 text-center">
+    							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
+    							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
+	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Deluxe Room</a></h3>
+	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
+    						</div>
+    					</div>
+    				</div>
+    			</div>
+
+    			<div class="col-lg-6">
+    				<div class="room-wrap d-md-flex ftco-animate">
+    					<a href="#" class="img" style="background-image: url({% static 'images/room-4.jpg' %});"></a>
+    					<div class="half left-arrow d-flex align-items-center">
+    						<div class="text p-4 text-center">
+    							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
+    							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
+	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Luxury Room</a></h3>
+	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
+    						</div>
+    					</div>
+    				</div>
+    			</div>
+    			<div class="col-lg-6">
+    				<div class="room-wrap d-md-flex ftco-animate">
+    					<a href="#" class="img" style="background-image: url({% static 'images/room-5.jpg' %});"></a>
+    					<div class="half left-arrow d-flex align-items-center">
+    						<div class="text p-4 text-center">
+    							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
+    							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
+	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Superior Room</a></h3>
+	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
+    						</div>
+    					</div>
+    				</div>
+    			</div>
+    		</div>
+    	</div>
+    </section>
+
+
+		
+		
+
+		
+		<section class="ftco-section ftco-menu bg-light">
+			<div class="container-fluid px-md-4">
+				<div class="row justify-content-center mb-5 pb-3">
+          <div class="col-md-7 heading-section text-center ftco-animate">
+          	<span class="subheading">Restaurant</span>
+            <h2>Restaurant</h2>
+          </div>
+        </div>
+				<div class="row">
+        	<div class="col-lg-6 col-xl-4 d-flex">
+        		<div class="pricing-entry rounded d-flex ftco-animate">
+        			<div class="img" style="background-image: url({% static 'images/menu-1.jpg' %});"></div>
+        			<div class="desc p-4">
+	        			<div class="d-md-flex text align-items-start">
+	        				<h3><span>Grilled Crab with Onion</span></h3>
+	        				<span class="price">$20.00</span>
+	        			</div>
+	        			<div class="d-block">
+	        				<p>A small river named Duden flows by their place and supplies</p>
+	        			</div>
+        			</div>
+        		</div>
+        	</div>
+        	<div class="col-lg-6 col-xl-4 d-flex">
+        		<div class="pricing-entry rounded d-flex ftco-animate">
+        			<div class="img" style="background-image: url({% static 'images/menu-2.jpg' %});"></div>
+        			<div class="desc p-4">
+	        			<div class="d-md-flex text align-items-start">
+	        				<h3><span>Grilled Crab with Onion</span></h3>
+	        				<span class="price">$20.00</span>
+	        			</div>
+	        			<div class="d-block">
+	        				<p>A small river named Duden flows by their place and supplies</p>
+	        			</div>
+        			</div>
+        		</div>
+        	</div>
+        	<div class="col-lg-6 col-xl-4 d-flex">
+        		<div class="pricing-entry rounded d-flex ftco-animate">
+        			<div class="img" style="background-image: url({% static 'images/menu-3.jpg' %});"></div>
+        			<div class="desc p-4">
+	        			<div class="d-md-flex text align-items-start">
+	        				<h3><span>Grilled Crab with Onion</span></h3>
+	        				<span class="price">$20.00</span>
+	        			</div>
+	        			<div class="d-block">
+	        				<p>A small river named Duden flows by their place and supplies</p>
+	        			</div>
+        			</div>
+        		</div>
+        	</div>
+        	<div class="col-lg-6 col-xl-4 d-flex">
+        		<div class="pricing-entry rounded d-flex ftco-animate">
+        			<div class="img" style="background-image: url({% static 'images/menu-4.jpg' %});"></div>
+        			<div class="desc p-4">
+	        			<div class="d-md-flex text align-items-start">
+	        				<h3><span>Grilled Crab with Onion</span></h3>
+	        				<span class="price">$20.00</span>
+	        			</div>
+	        			<div class="d-block">
+	        				<p>A small river named Duden flows by their place and supplies</p>
+	        			</div>
+        			</div>
+        		</div>
+        	</div>
+        	<div class="col-lg-6 col-xl-4 d-flex">
+        		<div class="pricing-entry rounded d-flex ftco-animate">
+        			<div class="img" style="background-image: url({% static 'images/menu-5.jpg' %});"></div>
+        			<div class="desc p-4">
+	        			<div class="d-md-flex text align-items-start">
+	        				<h3><span>Grilled Crab with Onion</span></h3>
+	        				<span class="price">$20.00</span>
+	        			</div>
+	        			<div class="d-block">
+	        				<p>A small river named Duden flows by their place and supplies</p>
+	        			</div>
+        			</div>
+        		</div>
+        	</div>
+        	<div class="col-lg-6 col-xl-4 d-flex">
+        		<div class="pricing-entry rounded d-flex ftco-animate">
+        			<div class="img" style="background-image: url({% static 'images/menu-6.jpg' %});"></div>
+        			<div class="desc p-4">
+	        			<div class="d-md-flex text align-items-start">
+	        				<h3><span>Grilled Crab with Onion</span></h3>
+	        				<span class="price">$20.00</span>
+	        			</div>
+	        			<div class="d-block">
+	        				<p>A small river named Duden flows by their place and supplies</p>
+	        			</div>
+        			</div>
+        		</div>
+        	</div>
+        	<div class="col-md-12 text-center ftco-animate">
+        		<p><a href="#" class="btn btn-primary rounded">View All Menu</a></p>
+        	</div>
+        </div>
+			</div>
+		</section>
+
+
+    <section class="ftco-section">
+      <div class="container">
+        <div class="row justify-content-center mb-5 pb-3">
+          <div class="col-md-7 heading-section text-center ftco-animate">
+          	<span class="subheading">Read Blog</span>
+            <h2>Recent Blog</h2>
+          </div>
+        </div>
+        <div class="row d-flex">
+          <div class="col-md-4 d-flex ftco-animate">
+            <div class="blog-entry align-self-stretch">
+              <a href="{% url 'blog_single' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_1.jpg' %}');">
+              </a>
+              <div class="text mt-3 text-center">
+              	<div class="meta mb-2">
+                  <div><a href="#">Oct. 30, 2019</a></div>
+                  <div><a href="#">Admin</a></div>
+                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 3</a></div>
+                </div>
+                <h3 class="heading"><a href="#">Even the all-powerful Pointing has no control about the blind texts</a></h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 d-flex ftco-animate">
+            <div class="blog-entry align-self-stretch">
+              <a href="{% url 'blog_single' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_2.jpg' %}');">
+              </a>
+              <div class="text mt-3 text-center">
+              	<div class="meta mb-2">
+                  <div><a href="#">Oct. 30, 2019</a></div>
+                  <div><a href="#">Admin</a></div>
+                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 3</a></div>
+                </div>
+                <h3 class="heading"><a href="#">Even the all-powerful Pointing has no control about the blind texts</a></h3>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 d-flex ftco-animate">
+            <div class="blog-entry align-self-stretch">
+              <a href="{% url 'blog_single' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_3.jpg' %}');">
+              </a>
+              <div class="text mt-3 text-center">
+              	<div class="meta mb-2">
+                  <div><a href="#">Oct. 30, 2019</a></div>
+                  <div><a href="#">Admin</a></div>
+                  <div><a href="#" class="meta-chat"><span class="icon-chat"></span> 3</a></div>
+                </div>
+                <h3 class="heading"><a href="#">Even the all-powerful Pointing has no control about the blind texts</a></h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="instagram">
+      <div class="container-fluid">
+        <div class="row no-gutters justify-content-center pb-5">
+          <div class="col-md-7 text-center heading-section ftco-animate">
+          	<span class="subheading">Photos</span>
+            <h2><span>Instagram</span></h2>
+          </div>
+        </div>
+        <div class="row no-gutters">
+          <div class="col-sm-12 col-md ftco-animate">
+            <a href="images/insta-1.jpg" class="insta-img image-popup" style="background-image: url({% static 'images/insta-1.jpg' %});">
+              <div class="icon d-flex justify-content-center">
+                <span class="icon-instagram align-self-center"></span>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-12 col-md ftco-animate">
+            <a href="images/insta-2.jpg" class="insta-img image-popup" style="background-image: url({% static 'images/insta-2.jpg' %});">
+              <div class="icon d-flex justify-content-center">
+                <span class="icon-instagram align-self-center"></span>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-12 col-md ftco-animate">
+            <a href="images/insta-3.jpg" class="insta-img image-popup" style="background-image: url({% static 'images/insta-3.jpg' %});">
+              <div class="icon d-flex justify-content-center">
+                <span class="icon-instagram align-self-center"></span>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-12 col-md ftco-animate">
+            <a href="images/insta-4.jpg" class="insta-img image-popup" style="background-image: url({% static 'images/insta-4.jpg' %});">
+              <div class="icon d-flex justify-content-center">
+                <span class="icon-instagram align-self-center"></span>
+              </div>
+            </a>
+          </div>
+          <div class="col-sm-12 col-md ftco-animate">
+            <a href="images/insta-5.jpg" class="insta-img image-popup" style="background-image: url({% static 'images/insta-5.jpg' %});">
+              <div class="icon d-flex justify-content-center">
+                <span class="icon-instagram align-self-center"></span>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="ftco-footer ftco-section img" style="background-image: url('{% static 'images/bg_4.jpg' %}');">
+    	<div class="overlay"></div>
+      <div class="container">
+        <div class="row mb-5">
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">LuxAI Resorts</h2>
+              <p>Experience the perfect blend of luxury and artificial intelligence.</p>
+              <ul class="ftco-footer-social list-unstyled float-md-left float-lft mt-5">
+                <li class="ftco-animate"><a href="#"><span class="icon-twitter"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+                <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4 ml-md-5">
+              <h2 class="ftco-heading-2">Useful Links</h2>
+              <ul class="list-unstyled">
+                <li><a href="{% url 'blog' %}" class="py-2 d-block">Blog</a></li>
+                <li><a href="{% url 'rooms' %}" class="py-2 d-block">Rooms</a></li>
+                <li><a href="#" class="py-2 d-block">Amenities</a></li>
+                <li><a href="#" class="py-2 d-block">Gift Card</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md">
+             <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Privacy</h2>
+              <ul class="list-unstyled">
+                <li><a href="#" class="py-2 d-block">Career</a></li>
+                <li><a href="#" class="py-2 d-block">About Us</a></li>
+                <li><a href="#" class="py-2 d-block">Contact Us</a></li>
+                <li><a href="#" class="py-2 d-block">Services</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md">
+            <div class="ftco-footer-widget mb-4">
+            	<h2 class="ftco-heading-2">Have a Questions?</h2>
+            	<div class="block-23 mb-3">
+	              <ul>
+	                <li><span class="icon icon-map-marker"></span><span class="text">203 Fake St. Mountain View, San Francisco, California, USA</span></li>
+	                <li><a href="#"><span class="icon icon-phone"></span><span class="text">+2 392 3929 210</span></a></li>
+	                <li><a href="#"><span class="icon icon-envelope"></span><span class="text">info@yourdomain.com</span></a></li>
+	              </ul>
+	            </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-center">
+
+            <p><!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. -->
+  Copyright &copy;<script>document.write(new Date().getFullYear());</script> All rights reserved | This template is made with <i class="icon-heart color-danger" aria-hidden="true"></i> by <a href="https://colorlib.com" target="_blank">Colorlib</a>
+  <!-- Link back to Colorlib can't be removed. Template is licensed under CC BY 3.0. --></p>
+          </div>
+        </div>
+      </div>
+    </footer>
+    
+  
+
+  <!-- loader -->
+  <div id="ftco-loader" class="show fullscreen">
+    <svg class="circular" width="48px" height="48px">
+      <circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/>
+      <circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/>
+    </svg>
+  </div>
+
+
+  <script src="{% static 'js/jquery.min.js' %}"></script>
+  <script src="{% static 'js/jquery-migrate-3.0.1.min.js' %}"></script>
+  <script src="{% static 'js/popper.min.js' %}"></script>
+  <script src="{% static 'js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'js/jquery.easing.1.3.js' %}"></script>
+  <script src="{% static 'js/jquery.waypoints.min.js' %}"></script>
+  <script src="{% static 'js/jquery.stellar.min.js' %}"></script>
+  <script src="{% static 'js/owl.carousel.min.js' %}"></script>
+  <script src="{% static 'js/jquery.magnific-popup.min.js' %}"></script>
+  <script src="{% static 'js/aos.js' %}"></script>
+  <script src="{% static 'js/jquery.animateNumber.min.js' %}"></script>
+  <script src="{% static 'js/bootstrap-datepicker.js' %}"></script>
+  <script src="{% static 'js/scrollax.min.js' %}"></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBVWaKrjvy3MaE7SQ74_uJiULgl1JY0H2s&sensor=false"></script>
+  <script src="{% static 'js/google-map.js' %}"></script>
+  <script src="{% static 'js/main.js' %}"></script>
+    
+  </body>
+</html>

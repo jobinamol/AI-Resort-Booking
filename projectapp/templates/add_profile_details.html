@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Profile - LuxAI Resorts</title>
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:200,300,400,600,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('{% static "videos/bg.mp4" %}') no-repeat center center fixed;
+            background-size: cover;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+        
+        #video-background {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            z-index: -1;
+            object-fit: cover;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: -1;
+        }
+
+        .profile-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .profile-card {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 600px;
+            backdrop-filter: blur(10px);
+        }
+
+        .brand-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .brand-logo h1 {
+            font-size: 2.5em;
+            font-weight: 600;
+            margin: 0;
+            color: #333;
+        }
+
+        .brand-logo span {
+            color: #00c6ff;
+        }
+
+        .brand-logo small {
+            font-size: 0.5em;
+            letter-spacing: 2px;
+            color: #666;
+        }
+
+        .form-control {
+            height: 50px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            padding: 10px 15px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-control:focus {
+            border-color: #00c6ff;
+            box-shadow: 0 0 15px rgba(0, 198, 255, 0.1);
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .btn {
+            height: 50px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 16px;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 198, 255, 0.3);
+            background: linear-gradient(45deg, #0072ff, #00c6ff);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #495057);
+            border: none;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(108, 117, 125, 0.3);
+            background: linear-gradient(45deg, #495057, #6c757d);
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+            background: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            padding: 15px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .profile-upload {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-upload .upload-placeholder {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .profile-upload .upload-placeholder:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 198, 255, 0.3);
+        }
+
+        .profile-upload .upload-placeholder i {
+            font-size: 40px;
+            color: white;
+        }
+
+        .profile-upload input[type="file"] {
+            display: none;
+        }
+
+        .otp-section {
+            position: relative;
+        }
+
+        .otp-input {
+            padding-right: 110px;
+        }
+
+        .otp-button {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 50px;
+            width: auto;
+            padding: 0 20px;
+            border-radius: 0 10px 10px 0;
+        }
+
+        .section-title {
+            color: #333;
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #00c6ff;
+        }
+    </style>
+</head>
+<body>
+    <video id="video-background" autoplay muted loop playsinline>
+        <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
+    </video>
+    <div class="overlay"></div>
+
+    <div class="profile-container">
+        <div class="profile-card">
+            <div class="brand-logo">
+                <h1>Lux<span>AI</span></h1>
+                <small>RESORTS</small>
+            </div>
+
+            {% if messages %}
+                <div class="alert alert-danger">
+                    {% for message in messages %}
+                        <i class="fas fa-exclamation-circle me-2"></i>{{ message }}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="profile-upload mb-4">
+                    <label for="profile_image" class="upload-placeholder">
+                        <i class="fas fa-camera"></i>
+                    </label>
+                    <input type="file" id="profile_image" name="profile_image" accept="image/*">
+                    <div class="text-muted">Click to upload profile picture</div>
+                </div>
+
+                <div class="section-title">Personal Information</div>
+                
+                <div class="mb-4">
+                    <label for="name" class="form-label">Full Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-user text-muted"></i>
+                        </span>
+                        <input type="text" id="name" name="name" class="form-control border-start-0" placeholder="Enter your full name" required>
+                    </div>
+                </div>
+
+                <div class="section-title">Contact Information</div>
+
+                <div class="mb-4">
+                    <label for="mobile_number" class="form-label">Mobile Number</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-phone text-muted"></i>
+                        </span>
+                        <input type="text" id="mobile_number" name="mobile_number" class="form-control border-start-0" placeholder="Enter mobile number" required>
+                        <button type="button" class="btn btn-secondary otp-button" id="sendOtp">
+                            <i class="fas fa-paper-plane me-2"></i>Send OTP
+                        </button>
+                    </div>
+                    <input type="text" name="mobile_otp" class="form-control mt-2" placeholder="Enter OTP">
+                </div>
+
+                <div class="mb-4">
+                    <label for="email" class="form-label">Email Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-envelope text-muted"></i>
+                        </span>
+                        <input type="email" id="email" name="email" class="form-control border-start-0" placeholder="Enter email address" required>
+                        <button type="button" class="btn btn-secondary otp-button" id="sendEmailOtp">
+                            <i class="fas fa-paper-plane me-2"></i>Send OTP
+                        </button>
+                    </div>
+                    <input type="text" name="email_otp" class="form-control mt-2" placeholder="Enter OTP">
+                </div>
+
+                <div class="mb-4">
+                    <label for="address" class="form-label">Address</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-transparent border-end-0">
+                            <i class="fas fa-map-marker-alt text-muted"></i>
+                        </span>
+                        <input type="text" id="address" name="address" class="form-control border-start-0" placeholder="Enter your address">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-check-circle me-2"></i>Complete Profile
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Profile image preview
+        document.getElementById('profile_image').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const placeholder = document.querySelector('.upload-placeholder');
+                    placeholder.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // OTP handlers
+        document.getElementById('sendOtp').addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-check me-2"></i>OTP Sent';
+            this.classList.remove('btn-secondary');
+            this.classList.add('btn-success');
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send OTP';
+                this.classList.remove('btn-success');
+                this.classList.add('btn-secondary');
+            }, 3000);
+        });
+
+        document.getElementById('sendEmailOtp').addEventListener('click', function() {
+            this.innerHTML = '<i class="fas fa-check me-2"></i>OTP Sent';
+            this.classList.remove('btn-secondary');
+            this.classList.add('btn-success');
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-paper-plane me-2"></i>Send OTP';
+                this.classList.remove('btn-success');
+                this.classList.add('btn-secondary');
+            }, 3000);
+        });
+
+        // Form validation
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    </script>
+</body>
+</html>

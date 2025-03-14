@@ -1,0 +1,105 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - LuxAI Resorts</title>
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:200,300,400,600,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animate.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        body {
+            font-family: 'Nunito Sans', sans-serif;
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: 600;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,114,255,0.3);
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h2 {
+            color: #333;
+            font-weight: 600;
+        }
+        .logo span {
+            color: #00c6ff;
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <div class="logo">
+                <h2>Lux<span>AI</span> Resorts</h2>
+                <p>Welcome back</p>
+            </div>
+            
+            {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST" class="login-form">
+                {% csrf_token %}
+                
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" name="username" class="form-control" required>
+                    {{ form.username.errors }}
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" name="password" class="form-control" required>
+                    {{ form.password.errors }}
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100">Login</button>
+            </form>
+
+            <div class="text-center mt-4">
+                Don't have an account? <a href="{% url 'user_signup' %}">Sign up here</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+</body>
+</html>
