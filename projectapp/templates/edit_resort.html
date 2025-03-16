@@ -1,0 +1,120 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Edit Resort Details</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <form method="POST" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6">
+                                <h4 class="mb-3">Basic Information</h4>
+                                <div class="mb-3">
+                                    <label for="resort_name" class="form-label">Resort Name</label>
+                                    <input type="text" class="form-control" id="resort_name" name="resort_name" value="{{ resort.resort_name }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="resort_address" class="form-label">Resort Address</label>
+                                    <textarea class="form-control" id="resort_address" name="resort_address" rows="3" required>{{ resort.resort_address }}</textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="resort_contact" class="form-label">Contact Number</label>
+                                    <input type="tel" class="form-control" id="resort_contact" name="resort_contact" value="{{ resort.resort_contact }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="resort_email" class="form-label">Resort Email</label>
+                                    <input type="email" class="form-control" id="resort_email" name="resort_email" value="{{ resort.resort_email }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="resort_website" class="form-label">Resort Website</label>
+                                    <input type="url" class="form-control" id="resort_website" name="resort_website" value="{{ resort.resort_website }}">
+                                </div>
+                            </div>
+
+                            <!-- Additional Details -->
+                            <div class="col-md-6">
+                                <h4 class="mb-3">Additional Details</h4>
+                                <div class="mb-3">
+                                    <label for="resort_type" class="form-label">Resort Type</label>
+                                    <select class="form-select" id="resort_type" name="resort_type" required>
+                                        <option value="staycation" {% if resort.resort_type == 'staycation' %}selected{% endif %}>Staycation</option>
+                                        <option value="daycation" {% if resort.resort_type == 'daycation' %}selected{% endif %}>Daycation</option>
+                                        <option value="luxury" {% if resort.resort_type == 'luxury' %}selected{% endif %}>Luxury</option>
+                                        <option value="budget" {% if resort.resort_type == 'budget' %}selected{% endif %}>Budget</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="room_count" class="form-label">Number of Rooms</label>
+                                    <input type="number" class="form-control" id="room_count" name="room_count" value="{{ resort.room_count }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="resort_description" class="form-label">Resort Description</label>
+                                    <textarea class="form-control" id="resort_description" name="resort_description" rows="4">{{ resort.resort_description }}</textarea>
+                                </div>
+                            </div>
+
+                            <!-- Basic Facilities -->
+                            <div class="col-12 mt-4">
+                                <h4 class="mb-3">Basic Facilities</h4>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="has_pool" name="has_pool" {% if resort.has_pool %}checked{% endif %}>
+                                            <label class="form-check-label" for="has_pool">Swimming Pool</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="has_spa" name="has_spa" {% if resort.has_spa %}checked{% endif %}>
+                                            <label class="form-check-label" for="has_spa">Spa & Wellness</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="has_restaurant" name="has_restaurant" {% if resort.has_restaurant %}checked{% endif %}>
+                                            <label class="form-check-label" for="has_restaurant">Restaurant</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="has_gym" name="has_gym" {% if resort.has_gym %}checked{% endif %}>
+                                            <label class="form-check-label" for="has_gym">Fitness Center</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="has_wifi" name="has_wifi" {% if resort.has_wifi %}checked{% endif %}>
+                                            <label class="form-check-label" for="has_wifi">High-Speed Wi-Fi</label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="has_parking" name="has_parking" {% if resort.has_parking %}checked{% endif %}>
+                                            <label class="form-check-label" for="has_parking">Valet Parking</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="col-12 mt-4">
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                <a href="{% url 'profile' %}" class="btn btn-secondary">Cancel</a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -10,6 +10,7 @@
 
     <link rel="stylesheet" href="{% static 'css/open-iconic-bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/animate.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <link rel="stylesheet" href="{% static 'css/owl.carousel.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/owl.theme.default.min.css' %}">
@@ -121,11 +122,35 @@
 	        <ul class="navbar-nav ml-auto">
 	          <li class="nav-item active"><a href="{% url 'index' %}" class="nav-link">Home</a></li>
 			  <li class="nav-item"><a href="{% url 'ResortDashboard' %}" class="nav-link">Resort Dashboard</a></li>
-	          <li class="nav-item"><a href="{% url 'rooms' %}" class="nav-link">Our Rooms</a></li>
-	          <li class="nav-item"><a href="{% url 'restaurants' %}" class="nav-link">Restaurant</a></li>
-	          <li class="nav-item"><a href="{% url 'about' %}" class="nav-link">About Us</a></li>
+	          <li class="nav-item"><a href="{% url 'about' %}" class="nav-link">About</a></li>
 	          <li class="nav-item"><a href="{% url 'blog' %}" class="nav-link">Blog</a></li>
 	          <li class="nav-item"><a href="{% url 'contact' %}" class="nav-link">Contact</a></li>
+              {% if user.is_authenticated %}
+              <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="fas fa-user-circle" style="font-size: 24px; color: #00c6ff;"></i>
+                  <span class="ml-2">{{ user.name }}</span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profileDropdown">
+                  <a class="dropdown-item" href="{% url 'profile1' %}">
+                    <i class="fas fa-user mr-2"></i>Profile
+                  </a>
+                  <a class="dropdown-item" href="{% url 'settings' %}">
+                    <i class="fas fa-cog mr-2"></i>Settings
+                  </a>
+                  <div class="dropdown-divider"></div>
+                  <a class="dropdown-item" href="{% url 'user_logout' %}">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                  </a>
+                </div>
+              </li>
+              {% else %}
+              <li class="nav-item">
+                <a href="{% url 'user_login' %}" class="nav-link login-btn">
+                  <i class="fas fa-sign-in-alt"></i> Login
+                </a>
+              </li>
+              {% endif %}
 	        </ul>
 	      </div>
 	    </div>
@@ -464,7 +489,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">King Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -477,7 +501,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Suite Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -491,7 +514,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Family Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -504,7 +526,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Deluxe Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -518,7 +539,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Luxury Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -531,7 +551,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Superior Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -657,7 +676,7 @@
         <div class="row d-flex">
           <div class="col-md-4 d-flex ftco-animate">
             <div class="blog-entry align-self-stretch">
-              <a href="{% url 'blog_single' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_1.jpg' %}');">
+              <a href="{% url 'blog_single' slug='first-blog' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_1.jpg' %}');">
               </a>
               <div class="text mt-3 text-center">
               	<div class="meta mb-2">
@@ -671,7 +690,7 @@
           </div>
           <div class="col-md-4 d-flex ftco-animate">
             <div class="blog-entry align-self-stretch">
-              <a href="{% url 'blog_single' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_2.jpg' %}');">
+              <a href="{% url 'blog_single' slug='second-blog' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_2.jpg' %}');">
               </a>
               <div class="text mt-3 text-center">
               	<div class="meta mb-2">
@@ -685,7 +704,7 @@
           </div>
           <div class="col-md-4 d-flex ftco-animate">
             <div class="blog-entry align-self-stretch">
-              <a href="{% url 'blog_single' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_3.jpg' %}');">
+              <a href="{% url 'blog_single' slug='third-blog' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_3.jpg' %}');">
               </a>
               <div class="text mt-3 text-center">
               	<div class="meta mb-2">

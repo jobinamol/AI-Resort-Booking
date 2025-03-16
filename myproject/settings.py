@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_extensions',
     'projectapp'
 ]
 
@@ -91,8 +92,24 @@ DATABASES = {
     }
 }
 
+# Email Configuration
+if DEBUG:
+    # Use console backend for development
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    # Use SMTP backend for production
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    EMAIL_HOST_USER = 'jobinamoljaimon2025@mca.ajce.in'
+    EMAIL_HOST_PASSWORD = 'Jaimon@123*'  # Your 16-character App Password
+    DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # 'optional' or 'none' if you don't require verification
+ACCOUNT_EMAIL_REQUIRED = True
 
 AUTH_PASSWORD_VALIDATORS = [
     {

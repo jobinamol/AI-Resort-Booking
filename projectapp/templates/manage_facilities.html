@@ -1,0 +1,143 @@
+{% extends 'index.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Manage Resort Facilities</h3>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                    {% endif %}
+
+                    <form method="POST" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Basic Facilities -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Basic Facilities</h4>
+                            <div class="row">
+                                {% for facility in basic_facilities %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="{{ facility.field }}" 
+                                               name="{{ facility.field }}" {% if facility.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ facility.field }}">
+                                            {{ facility.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Venue Functions -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Venue Functions</h4>
+                            <div class="row">
+                                {% for venue in venue_functions %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="{{ venue.field }}" 
+                                               name="{{ venue.field }}" {% if venue.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ venue.field }}">
+                                            {{ venue.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Activities -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Activities</h4>
+                            <div class="row">
+                                {% for activity in activities %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="{{ activity.field }}" 
+                                               name="{{ activity.field }}" {% if activity.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ activity.field }}">
+                                            {{ activity.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Transportation Services -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Transportation Services</h4>
+                            <div class="row">
+                                {% for service in transportation %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="{{ service.field }}" 
+                                               name="{{ service.field }}" {% if service.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ service.field }}">
+                                            {{ service.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Additional Services -->
+                        <div class="mb-4">
+                            <h4 class="mb-3">Additional Services</h4>
+                            <div class="row">
+                                {% for service in additional_services %}
+                                <div class="col-md-4 mb-3">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input" id="{{ service.field }}" 
+                                               name="{{ service.field }}" {% if service.value %}checked{% endif %}>
+                                        <label class="form-check-label" for="{{ service.field }}">
+                                            {{ service.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="mt-4">
+                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                            <a href="{% url 'profile' %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    border: none;
+    border-radius: 15px;
+}
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+}
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+.form-check-input:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgb(13 110 253 / 25%);
+}
+</style>
+{% endblock %} 

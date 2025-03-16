@@ -1,0 +1,146 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - LuxAI Resorts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            color: white;
+        }
+
+        .verification-container {
+            max-width: 600px;
+            margin: 20px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        .logo {
+            margin-bottom: 30px;
+        }
+
+        .logo h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .logo span {
+            color: #00c6ff;
+        }
+
+        .verification-icon {
+            font-size: 4rem;
+            color: #00c6ff;
+            margin-bottom: 20px;
+        }
+
+        .verification-message {
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        .verification-code {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 2rem;
+            letter-spacing: 8px;
+            margin: 20px 0;
+            font-weight: 600;
+            color: #00c6ff;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,114,255,0.4);
+        }
+
+        .resend-text {
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+
+        .resend-link {
+            color: #00c6ff;
+            text-decoration: none;
+            margin-left: 5px;
+        }
+
+        .resend-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="verification-container">
+        <div class="logo">
+            <h2>Lux<span>AI</span></h2>
+        </div>
+        
+        {% if messages %}
+        <div class="messages">
+            {% for message in messages %}
+            <div class="verification-message">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} verification-icon"></i>
+                <p>{{ message }}</p>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="verification-message">
+            <i class="fas fa-envelope verification-icon"></i>
+            <h3>Email Verification</h3>
+            <p>Please enter the verification code sent to your email address</p>
+            
+            <div class="verification-code">
+                {{ verification_code }}
+            </div>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <input type="hidden" name="verification_code" value="{{ verification_code }}">
+                <button type="submit" class="btn">Verify Email</button>
+            </form>
+            
+            <p class="resend-text">
+                Didn't receive the code?
+                <a href="{% url 'resend_verification' user.id %}" class="resend-link">Resend Code</a>
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

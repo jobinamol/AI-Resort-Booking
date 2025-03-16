@@ -130,7 +130,7 @@
                     <li class="nav-item"><a href="{% url 'user_logout' %}" class="nav-link">Logout</a></li>
                   {% else %}
                     <li class="nav-item"><a href="{% url 'user_login' %}" class="nav-link">Login</a></li>
-                    <li class="nav-item"><a href="{% url 'user_signup' %}" class="nav-link">Sign Up</a></li>
+                  
                   {% endif %}
 	        </ul>
 	      </div>
@@ -470,7 +470,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">King Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -483,7 +482,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Suite Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -497,7 +495,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Family Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -510,7 +507,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Deluxe Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -524,7 +520,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Luxury Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -537,7 +532,6 @@
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
     							<p class="mb-0"><span class="price mr-1">$120.00</span> <span class="per">per night</span></p>
 	    						<h3 class="mb-3"><a href="{% url 'rooms' %}">Superior Room</a></h3>
-	    						<p class="pt-1"><a href="{% url 'rooms_single' %}" class="btn-custom px-3 py-2 rounded">View Details <span class="icon-long-arrow-right"></span></a></p>
     						</div>
     					</div>
     				</div>
@@ -663,7 +657,6 @@
         <div class="row d-flex">
           <div class="col-md-4 d-flex ftco-animate">
             <div class="blog-entry align-self-stretch">
-              <a href="{% url 'blog_single' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_1.jpg' %}');">
               </a>
               <div class="text mt-3 text-center">
               	<div class="meta mb-2">
@@ -677,7 +670,6 @@
           </div>
           <div class="col-md-4 d-flex ftco-animate">
             <div class="blog-entry align-self-stretch">
-              <a href="{% url 'blog_single' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_2.jpg' %}');">
               </a>
               <div class="text mt-3 text-center">
               	<div class="meta mb-2">
@@ -691,7 +683,6 @@
           </div>
           <div class="col-md-4 d-flex ftco-animate">
             <div class="blog-entry align-self-stretch">
-              <a href="{% url 'blog_single' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_3.jpg' %}');">
               </a>
               <div class="text mt-3 text-center">
               	<div class="meta mb-2">

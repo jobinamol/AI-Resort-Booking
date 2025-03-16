@@ -4,196 +4,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up - LuxAI Resorts</title>
-    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:200,300,400,600,700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/open-iconic-bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/animate.css' %}">
+    <title>Resort Profile - LuxAI Resorts</title>
+    
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
     <style>
-        body {
-            font-family: 'Nunito Sans', sans-serif;
-            background-color: #f8f9fa;
-            min-height: 100vh;
+        /* Background Video */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
         }
-        .signup-container {
-            max-width: 500px;
-            margin: 40px auto;
-            padding: 30px;
-            background: white;
+        .video-background video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.7;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5));
+            z-index: -1;
+        }
+
+        /* Form Container */
+        .profile-container {
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
             border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            color: white;
         }
-        .form-group {
-            margin-bottom: 20px;
+
+        .section-title {
+            color: #00c6ff;
+            font-size: 1.3rem;
+            font-weight: 600;
+            text-transform: uppercase;
         }
-        .btn-primary {
+
+        .form-label {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            color: white;
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .form-check-label {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 30px;
             background: linear-gradient(45deg, #00c6ff, #0072ff);
             border: none;
-            padding: 12px 30px;
-            border-radius: 30px;
-            font-weight: 600;
-            letter-spacing: 1px;
+            font-weight: 500;
+            text-transform: uppercase;
+            color: white;
             transition: all 0.3s ease;
         }
-        .btn-primary:hover {
+
+        .submit-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,114,255,0.3);
-        }
-        .logo {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo h2 {
-            color: #333;
-            font-weight: 600;
-        }
-        .logo span {
-            color: #00c6ff;
-        }
-        .error-message {
-            color: #dc3545;
-            font-size: 14px;
-            margin-top: 5px;
-        }
-        .errorlist {
-            color: #dc3545;
-            font-size: 14px;
-            list-style: none;
-            padding: 0;
-            margin: 5px 0 0;
-        }
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid transparent;
-            border-radius: 8px;
-        }
-        .alert-danger {
-            color: #721c24;
-            background-color: #f8d7da;
-            border-color: #f5c6cb;
-        }
-        .alert-success {
-            color: #155724;
-            background-color: #d4edda;
-            border-color: #c3e6cb;
+            box-shadow: 0 8px 20px rgba(0, 198, 255, 0.3);
         }
     </style>
 </head>
 <body>
+
+    <!-- Background Video -->
+    <div class="video-background">
+        <video autoplay muted loop playsinline>
+            <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
+        </video>
+    </div>
+    <div class="overlay"></div>
+
     <div class="container">
-        <div class="signup-container">
-            <div class="logo">
-                <h2>Lux<span>AI</span> Resorts</h2>
-                <p>Create your account</p>
-            </div>
-            
-            {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
-                    {{ message }}
-                </div>
-                {% endfor %}
-            </div>
-            {% endif %}
+        <div class="profile-container">
+            <h2 class="text-center section-title">Resort Profile</h2>
+            <p class="text-center">Update your resort details to enhance guest experience.</p>
 
-            {% if form.non_field_errors %}
-            <div class="alert alert-danger">
-                {% for error in form.non_field_errors %}
-                    {{ error }}
-                {% endfor %}
-            </div>
-            {% endif %}
-
-            <form method="POST" class="signup-form">
+            <form method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
-                
-                <div class="form-group">
-                    <label for="{{ form.username.id_for_label }}">Username</label>
-                    {{ form.username }}
-                    {% if form.username.errors %}
-                        <ul class="errorlist">
-                            {% for error in form.username.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
+
+                <!-- Basic Details -->
+                <h4 class="section-title mt-4">Basic Details</h4>
+                <div class="mb-3">
+                    <label class="form-label">Resort Name</label>
+                    <input type="text" name="resort_name" class="form-control" placeholder="Enter resort name" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Resort Address</label>
+                    <textarea name="resort_address" class="form-control" rows="2" placeholder="Enter full address" required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Contact Number</label>
+                    <input type="text" name="resort_contact" class="form-control" placeholder="Enter contact number" required>
                 </div>
 
-                <div class="form-group">
-                    <label for="{{ form.email.id_for_label }}">Email</label>
-                    {{ form.email }}
-                    {% if form.email.errors %}
-                        <ul class="errorlist">
-                            {% for error in form.email.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
+                <!-- Packages -->
+                <h4 class="section-title mt-4">Packages Offered</h4>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="romantic_package">
+                    <label class="form-check-label">Romantic Getaway</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="family_package">
+                    <label class="form-check-label">Family Vacation</label>
                 </div>
 
-                <div class="form-group">
-                    <label for="{{ form.name.id_for_label }}">Full Name</label>
-                    {{ form.name }}
-                    {% if form.name.errors %}
-                        <ul class="errorlist">
-                            {% for error in form.name.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
+                <!-- Rooms -->
+                <h4 class="section-title mt-4">Rooms & Availability</h4>
+                <div class="mb-3">
+                    <label class="form-label">Room Type</label>
+                    <select name="room_type" class="form-select">
+                        <option value="single">Single Room</option>
+                        <option value="double">Double Room</option>
+                        <option value="suite">Suite</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Room Price (Per Night)</label>
+                    <input type="number" name="room_price" class="form-control" placeholder="Enter room price" required>
                 </div>
 
-                <div class="form-group">
-                    <label for="{{ form.mobile_number.id_for_label }}">Mobile Number</label>
-                    {{ form.mobile_number }}
-                    {% if form.mobile_number.errors %}
-                        <ul class="errorlist">
-                            {% for error in form.mobile_number.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
+                <!-- Venue & Activities -->
+                <h4 class="section-title mt-4">Venue & Activities</h4>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="wedding_venue">
+                    <label class="form-check-label">Wedding Venue</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="conference_hall">
+                    <label class="form-check-label">Conference Hall</label>
                 </div>
 
-                <div class="form-group">
-                    <label for="{{ form.password1.id_for_label }}">Password</label>
-                    {{ form.password1 }}
-                    {% if form.password1.errors %}
-                        <ul class="errorlist">
-                            {% for error in form.password1.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
-                    {% if form.password1.help_text %}
-                        <small class="form-text text-muted">{{ form.password1.help_text|safe }}</small>
-                    {% endif %}
+                <!-- Additional Services -->
+                <h4 class="section-title mt-4">Additional Services</h4>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="laundry_service">
+                    <label class="form-check-label">Laundry Service</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="airport_transfer">
+                    <label class="form-check-label">Airport Transfer</label>
                 </div>
 
-                <div class="form-group">
-                    <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
-                    {{ form.password2 }}
-                    {% if form.password2.errors %}
-                        <ul class="errorlist">
-                            {% for error in form.password2.errors %}
-                                <li>{{ error }}</li>
-                            {% endfor %}
-                        </ul>
-                    {% endif %}
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="submit-btn">Update Profile</button>
                 </div>
-
-                <button type="submit" class="btn btn-primary w-100">Sign Up</button>
             </form>
-
-            <div class="text-center mt-4">
-                Already have an account? <a href="{% url 'user_login' %}">Login here</a>
-            </div>
         </div>
     </div>
 
+    <!-- Bootstrap JS -->
     <script src="{% static 'js/jquery.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
+
 </body>
 </html>
