@@ -92,21 +92,21 @@ if DEBUG:
     }
 else:
     # Production database (Render)
+    db_config = dj_database_url.config(
+        default=config('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+        ssl_require=True,
+    )
+    db_config['OPTIONS'] = {
+        'ssl': {
+            'rejectUnauthorized': True,
+        },
+        'charset': 'utf8mb4',
+        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
+    }
     DATABASES = {
-        'default': dj_database_url.config(
-            default=config('DATABASE_URL'),
-            conn_max_age=600,
-            conn_health_checks=True,
-            ssl_require=True,
-            engine='django.db.backends.mysql',
-            options={
-                'ssl': {
-                    'rejectUnauthorized': True,
-                },
-                'charset': 'utf8mb4',
-                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
-            }
-        )
+        'default': db_config
     }
 
 # Email Configuration
