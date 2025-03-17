@@ -1,402 +1,1119 @@
-{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resort Dashboard - LuxAI Resorts</title>
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- CSS Dependencies -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% load static %}
+    
     <style>
-        :root {
-            --primary-color: #4A90E2;
-            --secondary-color: #2C3E50;
-            --accent-color: #E74C3C;
-            --background-light: #F5F6FA;
-            --background-dark: #1A1A2E;
-            --text-light: #2C3E50;
-            --text-dark: #ECF0F1;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
-
         body {
-            background: var(--background-light);
-            color: var(--text-light);
-            transition: all 0.3s ease;
+            font-family: 'Poppins', sans-serif;
+            background: #f8f9fa;
         }
 
-        body.dark-mode {
-            background: var(--background-dark);
-            color: var(--text-dark);
-        }
-
-        .dashboard-container {
-            display: grid;
-            grid-template-columns: 250px 1fr;
-            min-height: 100vh;
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            background: rgba(255, 255, 255, 0.1);
+        .navbar {
+            background: rgba(33, 37, 41, 0.95);
             backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
         }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .logo img {
-            width: 40px;
-            height: 40px;
-        }
-
-        .logo h2 {
-            font-size: 1.5rem;
+        .navbar-brand {
+            color: #fff;
             font-weight: 600;
-        }
-
-        .nav-menu {
-            list-style: none;
-        }
-
-        .nav-item {
-            margin-bottom: 1rem;
+            font-size: 1.25rem;
         }
 
         .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.8rem 1rem;
-            color: var(--text-light);
-            text-decoration: none;
-            border-radius: 8px;
+            color: rgba(255, 255, 255, 0.85) !important;
+            padding: 0.5rem 1rem;
             transition: all 0.3s ease;
         }
 
-        .nav-link:hover, .nav-link.active {
-            background: rgba(74, 144, 226, 0.1);
-            color: var(--primary-color);
+        .nav-link:hover {
+            color: #fff !important;
         }
 
-        /* Main Content Styles */
-        .main-content {
-            padding: 2rem;
+        .dashboard-wrapper {
+            padding: 2rem 0;
+            margin-top: 70px;
+            min-height: calc(100vh - 70px);
         }
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 2rem;
-        }
-
-        .header h1 {
-            font-size: 2rem;
-            font-weight: 600;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .theme-toggle {
-            background: none;
+        .stat-card {
             border: none;
-            cursor: pointer;
-            font-size: 1.5rem;
-            color: var(--text-light);
+            border-radius: 1rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: transform 0.3s ease;
         }
 
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .card-title {
-            font-size: 1.2rem;
-            font-weight: 500;
-        }
-
-        /* Charts Section */
-        .charts-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .chart-container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 1.5rem;
-            height: 300px;
-        }
-
-        /* Calendar Section */
-        .calendar-section {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        /* Stats Cards */
-        .stats-card {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .stats-icon {
-            width: 50px;
-            height: 50px;
+        .stat-icon {
+            width: 48px;
+            height: 48px;
             border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 1.5rem;
+            color: white;
         }
 
-        .stats-info h3 {
-            font-size: 1.8rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+        .bg-primary { background-color: #4e73df !important; }
+        .bg-success { background-color: #1cc88a !important; }
+        .bg-warning { background-color: #f6c23e !important; }
+        .bg-info { background-color: #36b9cc !important; }
+
+        .card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            margin-bottom: 1.5rem;
         }
 
-        .stats-info p {
-            color: #666;
-            font-size: 0.9rem;
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            padding: 1.25rem;
         }
 
-        /* Responsive Design */
+        .price-card, .analytics-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            text-align: center;
+        }
+
+        .price-card h3, .analytics-card h3 {
+            color: #4e73df;
+            margin: 0.5rem 0;
+        }
+
+        .modifier-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .modifier-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 0.5rem;
+        }
+
+        .metric-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .metric-item .progress {
+            margin-top: 0.5rem;
+        }
+
+        .progress {
+            background-color: #eaecf4;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            height: 6px;
+        }
+
+        .progress-bar {
+            background-color: #4e73df;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-bar.bg-success {
+            background-color: #1cc88a;
+        }
+
+        .progress-bar.bg-warning {
+            background-color: #f6c23e;
+        }
+
+        .activity-timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .activity-item {
+            position: relative;
+            padding-bottom: 1.5rem;
+        }
+
+        .activity-item::before {
+            content: '';
+            position: absolute;
+            left: -1.5rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #e3e6f0;
+        }
+
+        .activity-content {
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        .activity-icon {
+            position: absolute;
+            left: -2rem;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+        }
+
         @media (max-width: 768px) {
-            .dashboard-container {
-                grid-template-columns: 1fr;
+            .dashboard-wrapper {
+                padding: 1rem;
             }
+        }
 
-            .sidebar {
-                display: none;
-            }
+        .dropdown-menu {
+            background: rgba(255, 255, 255, 0.98);
+            border: none;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            border-radius: 0.5rem;
+        }
 
-            .charts-section {
-                grid-template-columns: 1fr;
-            }
+        .dropdown-item {
+            padding: 0.75rem 1.25rem;
+            font-weight: 500;
+        }
+
+        .dropdown-item:hover {
+            background: #f8f9fa;
+        }
+
+        .btn-primary {
+            background: #4e73df;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background: #2e59d9;
+        }
+
+        .modal-content {
+            border: none;
+            border-radius: 1rem;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid #e3e6f0;
+            padding: 1.5rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #4e73df;
+        }
+
+        .form-control {
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e3e6f0;
+        }
+
+        .form-control:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
         }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo">
-                <img src="{% static 'images/logo.png' %}" alt="LuxAI Logo">
-                <h2>LuxAI Resorts</h2>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-hotel me-2"></i>LuxAI Resorts
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'ResortDashboard' %}">
+                            <i class="fas fa-chart-line me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_bookings' %}">
+                            <i class="fas fa-calendar-check me-2"></i>Bookings
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'manage_rooms' %}">
+                            <i class="fas fa-bed me-2"></i>Rooms
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'list_packages' %}">
+                            <i class="fas fa-gift me-2"></i>Packages
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'ResortDashboard' %}">
+                            <i class="fas fa-map-marker-alt me-2"></i>Venues
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="amenitiesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-concierge-bell me-2"></i>Amenities
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{% url 'ResortDashboard' %}">
+                                <i class="fas fa-utensils me-2"></i>Food & Beverages
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'ResortDashboard' %}">
+                                <i class="fas fa-spa me-2"></i>Spa & Wellness
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'ResortDashboard' %}">
+                                <i class="fas fa-hiking me-2"></i>Activities
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-2"></i>{{ request.user.name }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'view_profile' %}">
+                                <i class="fas fa-user me-2"></i>Profile
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'settings' %}">
+                                <i class="fas fa-cog me-2"></i>Settings
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'user_logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#" class="nav-link active">
-                        <i class="fas fa-home"></i>
-                        Dashboard
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-bed"></i>
-                        Room Management
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-calendar-alt"></i>
-                        Bookings
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-chart-line"></i>
-                        Analytics
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-users"></i>
-                        Guests
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link">
-                        <i class="fas fa-cog"></i>
-                        Settings
-                    </a>
-                </li>
-            </ul>
-        </aside>
+        </div>
+    </nav>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="header">
-                <h1>Resort Dashboard</h1>
-                <div class="header-actions">
-                    <button class="theme-toggle" id="themeToggle">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    <div class="user-profile">
-                        <img src="{% static 'images/profile.jpg' %}" alt="Profile" style="width: 40px; height: 40px; border-radius: 50%;">
-                    </div>
-                </div>
-            </header>
-
-            <!-- Stats Grid -->
-            <div class="dashboard-grid">
-                <div class="card">
-                    <div class="stats-card">
-                        <div class="stats-icon" style="background: rgba(74, 144, 226, 0.1); color: var(--primary-color);">
-                            <i class="fas fa-bed"></i>
-                        </div>
-                        <div class="stats-info">
-                            <h3>85%</h3>
-                            <p>Occupancy Rate</p>
+    <!-- Main Content -->
+    <div class="dashboard-wrapper">
+        <div class="container-fluid">
+            <!-- Quick Stats -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-3 col-md-6">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-primary">
+                                    <i class="fas fa-bed"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-1">Occupancy Rate</h6>
+                                    <h3 class="mb-0">{{ resort.analytics.occupancy_rate|floatformat:1 }}%</h3>
+                                    <small class="text-muted">Last 30 days</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="card">
-                    <div class="stats-card">
-                        <div class="stats-icon" style="background: rgba(46, 204, 113, 0.1); color: #2ecc71;">
-                            <i class="fas fa-dollar-sign"></i>
-                        </div>
-                        <div class="stats-info">
-                            <h3>$45,678</h3>
-                            <p>Monthly Revenue</p>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-success">
+                                    <i class="fas fa-dollar-sign"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-1">Revenue</h6>
+                                    <h3 class="mb-0">${{ resort.revenue_analytics.monthly_revenue|last|floatformat:0 }}</h3>
+                                    <small class="text-muted">This Month</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="card">
-                    <div class="stats-card">
-                        <div class="stats-icon" style="background: rgba(155, 89, 182, 0.1); color: #9b59b6;">
-                            <i class="fas fa-users"></i>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-warning">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-1">Total Bookings</h6>
+                                    <h3 class="mb-0">{{ resort.analytics.total_bookings }}</h3>
+                                    <small class="text-muted">All Time</small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="stats-info">
-                            <h3>1,234</h3>
-                            <p>Total Guests</p>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6">
+                    <div class="card stat-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="stat-icon bg-info">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div class="ms-3">
+                                    <h6 class="mb-1">Average Rating</h6>
+                                    <h3 class="mb-0">{{ resort.analytics.average_rating|floatformat:1 }}/5.0</h3>
+                                    <small class="text-muted">Based on {{ resort.reviews.count }} reviews</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts Section -->
-            <div class="charts-section">
-                <div class="chart-container">
-                    <div class="card-header">
-                        <h3 class="card-title">Revenue Analytics</h3>
+            <!-- Revenue & Occupancy Charts -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Revenue & Occupancy Trends</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenueChart" height="300"></canvas>
+                        </div>
                     </div>
-                    <canvas id="revenueChart"></canvas>
                 </div>
-                <div class="chart-container">
-                    <div class="card-header">
-                        <h3 class="card-title">Occupancy Trends</h3>
+                <div class="col-xl-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Revenue Distribution</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="revenueDistribution" height="300"></canvas>
+                        </div>
                     </div>
-                    <canvas id="occupancyChart"></canvas>
                 </div>
             </div>
 
-            <!-- Calendar Section -->
-            <div class="calendar-section">
-                <div class="card-header">
-                    <h3 class="card-title">Booking Calendar</h3>
+            <!-- Dynamic Pricing & Booking Analytics -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-6">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Dynamic Pricing</h5>
+                            <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#pricingSettingsModal">
+                                <i class="fas fa-cog me-1"></i>Settings
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="pricing-info mb-4">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="price-card">
+                                            <h6>Base Price</h6>
+                                            <h3>${{ resort.pricing.base_price|floatformat:2 }}</h3>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="price-card">
+                                            <h6>Current Dynamic Price</h6>
+                                            <h3>${{ current_dynamic_price|floatformat:2 }}</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h6 class="mb-3">Price Modifiers</h6>
+                            <div class="modifier-list">
+                                <div class="modifier-item">
+                                    <span>Weekend Rate</span>
+                                    <span>{{ resort.pricing.weekend_multiplier }}x</span>
+                                </div>
+                                <div class="modifier-item">
+                                    <span>Peak Season</span>
+                                    <span>{{ resort.pricing.peak_season_multiplier }}x</span>
+                                </div>
+                                <div class="modifier-item">
+                                    <span>Last Minute Discount</span>
+                                    <span>{{ resort.pricing.last_minute_discount }}x</span>
+                                </div>
+                                <div class="modifier-item">
+                                    <span>Advance Booking</span>
+                                    <span>{{ resort.pricing.advance_booking_discount }}x</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div id="calendar"></div>
+                <div class="col-xl-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Booking Analytics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="analytics-card">
+                                        <h6>Average Stay Duration</h6>
+                                        <h3>{{ resort.booking_analytics.average_stay_duration|floatformat:1 }} days</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="analytics-card">
+                                        <h6>Cancellation Rate</h6>
+                                        <h3>{{ resort.booking_analytics.cancellation_rate|floatformat:1 }}%</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="analytics-card">
+                                        <h6>Repeat Customer Rate</h6>
+                                        <h3>{{ resort.booking_analytics.repeat_customer_rate|floatformat:1 }}%</h3>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="analytics-card">
+                                        <h6>Average Daily Rate</h6>
+                                        <h3>${{ resort.revenue_analytics.average_daily_rate|floatformat:2 }}</h3>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <h6 class="mb-3">Booking Patterns</h6>
+                                <canvas id="bookingPatterns" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        </main>
+
+            <!-- Performance Metrics -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Key Performance Metrics</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="metric-item">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>RevPAR</span>
+                                    <span>${{ resort.revenue_analytics.revpar|floatformat:2 }}</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ revpar_percentage }}%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>GOPPAR</span>
+                                    <span>${{ resort.revenue_analytics.goppar|floatformat:2 }}</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ goppar_percentage }}%"></div>
+                                </div>
+                            </div>
+                            <div class="metric-item">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Occupancy</span>
+                                    <span>{{ resort.analytics.occupancy_rate|floatformat:1 }}%</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: {{ resort.analytics.occupancy_rate }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Popular Room Types</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="roomTypeChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Guest Demographics</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="demographicsChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Package Management Overview -->
+            <div class="row mb-4">
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-primary shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total Packages</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ package_stats.total_packages }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-box-open fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-success shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Active Packages</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ package_stats.active_packages }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-info shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Staycation Packages</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ package_stats.staycation_count }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-bed fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-3 col-md-6 mb-4">
+                    <div class="card border-left-warning shadow h-100 py-2">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Daycation Packages</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ package_stats.daycation_count }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-sun fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Popular Packages and Package Distribution -->
+            <div class="row">
+                <!-- Popular Packages -->
+                <div class="col-xl-8 col-lg-7">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                            <h6 class="m-0 font-weight-bold text-primary">Popular Packages</h6>
+                            <a href="{% url 'list_packages' %}" class="btn btn-sm btn-primary shadow-sm">
+                                <i class="fas fa-plus fa-sm text-white-50"></i> Manage Packages
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered" width="100%" cellspacing="0">
+                                    <thead>
+                                        <tr>
+                                            <th>Package</th>
+                                            <th>Type</th>
+                                            <th>Price</th>
+                                            <th>Bookings</th>
+                                            <th>Rating</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for package in popular_packages %}
+                                        <tr>
+                                            <td>
+                                                <div class="d-flex align-items-center">
+                                                    {% if package.image %}
+                                                    <img src="{{ package.image }}" alt="{{ package.name }}" class="rounded-circle mr-2" style="width: 40px; height: 40px; object-fit: cover;">
+                                                    {% endif %}
+                                                    {{ package.name }}
+                                                </div>
+                                            </td>
+                                            <td>{{ package.type }}</td>
+                                            <td>${{ package.price }}</td>
+                                            <td>{{ package.total_bookings }}</td>
+                                            <td>
+                                                <div class="small">
+                                                    {% for i in "12345"|make_list %}
+                                                    {% if forloop.counter <= package.rating %}
+                                                    <i class="fas fa-star text-warning"></i>
+                                                    {% else %}
+                                                    <i class="far fa-star text-warning"></i>
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </td>
+                                            <td>
+                                                {% if package.availability %}
+                                                <span class="badge badge-success">Available</span>
+                                                {% else %}
+                                                <span class="badge badge-danger">Not Available</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Package Distribution -->
+                <div class="col-xl-4 col-lg-5">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Package Distribution</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-pie pt-4">
+                                <canvas id="packageDistributionChart"></canvas>
+                            </div>
+                            <div class="mt-4 text-center small">
+                                <span class="mr-2">
+                                    <i class="fas fa-circle text-primary"></i> Staycation
+                                </span>
+                                <span class="mr-2">
+                                    <i class="fas fa-circle text-success"></i> Daycation
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Featured Packages -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow mb-4">
+                        <div class="card-header py-3">
+                            <h6 class="m-0 font-weight-bold text-primary">Featured Packages</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                {% for package in featured_packages %}
+                                <div class="col-lg-4 mb-4">
+                                    <div class="card">
+                                        {% if package.image %}
+                                        <img src="{{ package.image.url }}" class="card-img-top" alt="{{ package.package_name }}" style="height: 200px; object-fit: cover;">
+                                        {% endif %}
+                                        <div class="card-body">
+                                            <h5 class="card-title">{{ package.package_name }}</h5>
+                                            <p class="card-text">{{ package.description|truncatechars:100 }}</p>
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span class="h5 mb-0">${{ package.get_discounted_price }}</span>
+                                                <a href="{% url 'edit_package' package.id %}" class="btn btn-sm btn-primary">Edit</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Venues & Amenities -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Venue Bookings</h5>
+                            <a href="{% url 'ResortDashboard' %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i>Add Venue
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="venue-stats mb-4">
+                                {% for venue in venue_bookings %}
+                                <div class="venue-item mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">{{ venue.name }}</h6>
+                                        <span class="badge bg-{{ venue.status_color }}">{{ venue.status }}</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" 
+                                             style="width: {{ venue.booking_percentage }}%" 
+                                             aria-valuenow="{{ venue.booking_percentage }}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            {{ venue.booking_percentage }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">F&B Revenue</h5>
+                            <a href="{% url 'ResortDashboard' %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i>Add Item
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="fbRevenueChart" height="250"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-4">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Popular Activities</h5>
+                            <a href="{% url 'ResortDashboard' %}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus me-1"></i>Add Activity
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-stats">
+                                {% for activity in popular_activities %}
+                                <div class="activity-item mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <h6 class="mb-0">{{ activity.name }}</h6>
+                                            <small class="text-muted">{{ activity.participants }} participants</small>
+                                        </div>
+                                        <span class="badge bg-{{ activity.status_color }}">
+                                            {{ activity.status }}
+                                        </span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar bg-info" role="progressbar" 
+                                             style="width: {{ activity.popularity_percentage }}%">
+                                            {{ activity.popularity_percentage }}%
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Recent Activity</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="activity-timeline">
+                                {% for activity in recent_activities %}
+                                <div class="activity-item">
+                                    <div class="activity-content">
+                                        <div class="activity-icon bg-{{ activity.type }}">
+                                            <i class="fas fa-{{ activity.icon }}"></i>
+                                        </div>
+                                        <div class="activity-info">
+                                            <h6 class="mb-1">{{ activity.title }}</h6>
+                                            <p class="text-muted mb-0">{{ activity.description }}</p>
+                                            <small class="text-muted">{{ activity.timestamp }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Settings Modal -->
+    <div class="modal fade" id="pricingSettingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Dynamic Pricing Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="pricingSettingsForm">
+                        <div class="mb-3">
+                            <label class="form-label">Base Price ($)</label>
+                            <input type="number" class="form-control" name="base_price" value="{{ resort.pricing.base_price }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Weekend Multiplier</label>
+                            <input type="number" class="form-control" name="weekend_multiplier" value="{{ resort.pricing.weekend_multiplier }}" step="0.1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Peak Season Multiplier</label>
+                            <input type="number" class="form-control" name="peak_season_multiplier" value="{{ resort.pricing.peak_season_multiplier }}" step="0.1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Last Minute Discount</label>
+                            <input type="number" class="form-control" name="last_minute_discount" value="{{ resort.pricing.last_minute_discount }}" step="0.1">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Advance Booking Discount</label>
+                            <input type="number" class="form-control" name="advance_booking_discount" value="{{ resort.pricing.advance_booking_discount }}" step="0.1">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="savePricingSettings">Save Changes</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.0/dist/chart.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Keep the existing chart initialization scripts as is -->
     <script>
-        // Theme Toggle
-        const themeToggle = document.getElementById('themeToggle');
-        const body = document.body;
-        
-        themeToggle.addEventListener('click', () => {
-            body.classList.toggle('dark-mode');
-            const icon = themeToggle.querySelector('i');
-            icon.classList.toggle('fa-moon');
-            icon.classList.toggle('fa-sun');
-        });
-
-        // Revenue Chart
+        // Revenue & Occupancy Chart
         const revenueCtx = document.getElementById('revenueChart').getContext('2d');
         new Chart(revenueCtx, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                labels: JSON.parse('{{ revenue_labels|safe|escapejs }}'),
                 datasets: [{
                     label: 'Revenue',
-                    data: [30000, 35000, 40000, 38000, 42000, 45678],
-                    borderColor: '#4A90E2',
-                    tension: 0.4
+                    data: JSON.parse('{{ revenue_data|safe|escapejs }}'),
+                    borderColor: '#4e73df',
+                    tension: 0.1
+                }, {
+                    label: 'Occupancy',
+                    data: JSON.parse('{{ occupancy_data|safe|escapejs }}'),
+                    borderColor: '#1cc88a',
+                    tension: 0.1
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
             }
         });
 
-        // Occupancy Chart
-        const occupancyCtx = document.getElementById('occupancyChart').getContext('2d');
-        new Chart(occupancyCtx, {
-            type: 'bar',
+        // Revenue Distribution Chart
+        const distributionCtx = document.getElementById('revenueDistribution').getContext('2d');
+        new Chart(distributionCtx, {
+            type: 'doughnut',
             data: {
-                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                labels: JSON.parse('{{ revenue_distribution_labels|safe|escapejs }}'),
                 datasets: [{
-                    label: 'Occupancy Rate',
-                    data: [75, 82, 85, 88, 90, 95, 85],
-                    backgroundColor: '#2ecc71'
+                    data: JSON.parse('{{ revenue_distribution_data|safe|escapejs }}'),
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e']
                 }]
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
             }
+        });
+
+        // Booking Patterns Chart
+        const patternsCtx = document.getElementById('bookingPatterns').getContext('2d');
+        new Chart(patternsCtx, {
+            type: 'bar',
+            data: {
+                labels: JSON.parse('{{ booking_pattern_labels|safe|escapejs }}'),
+                datasets: [{
+                    label: 'Bookings',
+                    data: JSON.parse('{{ booking_pattern_data|safe|escapejs }}'),
+                    backgroundColor: '#4e73df'
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Room Type Chart
+        const roomTypeCtx = document.getElementById('roomTypeChart').getContext('2d');
+        new Chart(roomTypeCtx, {
+            type: 'pie',
+            data: {
+                labels: JSON.parse('{{ room_type_labels|safe|escapejs }}'),
+                datasets: [{
+                    data: JSON.parse('{{ room_type_data|safe|escapejs }}'),
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // Demographics Chart
+        const demographicsCtx = document.getElementById('demographicsChart').getContext('2d');
+        new Chart(demographicsCtx, {
+            type: 'pie',
+            data: {
+                labels: JSON.parse('{{ demographics_labels|safe|escapejs }}'),
+                datasets: [{
+                    data: JSON.parse('{{ demographics_data|safe|escapejs }}'),
+                    backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        // F&B Revenue Chart
+        const fbRevenueCtx = document.getElementById('fbRevenueChart').getContext('2d');
+        new Chart(fbRevenueCtx, {
+            type: 'bar',
+            data: {
+                labels: JSON.parse('{{ fb_revenue_labels|safe|escapejs }}'),
+                datasets: [{
+                    label: 'Food Revenue',
+                    data: JSON.parse('{{ food_revenue_data|safe|escapejs }}'),
+                    backgroundColor: '#4e73df'
+                }, {
+                    label: 'Beverage Revenue',
+                    data: JSON.parse('{{ beverage_revenue_data|safe|escapejs }}'),
+                    backgroundColor: '#1cc88a'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Revenue ($)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Save Pricing Settings
+        document.getElementById('savePricingSettings').addEventListener('click', function() {
+            const form = document.getElementById('pricingSettingsForm');
+            const formData = new FormData(form);
+            
+            fetch('/update-pricing-settings/', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        });
+
+        // Package Distribution Chart
+        var ctx = document.getElementById("packageDistributionChart");
+        var packageDistributionChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ package_distribution.labels|safe }},
+                datasets: [{
+                    data: {{ package_distribution.data|safe }},
+                    backgroundColor: ['#4e73df', '#1cc88a'],
+                    hoverBackgroundColor: ['#2e59d9', '#17a673'],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)",
+                }],
+            },
+            options: {
+                maintainAspectRatio: false,
+                tooltips: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyFontColor: "#858796",
+                    borderColor: '#dddfeb',
+                    borderWidth: 1,
+                    xPadding: 15,
+                    yPadding: 15,
+                    displayColors: false,
+                    caretPadding: 10,
+                },
+                legend: {
+                    display: false
+                },
+                cutoutPercentage: 80,
+            },
         });
     </script>
 </body>
 </html>
+
+

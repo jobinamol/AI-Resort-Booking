@@ -3,8 +3,8 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm
-from .models import UserDB, Resort, ResortImage
+from .forms import CustomUserCreationForm, PackageForm
+from .models import UserDB, Resort, ResortImage, Package
 import random
 from django.core.mail import send_mail
 from django.conf import settings
@@ -67,55 +67,60 @@ def ResortDashboard(request):
     try:
         resort = Resort.objects.get(user=request.user)
         
-        # Mock data for dashboard statistics (replace with actual data when implemented)
+        # Get package statistics
+        packages = resort.packages.all()
+        staycation_packages = packages.filter(package_type='Staycation')
+        daycation_packages = packages.filter(package_type='Daycation')
+        
+        # Get popular packages
+        popular_packages = packages.order_by('-total_bookings')[:5]
+        
         context = {
             'resort': resort,
             'statistics': {
-                'occupancy_rate': 85,  # Replace with actual calculation
-                'monthly_revenue': 45678,  # Replace with actual calculation
-                'total_guests': 1234,  # Replace with actual calculation
-                'total_bookings': 890,  # Replace with actual calculation
-                'average_rating': 4.5,  # Replace with actual calculation
-                'pending_bookings': 12,  # Replace with actual calculation
+                'occupancy_rate': resort.get_occupancy_rate(),
+                'monthly_revenue': resort.get_monthly_revenue(),
+                'total_guests': resort.get_total_guests(),
+                'average_rating': resort.get_average_rating(),
             },
-            'recent_bookings': [
-                {
-                    'guest_name': 'John Doe',
-                    'check_in': '2024-03-15',
-                    'check_out': '2024-03-18',
-                    'status': 'Confirmed',
-                    'amount': 1200
-                },
-                # Add more recent bookings
-            ],
-            'monthly_stats': {
-                'labels': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                'revenue': [30000, 35000, 40000, 38000, 42000, 45678],
-                'occupancy': [75, 82, 85, 88, 90, 95],
-            },
+            'recent_bookings': resort.get_recent_bookings(),
+            'monthly_stats': resort.get_monthly_stats(),
             'resort_images': resort.images.all()[:6],
-            'facilities': {
-                'basic': [
-                    {'name': 'Swimming Pool', 'available': resort.has_pool},
-                    {'name': 'Spa & Wellness', 'available': resort.has_spa},
-                    {'name': 'Restaurant', 'available': resort.has_restaurant},
-                    {'name': 'Gym', 'available': resort.has_gym},
-                    {'name': 'WiFi', 'available': resort.has_wifi},
-                    {'name': 'Parking', 'available': resort.has_parking},
-                ],
-                'activities': [
-                    {'name': 'Water Sports', 'available': resort.has_water_sports},
-                    {'name': 'Trekking', 'available': resort.has_trekking},
-                    {'name': 'Cycling', 'available': resort.has_cycling},
-                    {'name': 'Yoga', 'available': resort.has_yoga},
-                ],
-                'services': [
-                    {'name': 'Room Service', 'available': resort.has_room_service},
-                    {'name': 'Laundry', 'available': resort.has_laundry},
-                    {'name': 'Childcare', 'available': resort.has_childcare},
-                    {'name': 'Medical Services', 'available': resort.has_medical},
-                ],
-            }
+            'facilities': resort.get_facility_groups(),
+            'today_date': datetime.now().strftime('%B %d, %Y'),
+            
+            # Package statistics
+            'package_stats': {
+                'total_packages': packages.count(),
+                'staycation_count': staycation_packages.count(),
+                'daycation_count': daycation_packages.count(),
+                'active_packages': packages.filter(is_active=True).count(),
+            },
+            'popular_packages': [
+                {
+                    'name': pkg.package_name,
+                    'type': pkg.package_type,
+                    'price': pkg.get_discounted_price(),
+                    'total_bookings': pkg.total_bookings,
+                    'rating': pkg.average_rating,
+                    'availability': pkg.availability,
+                    'image': pkg.image.url if pkg.image else None,
+                }
+                for pkg in popular_packages
+            ],
+            'featured_packages': packages.filter(featured=True)[:3],
+            'recent_packages': packages.order_by('-created_at')[:5],
+            
+            # Revenue data for charts
+            'revenue_labels': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            'revenue_data': resort.revenue_analytics.monthly_revenue if hasattr(resort, 'revenue_analytics') else [],
+            'occupancy_data': [75, 82, 85, 88, 90, 95],  # Example data
+            
+            # Package type distribution for charts
+            'package_distribution': {
+                'labels': ['Staycation', 'Daycation'],
+                'data': [staycation_packages.count(), daycation_packages.count()]
+            },
         }
         return render(request, 'ResortDashboard.html', context)
     
@@ -1054,4 +1059,84 @@ def set_primary_image(request, image_id):
         messages.warning(request, 'Please create your resort profile first.')
         return redirect('add_profile')
 
+@login_required
+def list_packages(request):
+    """View to list all packages for a resort"""
+    try:
+        packages = Package.objects.filter(resort=request.user.resort).order_by('-created_at')
+        context = {
+            'packages': packages,
+            'staycation_count': packages.filter(package_type='Staycation').count(),
+            'daycation_count': packages.filter(package_type='Daycation').count(),
+        }
+        return render(request, 'package/list_packages.html', context)
+    except Exception as e:
+        messages.error(request, f"Error loading packages: {str(e)}")
+        return redirect('ResortDashboard')
 
+@login_required
+def create_package(request):
+    """View to create a new package"""
+    if request.method == 'POST':
+        form = PackageForm(request.POST, request.FILES)
+        if form.is_valid():
+            try:
+                package = form.save(commit=False)
+                package.resort = request.user.resort
+                package.save()
+                messages.success(request, f"Package '{package.package_name}' created successfully!")
+                return redirect('list_packages')
+            except Exception as e:
+                messages.error(request, f"Error creating package: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = PackageForm()
+    
+    return render(request, 'package/create_package.html', {'form': form})
+
+@login_required
+def edit_package(request, package_id):
+    """View to edit an existing package"""
+    package = get_object_or_404(Package, id=package_id, resort=request.user.resort)
+    
+    if request.method == 'POST':
+        form = PackageForm(request.POST, request.FILES, instance=package)
+        if form.is_valid():
+            try:
+                # Handle image removal
+                if request.POST.get('remove_image') and package.image:
+                    package.image.delete()
+                    package.image = None
+                
+                package = form.save()
+                messages.success(request, f"Package '{package.package_name}' updated successfully!")
+                return redirect('list_packages')
+            except Exception as e:
+                messages.error(request, f"Error updating package: {str(e)}")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field}: {error}")
+    else:
+        form = PackageForm(instance=package)
+    
+    return render(request, 'package/edit_package.html', {
+        'form': form,
+        'package': package
+    })
+
+@login_required
+def delete_package(request, package_id):
+    """View to delete a package"""
+    if request.method == 'POST':
+        package = get_object_or_404(Package, id=package_id, resort=request.user.resort)
+        try:
+            package_name = package.package_name
+            package.delete()
+            messages.success(request, f"Package '{package_name}' deleted successfully!")
+        except Exception as e:
+            messages.error(request, f"Error deleting package: {str(e)}")
+    return redirect('list_packages')

@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-white py-3">
+                    <h3 class="card-title mb-0">Create New Package</h3>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="packageForm">
+                        {% csrf_token %}
+                        
+                        <!-- Package Type Selection -->
+                        <div class="mb-4">
+                            <label class="form-label">Package Type</label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="package_type" value="Staycation" id="staycation" required>
+                                    <label class="form-check-label" for="staycation">
+                                        <i class="fas fa-bed"></i> Staycation
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="package_type" value="Daycation" id="daycation">
+                                    <label class="form-check-label" for="daycation">
+                                        <i class="fas fa-sun"></i> Daycation
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Package Name -->
+                        <div class="mb-3">
+                            <label for="package_name" class="form-label">Package Name</label>
+                            <input type="text" class="form-control" id="package_name" name="package_name" required>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required></textarea>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="mb-3">
+                            <label for="price" class="form-label">Price ($)</label>
+                            <input type="number" class="form-control" id="price" name="price" step="0.01" min="0" required>
+                        </div>
+
+                        <!-- Duration -->
+                        <div class="mb-3">
+                            <label for="duration" class="form-label">Duration</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="duration" name="duration" min="1" required>
+                                <span class="input-group-text duration-unit">hours</span>
+                            </div>
+                            <small class="text-muted">For Staycation: days, For Daycation: hours</small>
+                        </div>
+
+                        <!-- Amenities -->
+                        <div class="mb-3">
+                            <label for="amenities" class="form-label">Amenities</label>
+                            <input type="text" class="form-control" id="amenities" name="amenities" required>
+                            <small class="text-muted">Enter amenities separated by commas (e.g., WiFi, Pool, Spa)</small>
+                        </div>
+
+                        <!-- Package Image -->
+                        <div class="mb-4">
+                            <label for="image" class="form-label">Package Image</label>
+                            <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                            <div id="imagePreview" class="mt-2 d-none">
+                                <img src="" alt="Preview" class="img-thumbnail" style="max-height: 200px">
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Create Package
+                            </button>
+                            <a href="{% url 'list_packages' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Packages
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle package type selection
+        const packageTypeInputs = document.querySelectorAll('input[name="package_type"]');
+        const durationUnit = document.querySelector('.duration-unit');
+
+        packageTypeInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                durationUnit.textContent = this.value === 'Staycation' ? 'days' : 'hours';
+            });
+        });
+
+        // Image preview
+        const imageInput = document.getElementById('image');
+        const imagePreview = document.getElementById('imagePreview');
+        const previewImg = imagePreview.querySelector('img');
+
+        imageInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    imagePreview.classList.remove('d-none');
+                }
+                reader.readAsDataURL(this.files[0]);
+            } else {
+                imagePreview.classList.add('d-none');
+            }
+        });
+
+        // Form validation
+        const form = document.getElementById('packageForm');
+        form.addEventListener('submit', function(e) {
+            if (!form.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %} 

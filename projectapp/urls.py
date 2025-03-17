@@ -37,10 +37,10 @@ urlpatterns = [
     path('resort/calendar/', views.booking_calendar, name='booking_calendar'),
     
     # Package Management
-    path('resort/packages/', views.manage_packages, name='manage_packages'),
-    path('resort/packages/add/', views.add_package, name='add_package'),
-    path('resort/packages/<int:package_id>/edit/', views.edit_package, name='edit_package'),
-    path('resort/packages/<int:package_id>/delete/', views.delete_package, name='delete_package'),
+    path('packages/', views.list_packages, name='list_packages'),
+    path('packages/create/', views.create_package, name='create_package'),
+    path('packages/<int:package_id>/edit/', views.edit_package, name='edit_package'),
+    path('packages/<int:package_id>/delete/', views.delete_package, name='delete_package'),
     
     # Gallery Management
     path('resort/gallery/', views.manage_gallery, name='manage_gallery'),

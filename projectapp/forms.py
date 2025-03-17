@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import UserDB
+from .models import UserDB, Package
 from django.core.exceptions import ValidationError
 
 class CustomUserCreationForm(UserCreationForm):
@@ -38,3 +38,46 @@ class LoginForm(AuthenticationForm):
     class Meta:
         model = UserDB
         fields = ['username', 'password']
+
+class PackageForm(forms.ModelForm):
+    class Meta:
+        model = Package
+        fields = ['package_name', 'description', 'price', 'duration', 'package_type', 'amenities', 'image']
+        widgets = {
+            'package_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'price': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
+            'duration': forms.NumberInput(attrs={'class': 'form-control', 'min': '1'}),
+            'package_type': forms.RadioSelect(choices=[('Staycation', 'Staycation'), ('Daycation', 'Daycation')]),
+            'amenities': forms.TextInput(attrs={'class': 'form-control'}),
+            'image': forms.FileInput(attrs={'class': 'form-control'})
+        }
+
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if price <= 0:
+            raise forms.ValidationError("Price must be greater than zero")
+        return price
+
+    def clean_duration(self):
+        duration = self.cleaned_data.get('duration')
+        if duration <= 0:
+            raise forms.ValidationError("Duration must be greater than zero")
+        return duration
+
+    def clean_amenities(self):
+        amenities = self.cleaned_data.get('amenities')
+        if not amenities:
+            return ''
+        # Clean and format amenities as comma-separated list
+        amenities_list = [item.strip() for item in amenities.split(',') if item.strip()]
+        return ', '.join(amenities_list)
+
+    def clean_image(self):
+        image = self.cleaned_data.get('image')
+        if image:
+            if image.size > 5 * 1024 * 1024:  # 5MB limit
+                raise forms.ValidationError("Image file size must be less than 5MB")
+            if not image.content_type.startswith('image/'):
+                raise forms.ValidationError("File must be an image")
+        return image

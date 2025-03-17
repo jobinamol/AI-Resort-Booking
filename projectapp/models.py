@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractUser
 from django.utils.timezone import now, timedelta
 from django.core.exceptions import ValidationError
 import random
+import json
 
 
 class UserDB(AbstractUser):
@@ -138,6 +139,73 @@ class Resort(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
+    def get_occupancy_rate(self):
+        """Calculate current occupancy rate"""
+        # TODO: Implement actual booking logic
+        return 85  # Placeholder
+
+    def get_monthly_revenue(self):
+        """Calculate current month's revenue"""
+        # TODO: Implement actual booking logic
+        return 45678  # Placeholder
+
+    def get_total_guests(self):
+        """Get total number of guests"""
+        # TODO: Implement actual booking logic
+        return 1234  # Placeholder
+
+    def get_average_rating(self):
+        """Calculate average rating"""
+        # TODO: Implement actual review logic
+        return 4.5  # Placeholder
+
+    def get_recent_bookings(self, limit=5):
+        """Get recent bookings"""
+        # TODO: Implement actual booking logic
+        return [
+            {
+                'guest_name': 'John Doe',
+                'check_in': '2024-03-15',
+                'check_out': '2024-03-18',
+                'status': 'Confirmed',
+                'amount': 1200
+            }
+        ]
+
+    def get_monthly_stats(self):
+        """Get monthly statistics for charts"""
+        # TODO: Implement actual booking logic
+        return {
+            'labels': ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            'revenue': [30000, 35000, 40000, 38000, 42000, 45678],
+            'occupancy': [75, 82, 85, 88, 90, 95]
+        }
+
+    def get_facility_groups(self):
+        """Get grouped facilities for display"""
+        return {
+            'basic': [
+                {'name': 'Swimming Pool', 'available': self.has_pool},
+                {'name': 'Spa & Wellness', 'available': self.has_spa},
+                {'name': 'Restaurant', 'available': self.has_restaurant},
+                {'name': 'Gym', 'available': self.has_gym},
+                {'name': 'WiFi', 'available': self.has_wifi},
+                {'name': 'Parking', 'available': self.has_parking},
+            ],
+            'activities': [
+                {'name': 'Water Sports', 'available': self.has_water_sports},
+                {'name': 'Trekking', 'available': self.has_trekking},
+                {'name': 'Cycling', 'available': self.has_cycling},
+                {'name': 'Yoga', 'available': self.has_yoga},
+            ],
+            'services': [
+                {'name': 'Room Service', 'available': self.has_room_service},
+                {'name': 'Laundry', 'available': self.has_laundry},
+                {'name': 'Childcare', 'available': self.has_childcare},
+                {'name': 'Medical Services', 'available': self.has_medical},
+            ]
+        }
+
     def __str__(self):
         return f"{self.resort_name} - {self.get_resort_type_display()}"
 
@@ -170,3 +238,284 @@ class ResortImage(models.Model):
 
     def __str__(self):
         return f"{self.resort.resort_name} - {self.caption or 'Image'}"
+
+class ResortAnalytics(models.Model):
+    resort = models.OneToOneField(Resort, on_delete=models.CASCADE, related_name='analytics')
+    total_bookings = models.IntegerField(default=0)
+    total_revenue = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+    occupancy_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    peak_season_months = models.JSONField(default=list)
+    popular_room_types = models.JSONField(default=dict)
+    guest_demographics = models.JSONField(default=dict)
+    revenue_by_channel = models.JSONField(default=dict)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def update_analytics(self):
+        # Calculate total bookings and revenue
+        bookings = self.resort.bookings.all()
+        self.total_bookings = bookings.count()
+        self.total_revenue = sum(booking.total_amount for booking in bookings)
+        
+        # Calculate average rating
+        reviews = self.resort.reviews.all()
+        if reviews.exists():
+            self.average_rating = reviews.aggregate(models.Avg('rating'))['rating__avg']
+        
+        # Calculate occupancy rate
+        total_rooms = self.resort.room_count
+        occupied_rooms = bookings.filter(status='confirmed').count()
+        self.occupancy_rate = (occupied_rooms / total_rooms) * 100 if total_rooms > 0 else 0
+        
+        self.save()
+
+    def get_peak_seasons(self):
+        bookings_by_month = {}
+        for booking in self.resort.bookings.all():
+            month = booking.check_in.month
+            bookings_by_month[month] = bookings_by_month.get(month, 0) + 1
+        return sorted(bookings_by_month.items(), key=lambda x: x[1], reverse=True)[:3]
+
+    def get_revenue_trends(self):
+        monthly_revenue = {}
+        for booking in self.resort.bookings.all():
+            month = booking.created_at.strftime('%Y-%m')
+            monthly_revenue[month] = monthly_revenue.get(month, 0) + booking.total_amount
+        return monthly_revenue
+
+class DynamicPricing(models.Model):
+    resort = models.OneToOneField(Resort, on_delete=models.CASCADE, related_name='pricing')
+    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    weekend_multiplier = models.DecimalField(max_digits=4, decimal_places=2, default=1.2)
+    peak_season_multiplier = models.DecimalField(max_digits=4, decimal_places=2, default=1.5)
+    last_minute_discount = models.DecimalField(max_digits=4, decimal_places=2, default=0.8)
+    advance_booking_discount = models.DecimalField(max_digits=4, decimal_places=2, default=0.9)
+    minimum_price = models.DecimalField(max_digits=10, decimal_places=2)
+    maximum_price = models.DecimalField(max_digits=10, decimal_places=2)
+    price_history = models.JSONField(default=list)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def calculate_dynamic_price(self, check_in_date, check_out_date):
+        base = float(self.base_price)
+        price_adjustments = []
+
+        # Weekend pricing
+        if check_in_date.weekday() >= 5:  # Saturday or Sunday
+            base *= float(self.weekend_multiplier)
+            price_adjustments.append(('Weekend Rate', f'{float(self.weekend_multiplier)}x'))
+
+        # Peak season pricing
+        peak_seasons = self.resort.analytics.peak_season_months
+        if check_in_date.month in peak_seasons:
+            base *= float(self.peak_season_multiplier)
+            price_adjustments.append(('Peak Season', f'{float(self.peak_season_multiplier)}x'))
+
+        # Last minute booking (within 3 days)
+        days_until_checkin = (check_in_date - now().date()).days
+        if days_until_checkin <= 3:
+            base *= float(self.last_minute_discount)
+            price_adjustments.append(('Last Minute', f'{float(self.last_minute_discount)}x'))
+        # Advance booking discount (more than 30 days)
+        elif days_until_checkin > 30:
+            base *= float(self.advance_booking_discount)
+            price_adjustments.append(('Advance Booking', f'{float(self.advance_booking_discount)}x'))
+
+        # Ensure price is within bounds
+        final_price = max(float(self.minimum_price), min(base, float(self.maximum_price)))
+
+        return {
+            'final_price': final_price,
+            'adjustments': price_adjustments,
+            'original_price': float(self.base_price)
+        }
+
+    def update_price_history(self, price_data):
+        history = self.price_history
+        history.append({
+            'date': now().isoformat(),
+            'price': price_data['final_price'],
+            'adjustments': price_data['adjustments']
+        })
+        self.price_history = history[-30:]  # Keep last 30 days
+        self.save()
+
+class BookingAnalytics(models.Model):
+    resort = models.OneToOneField(Resort, on_delete=models.CASCADE, related_name='booking_analytics')
+    booking_patterns = models.JSONField(default=dict)
+    cancellation_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    average_stay_duration = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    repeat_customer_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    popular_add_ons = models.JSONField(default=list)
+    seasonal_demand = models.JSONField(default=dict)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def update_booking_patterns(self):
+        bookings = self.resort.bookings.all()
+        patterns = {
+            'weekday_distribution': {},
+            'booking_lead_time': {},
+            'length_of_stay': {},
+            'party_size': {}
+        }
+        
+        for booking in bookings:
+            # Weekday distribution
+            weekday = booking.check_in.strftime('%A')
+            patterns['weekday_distribution'][weekday] = patterns['weekday_distribution'].get(weekday, 0) + 1
+            
+            # Booking lead time
+            lead_time = (booking.check_in - booking.created_at.date()).days
+            lead_bucket = f"{(lead_time // 7) * 7}-{(lead_time // 7 + 1) * 7} days"
+            patterns['booking_lead_time'][lead_bucket] = patterns['booking_lead_time'].get(lead_bucket, 0) + 1
+            
+            # Length of stay
+            stay_length = (booking.check_out - booking.check_in).days
+            stay_bucket = f"{stay_length} days"
+            patterns['length_of_stay'][stay_bucket] = patterns['length_of_stay'].get(stay_bucket, 0) + 1
+            
+            # Party size
+            party_bucket = f"{booking.guests} guests"
+            patterns['party_size'][party_bucket] = patterns['party_size'].get(party_bucket, 0) + 1
+        
+        self.booking_patterns = patterns
+        self.save()
+
+    def calculate_metrics(self):
+        bookings = self.resort.bookings.all()
+        total_bookings = bookings.count()
+        
+        if total_bookings > 0:
+            # Cancellation rate
+            cancelled = bookings.filter(status='cancelled').count()
+            self.cancellation_rate = (cancelled / total_bookings) * 100
+            
+            # Average stay duration
+            total_days = sum((b.check_out - b.check_in).days for b in bookings)
+            self.average_stay_duration = total_days / total_bookings
+            
+            # Repeat customer rate
+            unique_customers = len(set(booking.guest for booking in bookings))
+            self.repeat_customer_rate = ((total_bookings - unique_customers) / total_bookings) * 100
+        
+        self.save()
+
+class RevenueAnalytics(models.Model):
+    resort = models.OneToOneField(Resort, on_delete=models.CASCADE, related_name='revenue_analytics')
+    daily_revenue = models.JSONField(default=dict)
+    monthly_revenue = models.JSONField(default=dict)
+    revenue_by_room_type = models.JSONField(default=dict)
+    revenue_by_package = models.JSONField(default=dict)
+    average_daily_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    revpar = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Revenue per available room
+    goppar = models.DecimalField(max_digits=10, decimal_places=2, default=0)  # Gross operating profit per available room
+    last_updated = models.DateTimeField(auto_now=True)
+
+    def calculate_metrics(self):
+        bookings = self.resort.bookings.all()
+        total_rooms = self.resort.room_count
+        
+        # Calculate RevPAR
+        if total_rooms > 0:
+            total_revenue = sum(booking.total_amount for booking in bookings)
+            self.revpar = total_revenue / (total_rooms * 30)  # 30 days period
+        
+        # Calculate ADR (Average Daily Rate)
+        occupied_room_nights = sum((b.check_out - b.check_in).days for b in bookings)
+        if occupied_room_nights > 0:
+            self.average_daily_rate = total_revenue / occupied_room_nights
+        
+        self.save()
+
+    def update_revenue_distribution(self):
+        bookings = self.resort.bookings.all()
+        
+        # Revenue by room type
+        room_type_revenue = {}
+        for booking in bookings:
+            room_type = booking.room_type
+            room_type_revenue[room_type] = room_type_revenue.get(room_type, 0) + booking.total_amount
+        
+        self.revenue_by_room_type = room_type_revenue
+        
+        # Revenue by package
+        package_revenue = {}
+        for booking in bookings:
+            package = booking.package_type
+            if package:
+                package_revenue[package] = package_revenue.get(package, 0) + booking.total_amount
+        
+        self.revenue_by_package = package_revenue
+        self.save()
+
+class Package(models.Model):
+    resort = models.ForeignKey(Resort, on_delete=models.CASCADE, related_name="packages")
+    package_name = models.CharField(max_length=255)
+    description = models.TextField()
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    duration = models.IntegerField(help_text="Duration in hours for daycation or days for staycation")
+    package_type = models.CharField(max_length=20, choices=[('Staycation', 'Staycation'), ('Daycation', 'Daycation')])
+    amenities = models.TextField(help_text="Comma-separated amenities")
+    image = models.ImageField(upload_to="package_images/", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+    max_guests = models.PositiveIntegerField(default=2)
+    availability = models.PositiveIntegerField(default=10, help_text="Number of packages available")
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0, help_text="Discount percentage")
+    featured = models.BooleanField(default=False)
+    total_bookings = models.PositiveIntegerField(default=0)
+    average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Package'
+        verbose_name_plural = 'Packages'
+
+    def __str__(self):
+        return f"{self.package_name} - {self.resort.resort_name}"
+
+    def get_discounted_price(self):
+        if self.discount_percentage > 0:
+            discount = (self.price * self.discount_percentage) / 100
+            return self.price - discount
+        return self.price
+
+    def get_duration_display(self):
+        if self.package_type == 'Staycation':
+            return f"{self.duration} days"
+        return f"{self.duration} hours"
+
+    def get_amenities_list(self):
+        return [amenity.strip() for amenity in self.amenities.split(',') if amenity.strip()]
+
+    def is_available(self):
+        return self.is_active and self.availability > 0
+
+    def update_stats(self, new_rating=None):
+        from django.db.models import Avg
+        # Update total bookings
+        self.total_bookings = self.bookings.count()
+        
+        # Update average rating if ratings exist
+        if new_rating:
+            ratings = list(self.ratings.values_list('rating', flat=True))
+            ratings.append(new_rating)
+            self.average_rating = sum(ratings) / len(ratings)
+        elif self.ratings.exists():
+            self.average_rating = self.ratings.aggregate(Avg('rating'))['rating__avg']
+        
+        self.save()
+
+    def save(self, *args, **kwargs):
+        # Validate price and duration
+        if self.price < 0:
+            raise ValidationError("Price cannot be negative")
+        if self.duration <= 0:
+            raise ValidationError("Duration must be greater than zero")
+        
+        # Clean amenities
+        if self.amenities:
+            amenities_list = [item.strip() for item in self.amenities.split(',') if item.strip()]
+            self.amenities = ', '.join(amenities_list)
+        
+        super().save(*args, **kwargs)
