@@ -92,21 +92,28 @@ if DEBUG:
     }
 else:
     # Production database (Render)
-    db_config = dj_database_url.config(
-        default=config('DATABASE_URL'),
+    db_from_env = dj_database_url.parse(
+        config('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
-        ssl_require=True,
     )
-    db_config['OPTIONS'] = {
-        'ssl': {
-            'rejectUnauthorized': True,
-        },
-        'charset': 'utf8mb4',
-        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
-    }
+    
     DATABASES = {
-        'default': db_config
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': db_from_env['NAME'],
+            'USER': db_from_env['USER'],
+            'PASSWORD': db_from_env['PASSWORD'],
+            'HOST': db_from_env['HOST'],
+            'PORT': db_from_env['PORT'] or '3306',
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
+                'ssl': {
+                    'rejectUnauthorized': True,
+                },
+            },
+        }
     }
 
 # Email Configuration
