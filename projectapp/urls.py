@@ -17,26 +17,36 @@ urlpatterns = [
     path('accounts/reset-password/', views.reset_password, name='reset_password'),
     
     # User Dashboard & Profile
-    path('profile/', views.profile, name='profile1'),
+    path('profile/', views.view_profile, name='view_profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
+    path('profile/add/', views.add_profile, name='add_profile'),
+    path('profile/change-password/', views.change_password, name='change_password'),
     path('settings/', views.settings_view, name='settings'),
     
     # Resort Management
     path('resort/', views.resortindex, name='resortindex'),
     path('resort/dashboard/', views.ResortDashboard, name='ResortDashboard'),
-    path('resort/edit/', views.edit_resort, name='edit_resort'),
     path('resort/facilities/', views.manage_facilities, name='manage_facilities'),
     
+    # Dashboard Features
+    path('resort/bookings/', views.manage_bookings, name='manage_bookings'),
+    path('resort/analytics/', views.resort_analytics, name='resort_analytics'),
+    path('resort/rooms/', views.manage_rooms, name='manage_rooms'),
+    path('resort/guests/', views.manage_guests, name='manage_guests'),
+    path('resort/reviews/', views.manage_reviews, name='manage_reviews'),
+    path('resort/calendar/', views.booking_calendar, name='booking_calendar'),
+    
     # Package Management
-    # path('resort/packages/', views.manage_packages, name='manage_packages'),
-    # path('resort/packages/add/', views.add_package, name='add_package'),
-    # path('resort/packages/<int:package_id>/edit/', views.edit_package, name='edit_package'),
-    # path('resort/packages/<int:package_id>/delete/', views.delete_package, name='delete_package'),
+    path('resort/packages/', views.manage_packages, name='manage_packages'),
+    path('resort/packages/add/', views.add_package, name='add_package'),
+    path('resort/packages/<int:package_id>/edit/', views.edit_package, name='edit_package'),
+    path('resort/packages/<int:package_id>/delete/', views.delete_package, name='delete_package'),
     
     # Gallery Management
-    # path('resort/gallery/', views.manage_gallery, name='manage_gallery'),
-    # path('resort/gallery/upload/', views.upload_images, name='upload_images'),
-    # path('resort/gallery/<int:image_id>/delete/', views.delete_image, name='delete_image'),
-    # path('resort/gallery/<int:image_id>/set-primary/', views.set_primary_image, name='set_primary_image'),
+    path('resort/gallery/', views.manage_gallery, name='manage_gallery'),
+    path('resort/gallery/upload/', views.upload_images, name='upload_images'),
+    path('resort/gallery/<int:image_id>/delete/', views.delete_image, name='delete_image'),
+    path('resort/gallery/<int:image_id>/set-primary/', views.set_primary_image, name='set_primary_image'),
     
     # Guest Features
     path('guest/', views.guestindex, name='guestindex'),

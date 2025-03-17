@@ -1,0 +1,435 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Resort Profile - LuxAI Resorts</title>
+    
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .profile-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .form-section {
+            background: white;
+            padding: 30px;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .form-section:hover {
+            transform: translateY(-5px);
+        }
+
+        .section-title {
+            color: #2c3e50;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .form-label {
+            font-weight: 500;
+            color: #34495e;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+        }
+
+        .form-check {
+            margin-bottom: 12px;
+        }
+
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            margin-top: 0.25em;
+            border: 2px solid #e9ecef;
+        }
+
+        .form-check-input:checked {
+            background-color: #3498db;
+            border-color: #3498db;
+        }
+
+        .form-check-label {
+            margin-left: 8px;
+            color: #2c3e50;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 30px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .alert {
+            border: none;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .required-field::after {
+            content: "*";
+            color: #e74c3c;
+            margin-left: 4px;
+        }
+
+        .image-preview {
+            width: 150px;
+            height: 150px;
+            border-radius: 10px;
+            object-fit: cover;
+            margin: 10px 0;
+            border: 2px solid #e9ecef;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .feature-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="profile-container">
+            <div class="p-4">
+                <h2 class="text-center mb-4">Edit Resort Profile</h2>
+                <p class="text-center text-muted mb-5">Update your resort's information and enhance its visibility</p>
+                
+                {% if messages %}
+                <div class="messages mb-4">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <form method="POST" enctype="multipart/form-data" id="editResortProfileForm" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Basic Details Section -->
+                    <div class="form-section">
+                        <h4 class="section-title">Basic Details</h4>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required-field">Resort Name</label>
+                                <input type="text" name="resort_name" class="form-control" value="{{ resort.resort_name }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required-field">Resort Type</label>
+                                <select name="resort_type" class="form-select" required>
+                                    <option value="">Select resort type</option>
+                                    <option value="beach_resort" {% if resort.resort_type == "beach_resort" %}selected{% endif %}>Beach Resort</option>
+                                    <option value="mountain_resort" {% if resort.resort_type == "mountain_resort" %}selected{% endif %}>Mountain Resort</option>
+                                    <option value="lake_resort" {% if resort.resort_type == "lake_resort" %}selected{% endif %}>Lake Resort</option>
+                                    <option value="forest_resort" {% if resort.resort_type == "forest_resort" %}selected{% endif %}>Forest Resort</option>
+                                    <option value="desert_resort" {% if resort.resort_type == "desert_resort" %}selected{% endif %}>Desert Resort</option>
+                                    <option value="island_resort" {% if resort.resort_type == "island_resort" %}selected{% endif %}>Island Resort</option>
+                                    <option value="wellness_resort" {% if resort.resort_type == "wellness_resort" %}selected{% endif %}>Wellness Resort</option>
+                                    <option value="golf_resort" {% if resort.resort_type == "golf_resort" %}selected{% endif %}>Golf Resort</option>
+                                    <option value="ski_resort" {% if resort.resort_type == "ski_resort" %}selected{% endif %}>Ski Resort</option>
+                                    <option value="eco_resort" {% if resort.resort_type == "eco_resort" %}selected{% endif %}>Eco Resort</option>
+                                    <option value="luxury_resort" {% if resort.resort_type == "luxury_resort" %}selected{% endif %}>Luxury Resort</option>
+                                    <option value="family_resort" {% if resort.resort_type == "family_resort" %}selected{% endif %}>Family Resort</option>
+                                    <option value="boutique_resort" {% if resort.resort_type == "boutique_resort" %}selected{% endif %}>Boutique Resort</option>
+                                    <option value="all_inclusive" {% if resort.resort_type == "all_inclusive" %}selected{% endif %}>All-Inclusive Resort</option>
+                                    <option value="casino_resort" {% if resort.resort_type == "casino_resort" %}selected{% endif %}>Casino Resort</option>
+                                    <option value="theme_park_resort" {% if resort.resort_type == "theme_park_resort" %}selected{% endif %}>Theme Park Resort</option>
+                                    <option value="villa_resort" {% if resort.resort_type == "villa_resort" %}selected{% endif %}>Villa Resort</option>
+                                    <option value="business_resort" {% if resort.resort_type == "business_resort" %}selected{% endif %}>Business Resort</option>
+                                    <option value="adventure_resort" {% if resort.resort_type == "adventure_resort" %}selected{% endif %}>Adventure Resort</option>
+                                    <option value="heritage_resort" {% if resort.resort_type == "heritage_resort" %}selected{% endif %}>Heritage Resort</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label required-field">Contact Number</label>
+                                <input type="text" name="resort_contact" class="form-control" value="{{ resort.resort_contact }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Email Address</label>
+                                <input type="email" name="resort_email" class="form-control" value="{{ resort.resort_email }}">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Resort Website</label>
+                            <input type="url" name="resort_website" class="form-control" value="{{ resort.resort_website }}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label required-field">Resort Address</label>
+                            <textarea name="resort_address" class="form-control" rows="3" required>{{ resort.resort_address }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Resort Description</label>
+                            <textarea name="resort_description" class="form-control" rows="4">{{ resort.resort_description }}</textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label required-field">Total Rooms</label>
+                                <input type="number" name="room_count" class="form-control" value="{{ resort.room_count }}" required min="1">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Check-in Time</label>
+                                <input type="time" name="check_in_time" class="form-control" value="{{ resort.check_in_time|time:'H:i' }}">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Check-out Time</label>
+                                <input type="time" name="check_out_time" class="form-control" value="{{ resort.check_out_time|time:'H:i' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resort Images Section -->
+                    <div class="form-section">
+                        <h4 class="section-title">Resort Images</h4>
+                        <div class="mb-3">
+                            <label class="form-label">Add New Images</label>
+                            <input type="file" name="resort_images" class="form-control" multiple accept="image/*">
+                            <small class="text-muted">You can select multiple images. Maximum size: 5MB per image</small>
+                        </div>
+                        {% if resort_images %}
+                        <div class="row mt-4">
+                            {% for image in resort_images %}
+                            <div class="col-md-3 mb-3">
+                                <div class="position-relative">
+                                    <img src="{{ image.image.url }}" alt="Resort Image" class="image-preview">
+                                    {% if image.is_primary %}
+                                    <span class="badge bg-primary position-absolute top-0 end-0 m-2">Primary</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Facilities Section -->
+                    <div class="form-section">
+                        <h4 class="section-title">Facilities & Services</h4>
+                        <div class="features-grid">
+                            <!-- Basic Facilities -->
+                            <div class="feature-card">
+                                <h6 class="mb-3">Basic Facilities</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_pool" {% if resort.has_pool %}checked{% endif %}>
+                                    <label class="form-check-label">Swimming Pool</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_spa" {% if resort.has_spa %}checked{% endif %}>
+                                    <label class="form-check-label">Spa & Wellness</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_restaurant" {% if resort.has_restaurant %}checked{% endif %}>
+                                    <label class="form-check-label">Restaurant</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_gym" {% if resort.has_gym %}checked{% endif %}>
+                                    <label class="form-check-label">Fitness Center</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_wifi" {% if resort.has_wifi %}checked{% endif %}>
+                                    <label class="form-check-label">Wi-Fi</label>
+                                </div>
+                            </div>
+
+                            <!-- Additional Services -->
+                            <div class="feature-card">
+                                <h6 class="mb-3">Additional Services</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_laundry" {% if resort.has_laundry %}checked{% endif %}>
+                                    <label class="form-check-label">Laundry Service</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_room_service" {% if resort.has_room_service %}checked{% endif %}>
+                                    <label class="form-check-label">Room Service</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_childcare" {% if resort.has_childcare %}checked{% endif %}>
+                                    <label class="form-check-label">Childcare</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_medical" {% if resort.has_medical %}checked{% endif %}>
+                                    <label class="form-check-label">Medical Services</label>
+                                </div>
+                            </div>
+
+                            <!-- Activities -->
+                            <div class="feature-card">
+                                <h6 class="mb-3">Activities</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_water_sports" {% if resort.has_water_sports %}checked{% endif %}>
+                                    <label class="form-check-label">Water Sports</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_yoga" {% if resort.has_yoga %}checked{% endif %}>
+                                    <label class="form-check-label">Yoga Classes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_cooking_class" {% if resort.has_cooking_class %}checked{% endif %}>
+                                    <label class="form-check-label">Cooking Classes</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_kids_club" {% if resort.has_kids_club %}checked{% endif %}>
+                                    <label class="form-check-label">Kids Club</label>
+                                </div>
+                            </div>
+
+                            <!-- Transportation -->
+                            <div class="feature-card">
+                                <h6 class="mb-3">Transportation</h6>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_airport_transfer" {% if resort.has_airport_transfer %}checked{% endif %}>
+                                    <label class="form-check-label">Airport Transfer</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_car_rental" {% if resort.has_car_rental %}checked{% endif %}>
+                                    <label class="form-check-label">Car Rental</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="has_shuttle" {% if resort.has_shuttle %}checked{% endif %}>
+                                    <label class="form-check-label">Shuttle Service</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Save Changes
+                        </button>
+                        <a href="{% url 'view_profile' %}" class="btn btn-outline-secondary ms-2">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    
+    <script>
+        // Form validation
+        document.getElementById('editResortProfileForm').addEventListener('submit', function(e) {
+            let isValid = true;
+            const requiredFields = ['resort_name', 'resort_type', 'resort_contact', 'resort_address', 'room_count'];
+            
+            requiredFields.forEach(field => {
+                const input = document.getElementsByName(field)[0];
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+
+            // Validate room count
+            const roomCount = parseInt(document.getElementsByName('room_count')[0].value);
+            if (isNaN(roomCount) || roomCount <= 0) {
+                isValid = false;
+                document.getElementsByName('room_count')[0].classList.add('is-invalid');
+            }
+
+            // Validate check-in/check-out times
+            const checkIn = document.getElementsByName('check_in_time')[0].value;
+            const checkOut = document.getElementsByName('check_out_time')[0].value;
+            if (checkIn && checkOut && checkOut <= checkIn) {
+                isValid = false;
+                document.getElementsByName('check_out_time')[0].classList.add('is-invalid');
+                alert('Check-out time must be after check-in time');
+            }
+
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields correctly');
+            }
+        });
+
+        // Real-time validation feedback
+        document.querySelectorAll('.form-control, .form-select').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -42,24 +42,40 @@ class Resort(models.Model):
     resort_name = models.CharField(max_length=255, null=False, verbose_name="Resort Name")
     resort_address = models.TextField(null=False, verbose_name="Resort Address")
     resort_contact = models.CharField(max_length=15, null=False, verbose_name="Resort Contact")
-    resort_email = models.EmailField(verbose_name="Resort Email", blank=True, null=True)  # New field
-    resort_website = models.URLField(verbose_name="Resort Website", blank=True, null=True)  # New field
-    resort_description = models.TextField(verbose_name="Resort Description", blank=True, null=True)  # New field
+    resort_email = models.EmailField(verbose_name="Resort Email", blank=True, null=True)
+    resort_website = models.URLField(verbose_name="Resort Website", blank=True, null=True)
+    resort_description = models.TextField(verbose_name="Resort Description", blank=True, null=True)
     resort_type = models.CharField(
         max_length=50,
         choices=[
-            ('staycation', 'Staycation'),
-            ('daycation', 'Daycation'),
-            ('luxury', 'Luxury'),
-            ('budget', 'Budget')
+            ('beach_resort', 'Beach Resort'),
+            ('mountain_resort', 'Mountain Resort'),
+            ('lake_resort', 'Lake Resort'),
+            ('forest_resort', 'Forest Resort'),
+            ('desert_resort', 'Desert Resort'),
+            ('island_resort', 'Island Resort'),
+            ('wellness_resort', 'Wellness Resort'),
+            ('golf_resort', 'Golf Resort'),
+            ('ski_resort', 'Ski Resort'),
+            ('eco_resort', 'Eco Resort'),
+            ('luxury_resort', 'Luxury Resort'),
+            ('family_resort', 'Family Resort'),
+            ('boutique_resort', 'Boutique Resort'),
+            ('all_inclusive', 'All-Inclusive Resort'),
+            ('casino_resort', 'Casino Resort'),
+            ('theme_park_resort', 'Theme Park Resort'),
+            ('villa_resort', 'Villa Resort'),
+            ('business_resort', 'Business Resort'),
+            ('adventure_resort', 'Adventure Resort'),
+            ('heritage_resort', 'Heritage Resort')
         ],
         null=False,
         verbose_name="Resort Type"
     )
     room_count = models.PositiveIntegerField(null=False, verbose_name="Number of Rooms")
-    check_in_time = models.TimeField(verbose_name="Check-in Time", null=True, blank=True)  # New field
-    check_out_time = models.TimeField(verbose_name="Check-out Time", null=True, blank=True)  # New field
-    min_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Starting Price")  # New field
+    check_in_time = models.TimeField(verbose_name="Check-in Time", null=True, blank=True)
+    check_out_time = models.TimeField(verbose_name="Check-out Time", null=True, blank=True)
+    min_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Starting Price")
     
     # Basic Facilities
     has_pool = models.BooleanField(default=False, verbose_name="Swimming Pool")
@@ -123,15 +139,15 @@ class Resort(models.Model):
     is_active = models.BooleanField(default=True)
 
     def __str__(self):
-        return f"{self.resort_name} - {self.resort_type}"
+        return f"{self.resort_name} - {self.get_resort_type_display()}"
 
     def clean(self):
         # Add validation logic
         if self.check_in_time and self.check_out_time and self.check_in_time >= self.check_out_time:
-            raise ValidationError({'check_out_time': 'Check-out time must be after check-in time.'})
+            raise ValidationError("Check-out time must be after check-in time")
         
         if self.min_price and self.min_price < 0:
-            raise ValidationError({'min_price': 'Price cannot be negative.'})
+            raise ValidationError("Price cannot be negative")
 
     def save(self, *args, **kwargs):
         self.clean()
@@ -140,6 +156,7 @@ class Resort(models.Model):
     class Meta:
         verbose_name = 'Resort'
         verbose_name_plural = 'Resorts'
+        ordering = ['resort_name']  # Add default ordering
 
 class ResortImage(models.Model):
     resort = models.ForeignKey(Resort, on_delete=models.CASCADE, related_name='images')

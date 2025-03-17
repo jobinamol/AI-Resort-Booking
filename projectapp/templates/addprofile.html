@@ -1,0 +1,784 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Resort Profile - LuxAI Resorts</title>
+    
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            color: white;
+        }
+
+        /* Background Video */
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .video-background video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.7;
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(0,0,0,0.8), rgba(0,0,0,0.6));
+            z-index: -1;
+        }
+
+        /* Form Container */
+        .profile-container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .form-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-title {
+            color: #00c6ff;
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-label {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-control, .form-select {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 12px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #00c6ff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 198, 255, 0.25);
+        }
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-check {
+            margin-bottom: 10px;
+            padding-left: 30px;
+        }
+
+        .form-check-input {
+            width: 20px;
+            height: 20px;
+            margin-left: -30px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .form-check-input:checked {
+            background-color: #00c6ff;
+            border-color: #00c6ff;
+        }
+
+        .form-check-label {
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            padding-left: 8px;
+        }
+
+        .custom-file-input {
+            position: relative;
+        }
+
+        .custom-file-input::before {
+            content: 'Choose File';
+            position: absolute;
+            padding: 8px 15px;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .submit-btn {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 114, 255, 0.3);
+        }
+
+        .form-text {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.875rem;
+            margin-top: 5px;
+        }
+
+        .invalid-feedback {
+            color: #ff6b6b;
+            font-size: 0.875rem;
+            margin-top: 5px;
+        }
+
+        .progress-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            margin: 0 15px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .step.active {
+            color: #00c6ff;
+        }
+
+        .step-number {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+        }
+
+        .step.active .step-number {
+            background: #00c6ff;
+            color: white;
+        }
+
+        .alert {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: white;
+        }
+
+        .alert-danger {
+            background: rgba(220, 53, 69, 0.2);
+            color: #ff6b6b;
+        }
+
+        .alert-success {
+            background: rgba(40, 167, 69, 0.2);
+            color: #51cf66;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Video -->
+    <div class="video-background">
+        <video autoplay muted loop playsinline>
+            <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
+        </video>
+    </div>
+    <div class="overlay"></div>
+
+    <div class="container py-5">
+        <div class="profile-container">
+            <h2 class="text-center section-title mb-4">SMART RESORT PROFILE</h2>
+            <p class="text-center mb-5">Enhance your resort's presence with AI-powered features and smart pricing</p>
+
+            <!-- Progress Indicator -->
+            <div class="progress-indicator">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <!-- Step Indicator -->
+            <div class="step-indicator mb-4">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <span>Basic Details</span>
+                </div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <span>Features</span>
+                </div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <span>Services</span>
+                </div>
+            </div>
+
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <form method="POST" enctype="multipart/form-data" id="resortProfileForm" novalidate>
+                {% csrf_token %}
+
+                <!-- Basic Details Section -->
+                <div class="form-section">
+                    <h4 class="section-title">Basic Details</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Resort Name <span class="text-danger">*</span></label>
+                            <input type="text" name="resort_name" class="form-control" placeholder="Enter resort name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Resort Type <span class="text-danger">*</span></label>
+                            <select name="resort_type" class="form-select" required>
+                                <option value="">Select resort type</option>
+                                <option value="beach_resort">Beach Resort</option>
+                                <option value="mountain_resort">Mountain Resort</option>
+                                <option value="lake_resort">Lake Resort</option>
+                                <option value="forest_resort">Forest Resort</option>
+                                <option value="desert_resort">Desert Resort</option>
+                                <option value="island_resort">Island Resort</option>
+                                <option value="wellness_resort">Wellness Resort</option>
+                                <option value="golf_resort">Golf Resort</option>
+                                <option value="ski_resort">Ski Resort</option>
+                                <option value="eco_resort">Eco Resort</option>
+                                <option value="luxury_resort">Luxury Resort</option>
+                                <option value="family_resort">Family Resort</option>
+                                <option value="boutique_resort">Boutique Resort</option>
+                                <option value="all_inclusive">All-Inclusive Resort</option>
+                                <option value="casino_resort">Casino Resort</option>
+                                <option value="theme_park_resort">Theme Park Resort</option>
+                                <option value="villa_resort">Villa Resort</option>
+                                <option value="business_resort">Business Resort</option>
+                                <option value="adventure_resort">Adventure Resort</option>
+                                <option value="heritage_resort">Heritage Resort</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Contact Number <span class="text-danger">*</span></label>
+                            <input type="text" name="resort_contact" class="form-control" placeholder="Enter contact number" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Email Address</label>
+                            <input type="email" name="resort_email" class="form-control" placeholder="Enter email address">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Resort Website</label>
+                        <input type="url" name="resort_website" class="form-control" placeholder="https://...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Resort Address <span class="text-danger">*</span></label>
+                        <textarea name="resort_address" class="form-control" rows="2" placeholder="Enter full address" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Resort Description</label>
+                        <textarea name="resort_description" class="form-control" rows="3" placeholder="Describe your resort"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Total Rooms <span class="text-danger">*</span></label>
+                            <input type="number" name="room_count" class="form-control" placeholder="Number of rooms" required min="1">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Check-in Time</label>
+                            <input type="time" name="check_in_time" class="form-control">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Check-out Time</label>
+                            <input type="time" name="check_out_time" class="form-control">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Resort Images</label>
+                        <input type="file" name="resort_images" class="form-control" multiple accept="image/*">
+                        <small class="text-white-50">You can select multiple images. First image will be set as primary.</small>
+                    </div>
+                </div>
+
+                <!-- Smart Pricing Section -->
+                <div class="form-section">
+                    <h4 class="section-title">Smart Pricing & Revenue Management</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Dynamic Pricing Strategy</label>
+                            <select name="pricing_strategy" class="form-select">
+                                <option value="demand">Demand-Based</option>
+                                <option value="competitive">Competitive-Based</option>
+                                <option value="seasonal">Seasonal Adjustment</option>
+                                <option value="hybrid">AI Hybrid Model</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Price Flexibility Range (%)</label>
+                            <input type="range" class="pricing-slider" name="price_flexibility" min="0" max="30" value="15">
+                            <div class="d-flex justify-content-between mt-2">
+                                <small>0%</small>
+                                <small>15%</small>
+                                <small>30%</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-4">
+                            <div class="analytics-card">
+                                <h6 class="text-white-50">Average Daily Rate</h6>
+                                <div class="analytics-value">₹5,500</div>
+                                <small class="text-success"><i class="fas fa-arrow-up"></i> 12% vs last month</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="analytics-card">
+                                <h6 class="text-white-50">Occupancy Rate</h6>
+                                <div class="analytics-value">78%</div>
+                                <small class="text-success"><i class="fas fa-arrow-up"></i> 5% vs last month</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="analytics-card">
+                                <h6 class="text-white-50">RevPAR</h6>
+                                <div class="analytics-value">₹4,290</div>
+                                <small class="text-success"><i class="fas fa-arrow-up"></i> 8% vs last month</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Packages & Experiences -->
+                <div class="form-section">
+                    <h4 class="section-title">Packages & Experiences</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-white-50 mb-3">Staycation Packages</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_romantic_package">
+                                <label class="form-check-label">Romantic Getaway</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_family_package">
+                                <label class="form-check-label">Family Vacation</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_business_package">
+                                <label class="form-check-label">Business Stay</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_wellness_package">
+                                <label class="form-check-label">Wellness Retreat</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_longstay_package">
+                                <label class="form-check-label">Extended Stay</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_workation_package">
+                                <label class="form-check-label">Work From Resort</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-white-50 mb-3">Daycation Packages</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_pool_access">
+                                <label class="form-check-label">Pool Day Pass</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_spa_day">
+                                <label class="form-check-label">Spa Day Package</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_dining">
+                                <label class="form-check-label">Dining Experience</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_workspace">
+                                <label class="form-check-label">Day Workspace</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Venue & Functions -->
+                <div class="form-section">
+                    <h4 class="section-title">Venues & Functions</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-white-50 mb-3">Event Spaces</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_wedding_venue">
+                                <label class="form-check-label">Wedding Venue</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_conference_hall">
+                                <label class="form-check-label">Conference Hall</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_banquet_hall">
+                                <label class="form-check-label">Banquet Hall</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_outdoor_venue">
+                                <label class="form-check-label">Outdoor Events</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-white-50 mb-3">Special Category Packages</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_student_package">
+                                <label class="form-check-label">Student Groups</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_senior_package">
+                                <label class="form-check-label">Senior Citizens</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_corporate_package">
+                                <label class="form-check-label">Corporate Groups</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_honeymoon_package">
+                                <label class="form-check-label">Honeymoon</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activities & Recreation -->
+                <div class="form-section">
+                    <h4 class="section-title">Activities & Recreation</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-white-50 mb-3">Adventure Activities</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_water_sports">
+                                <label class="form-check-label">Water Sports</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_trekking">
+                                <label class="form-check-label">Trekking Tours</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_cycling">
+                                <label class="form-check-label">Cycling</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-white-50 mb-3">Wellness Activities</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_yoga">
+                                <label class="form-check-label">Yoga Classes</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_spa">
+                                <label class="form-check-label">Spa & Wellness</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_gym">
+                                <label class="form-check-label">Fitness Center</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-white-50 mb-3">Entertainment</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_cooking_class">
+                                <label class="form-check-label">Cooking Classes</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_kids_club">
+                                <label class="form-check-label">Kids Club</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services & Amenities -->
+                <div class="form-section">
+                    <h4 class="section-title">Services & Amenities</h4>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6 class="text-white-50 mb-3">Basic Facilities</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_wifi">
+                                <label class="form-check-label">High-Speed Wi-Fi</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_parking">
+                                <label class="form-check-label">Valet Parking</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_pool">
+                                <label class="form-check-label">Swimming Pool</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_restaurant">
+                                <label class="form-check-label">Restaurant</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-white-50 mb-3">Transportation</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_airport_transfer">
+                                <label class="form-check-label">Airport Transfer</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_car_rental">
+                                <label class="form-check-label">Car Rental</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_shuttle">
+                                <label class="form-check-label">Shuttle Service</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_taxi">
+                                <label class="form-check-label">Taxi Booking</label>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="text-white-50 mb-3">Additional Services</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_laundry">
+                                <label class="form-check-label">Laundry Service</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_childcare">
+                                <label class="form-check-label">Childcare</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_room_service">
+                                <label class="form-check-label">24/7 Room Service</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_concierge">
+                                <label class="form-check-label">Concierge</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="has_medical">
+                                <label class="form-check-label">Medical Assistance</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_pet_friendly">
+                                <label class="form-check-label">Pet Friendly</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Buttons -->
+                <div class="d-flex justify-content-between mt-4">
+                    <button type="button" class="btn btn-outline-light" id="prevBtn" style="display: none;">
+                        <i class="fas fa-arrow-left me-2"></i>Previous
+                    </button>
+                    <button type="button" class="btn btn-primary" id="nextBtn">
+                        Next<i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                    <button type="submit" class="submit-btn" id="submitBtn" style="display: none;">
+                        <i class="fas fa-magic me-2"></i>Activate Smart Profile
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and other scripts -->
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    
+    <script>
+        let currentStep = 1;
+        const totalSteps = 3;
+        
+        function updateProgress() {
+            const progress = (currentStep - 1) / (totalSteps - 1) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            
+            // Update step indicators
+            document.querySelectorAll('.step').forEach(step => {
+                const stepNum = parseInt(step.dataset.step);
+                if (stepNum === currentStep) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+        }
+
+        function showStep(step) {
+            const formSections = document.querySelectorAll('.form-section');
+            formSections.forEach((section, index) => {
+                if (index + 1 === step) {
+                    section.style.display = 'block';
+                } else {
+                    section.style.display = 'none';
+                }
+            });
+
+            // Update buttons
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            prevBtn.style.display = step === 1 ? 'none' : 'block';
+            nextBtn.style.display = step === totalSteps ? 'none' : 'block';
+            submitBtn.style.display = step === totalSteps ? 'block' : 'none';
+
+            updateProgress();
+        }
+
+        // Initialize form
+        showStep(1);
+
+        // Next button handler
+        document.getElementById('nextBtn').addEventListener('click', () => {
+            if (validateStep(currentStep)) {
+                currentStep++;
+                showStep(currentStep);
+                window.scrollTo(0, 0);
+            }
+        });
+
+        // Previous button handler
+        document.getElementById('prevBtn').addEventListener('click', () => {
+            currentStep--;
+            showStep(currentStep);
+            window.scrollTo(0, 0);
+        });
+
+        function validateStep(step) {
+            let isValid = true;
+            let firstInvalidField = null;
+
+            // Define required fields for each step
+            const stepFields = {
+                1: ['resort_name', 'resort_type', 'resort_contact', 'resort_address', 'room_count'],
+                2: [], // Add any required fields for step 2
+                3: []  // Add any required fields for step 3
+            };
+
+            stepFields[step].forEach(field => {
+                const input = document.getElementsByName(field)[0];
+                if (!input.value.trim()) {
+                    isValid = false;
+                    input.classList.add('is-invalid');
+                    if (!firstInvalidField) firstInvalidField = input;
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+
+            if (step === 1) {
+                // Validate room count
+                const roomCount = parseInt(document.getElementsByName('room_count')[0].value);
+                if (isNaN(roomCount) || roomCount <= 0) {
+                    isValid = false;
+                    document.getElementsByName('room_count')[0].classList.add('is-invalid');
+                    if (!firstInvalidField) firstInvalidField = document.getElementsByName('room_count')[0];
+                }
+
+                // Validate check-in/check-out times if both are provided
+                const checkIn = document.getElementsByName('check_in_time')[0].value;
+                const checkOut = document.getElementsByName('check_out_time')[0].value;
+                if (checkIn && checkOut && checkOut <= checkIn) {
+                    isValid = false;
+                    document.getElementsByName('check_out_time')[0].classList.add('is-invalid');
+                    if (!firstInvalidField) firstInvalidField = document.getElementsByName('check_out_time')[0];
+                    alert('Check-out time must be after check-in time');
+                }
+            }
+
+            if (!isValid && firstInvalidField) {
+                firstInvalidField.focus();
+                alert('Please fill in all required fields correctly');
+            }
+
+            return isValid;
+        }
+
+        // Form submission handler
+        document.getElementById('resortProfileForm').addEventListener('submit', function(e) {
+            if (!validateStep(currentStep)) {
+                e.preventDefault();
+            }
+        });
+
+        // Add visual feedback for invalid fields
+        document.querySelectorAll('.form-control, .form-select').forEach(input => {
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    this.classList.remove('is-invalid');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

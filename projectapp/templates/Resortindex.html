@@ -132,7 +132,7 @@
                   <span class="ml-2">{{ user.name }}</span>
                 </a>
                 <div class="dropdown-menu dropdown-menu-right" aria-labelledby="profileDropdown">
-                  <a class="dropdown-item" href="{% url 'profile1' %}">
+                  <a class="dropdown-item" href="{% url 'view_profile' %}">
                     <i class="fas fa-user mr-2"></i>Profile
                   </a>
                   <a class="dropdown-item" href="{% url 'settings' %}">
@@ -396,7 +396,7 @@
       <div class="container">
         <div class="row no-gutters ftco-animate justify-content-center">
         	<div class="col-md-5 d-flex">
-        		<div class="testimony-img aside-stretch-2" style="background-image: url({% static 'images/testimony-img.jpg' %});"></div>
+        		<div class="testimony-img aside-stretch-2" style="background-image: url('{% static 'images/testimony-img.jpg' %}');"></div>
         	</div>
           <div class="col-md-7 py-5 pl-md-5">
           	<div class="py-md-5">
@@ -411,7 +411,7 @@
 	                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
 	                  </div>
 	                  <div class="d-flex">
-		                  <div class="user-img" style="background-image: url({% static 'images/person_1.jpg' %});">
+		                  <div class="user-img" style="background-image: url('{% static 'images/person_1.jpg' %}');">
 		                  </div>
 		                  <div class="pos ml-3">
 		                  	<p class="name">Gerald Hodson</p>
@@ -426,7 +426,7 @@
 	                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
 	                  </div>
 	                  <div class="d-flex">
-		                  <div class="user-img" style="background-image: url({% static 'images/person_2.jpg' %});">
+		                  <div class="user-img" style="background-image: url('{% static 'images/person_2.jpg' %}');">
 		                  </div>
 		                  <div class="pos ml-3">
 		                  	<p class="name">Gerald Hodson</p>
@@ -441,7 +441,7 @@
 	                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
 	                  </div>
 	                  <div class="d-flex">
-		                  <div class="user-img" style="background-image: url({% static 'images/person_3.jpg' %});">
+		                  <div class="user-img" style="background-image: url('{% static 'images/person_3.jpg' %}');">
 		                  </div>
 		                  <div class="pos ml-3">
 		                  	<p class="name">Gerald Hodson</p>
@@ -456,7 +456,7 @@
 	                    <p class="mb-4">A small river named Duden flows by their place and supplies it with the necessary regelialia. It is a paradisematic country, in which roasted parts of sentences fly into your mouth.</p>
 	                  </div>
 	                  <div class="d-flex">
-		                  <div class="user-img" style="background-image: url({% static 'images/person_4.jpg' %});">
+		                  <div class="user-img" style="background-image: url('{% static 'images/person_4.jpg' %}');">
 		                  </div>
 		                  <div class="pos ml-3">
 		                  	<p class="name">Gerald Hodson</p>
@@ -483,7 +483,7 @@
     		<div class="row no-gutters">
     			<div class="col-lg-6">
     				<div class="room-wrap d-md-flex ftco-animate">
-    					<a href="#" class="img" style="background-image: url({% static 'images/room-6.jpg' %});"></a>
+    					<a href="#" class="img" style="background-image: url('{% static 'images/room-6.jpg' %}');"></a>
     					<div class="half left-arrow d-flex align-items-center">
     						<div class="text p-4 text-center">
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
@@ -495,7 +495,7 @@
     			</div>
     			<div class="col-lg-6">
     				<div class="room-wrap d-md-flex ftco-animate">
-    					<a href="#" class="img" style="background-image: url({% static 'images/room-1.jpg' %});"></a>
+    					<a href="#" class="img" style="background-image: url('{% static 'images/room-1.jpg' %}');"></a>
     					<div class="half left-arrow d-flex align-items-center">
     						<div class="text p-4 text-center">
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
@@ -508,7 +508,7 @@
 
     			<div class="col-lg-6">
     				<div class="room-wrap d-md-flex ftco-animate">
-    					<a href="#" class="img order-md-last" style="background-image: url({% static 'images/room-2.jpg' %});"></a>
+    					<a href="#" class="img order-md-last" style="background-image: url('{% static 'images/room-2.jpg' %}');"></a>
     					<div class="half right-arrow d-flex align-items-center">
     						<div class="text p-4 text-center">
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
@@ -520,7 +520,7 @@
     			</div>
     			<div class="col-lg-6">
     				<div class="room-wrap d-md-flex ftco-animate">
-    					<a href="#" class="img order-md-last" style="background-image: url({% static 'images/room-3.jpg' %});"></a>
+    					<a href="#" class="img order-md-last" style="background-image: url('{% static 'images/room-3.jpg' %}');"></a>
     					<div class="half right-arrow d-flex align-items-center">
     						<div class="text p-4 text-center">
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
@@ -533,7 +533,7 @@
 
     			<div class="col-lg-6">
     				<div class="room-wrap d-md-flex ftco-animate">
-    					<a href="#" class="img" style="background-image: url({% static 'images/room-4.jpg' %});"></a>
+    					<a href="#" class="img" style="background-image: url('{% static 'images/room-4.jpg' %}');"></a>
     					<div class="half left-arrow d-flex align-items-center">
     						<div class="text p-4 text-center">
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
@@ -545,7 +545,7 @@
     			</div>
     			<div class="col-lg-6">
     				<div class="room-wrap d-md-flex ftco-animate">
-    					<a href="#" class="img" style="background-image: url({% static 'images/room-5.jpg' %});"></a>
+    					<a href="#" class="img" style="background-image: url('{% static 'images/room-5.jpg' %}');"></a>
     					<div class="half left-arrow d-flex align-items-center">
     						<div class="text p-4 text-center">
     							<p class="star mb-0"><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span><span class="ion-ios-star"></span></p>
@@ -575,7 +575,7 @@
 				<div class="row">
         	<div class="col-lg-6 col-xl-4 d-flex">
         		<div class="pricing-entry rounded d-flex ftco-animate">
-        			<div class="img" style="background-image: url({% static 'images/menu-1.jpg' %});"></div>
+        			<div class="img" style="background-image: url('{% static 'images/menu-1.jpg' %}');"></div>
         			<div class="desc p-4">
 	        			<div class="d-md-flex text align-items-start">
 	        				<h3><span>Grilled Crab with Onion</span></h3>
@@ -589,7 +589,7 @@
         	</div>
         	<div class="col-lg-6 col-xl-4 d-flex">
         		<div class="pricing-entry rounded d-flex ftco-animate">
-        			<div class="img" style="background-image: url({% static 'images/menu-2.jpg' %});"></div>
+        			<div class="img" style="background-image: url('{% static 'images/menu-2.jpg' %}');"></div>
         			<div class="desc p-4">
 	        			<div class="d-md-flex text align-items-start">
 	        				<h3><span>Grilled Crab with Onion</span></h3>
@@ -603,7 +603,7 @@
         	</div>
         	<div class="col-lg-6 col-xl-4 d-flex">
         		<div class="pricing-entry rounded d-flex ftco-animate">
-        			<div class="img" style="background-image: url({% static 'images/menu-3.jpg' %});"></div>
+        			<div class="img" style="background-image: url('{% static 'images/menu-3.jpg' %}');"></div>
         			<div class="desc p-4">
 	        			<div class="d-md-flex text align-items-start">
 	        				<h3><span>Grilled Crab with Onion</span></h3>
@@ -617,7 +617,7 @@
         	</div>
         	<div class="col-lg-6 col-xl-4 d-flex">
         		<div class="pricing-entry rounded d-flex ftco-animate">
-        			<div class="img" style="background-image: url({% static 'images/menu-4.jpg' %});"></div>
+        			<div class="img" style="background-image: url('{% static 'images/menu-4.jpg' %}');"></div>
         			<div class="desc p-4">
 	        			<div class="d-md-flex text align-items-start">
 	        				<h3><span>Grilled Crab with Onion</span></h3>
@@ -631,7 +631,7 @@
         	</div>
         	<div class="col-lg-6 col-xl-4 d-flex">
         		<div class="pricing-entry rounded d-flex ftco-animate">
-        			<div class="img" style="background-image: url({% static 'images/menu-5.jpg' %});"></div>
+        			<div class="img" style="background-image: url('{% static 'images/menu-5.jpg' %}');"></div>
         			<div class="desc p-4">
 	        			<div class="d-md-flex text align-items-start">
 	        				<h3><span>Grilled Crab with Onion</span></h3>
@@ -645,7 +645,7 @@
         	</div>
         	<div class="col-lg-6 col-xl-4 d-flex">
         		<div class="pricing-entry rounded d-flex ftco-animate">
-        			<div class="img" style="background-image: url({% static 'images/menu-6.jpg' %});"></div>
+        			<div class="img" style="background-image: url('{% static 'images/menu-6.jpg' %}');"></div>
         			<div class="desc p-4">
 	        			<div class="d-md-flex text align-items-start">
 	        				<h3><span>Grilled Crab with Onion</span></h3>
@@ -676,8 +676,7 @@
         <div class="row d-flex">
           <div class="col-md-4 d-flex ftco-animate">
             <div class="blog-entry align-self-stretch">
-              <a href="{% url 'blog_single' slug='first-blog' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_1.jpg' %}');">
-              </a>
+              <a href="{% url 'blog_single' slug='first-blog' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_1.jpg' %}');"></a>
               <div class="text mt-3 text-center">
               	<div class="meta mb-2">
                   <div><a href="#">Oct. 30, 2019</a></div>
@@ -690,8 +689,7 @@
           </div>
           <div class="col-md-4 d-flex ftco-animate">
             <div class="blog-entry align-self-stretch">
-              <a href="{% url 'blog_single' slug='second-blog' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_2.jpg' %}');">
-              </a>
+              <a href="{% url 'blog_single' slug='second-blog' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_2.jpg' %}');"></a>
               <div class="text mt-3 text-center">
               	<div class="meta mb-2">
                   <div><a href="#">Oct. 30, 2019</a></div>
@@ -704,8 +702,7 @@
           </div>
           <div class="col-md-4 d-flex ftco-animate">
             <div class="blog-entry align-self-stretch">
-              <a href="{% url 'blog_single' slug='third-blog' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_3.jpg' %}');">
-              </a>
+              <a href="{% url 'blog_single' slug='third-blog' %}" class="block-20 rounded" style="background-image: url('{% static 'images/image_3.jpg' %}');"></a>
               <div class="text mt-3 text-center">
               	<div class="meta mb-2">
                   <div><a href="#">Oct. 30, 2019</a></div>
@@ -730,28 +727,28 @@
         </div>
         <div class="row no-gutters">
           <div class="col-sm-12 col-md ftco-animate">
-            <a href="images/insta-1.jpg" class="insta-img image-popup" style="background-image: url({% static 'images/insta-1.jpg' %});">
+            <a href="images/insta-1.jpg" class="insta-img image-popup" style="background-image: url('{% static 'images/insta-1.jpg' %}');">
               <div class="icon d-flex justify-content-center">
                 <span class="icon-instagram align-self-center"></span>
               </div>
             </a>
           </div>
           <div class="col-sm-12 col-md ftco-animate">
-            <a href="images/insta-2.jpg" class="insta-img image-popup" style="background-image: url({% static 'images/insta-2.jpg' %});">
+            <a href="images/insta-2.jpg" class="insta-img image-popup" style="background-image: url('{% static 'images/insta-2.jpg' %}');">
               <div class="icon d-flex justify-content-center">
                 <span class="icon-instagram align-self-center"></span>
               </div>
             </a>
           </div>
           <div class="col-sm-12 col-md ftco-animate">
-            <a href="images/insta-3.jpg" class="insta-img image-popup" style="background-image: url({% static 'images/insta-3.jpg' %});">
+            <a href="images/insta-3.jpg" class="insta-img image-popup" style="background-image: url('{% static 'images/insta-3.jpg' %}');">
               <div class="icon d-flex justify-content-center">
                 <span class="icon-instagram align-self-center"></span>
               </div>
             </a>
           </div>
           <div class="col-sm-12 col-md ftco-animate">
-            <a href="images/insta-4.jpg" class="insta-img image-popup" style="background-image: url({% static 'images/insta-4.jpg' %});">
+            <a href="images/insta-4.jpg" class="insta-img image-popup" style="background-image: url('{% static 'images/insta-4.jpg' %}');">
               <div class="icon d-flex justify-content-center">
                 <span class="icon-instagram align-self-center"></span>
               </div>

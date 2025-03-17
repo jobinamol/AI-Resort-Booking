@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resort Profile - LuxAI Resorts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% load static %}
+</head>
+<body>
+    <!-- Video Background -->
+    <div class="video-background">
+        <video autoplay muted loop playsinline>
+            <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+
+    <div class="profile-wrapper py-5">
+        <div class="container">
+            {% if messages %}
+            <div class="messages mb-4">
+                {% for message in messages %}
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% if not is_profile_complete %}
+            <div class="text-center py-5">
+                <div class="welcome-card">
+                    <i class="fas fa-hotel welcome-icon mb-4"></i>
+                    <h2>Welcome to LuxAI Resorts</h2>
+                    <p class="lead text-muted">You haven't set up your resort profile yet.</p>
+                    <a href="{% url 'add_profile' %}" class="btn btn-primary btn-lg mt-3">
+                        <i class="fas fa-plus-circle me-2"></i>Create Resort Profile
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="profile-header mb-4">
+                <div class="card">
+                    <div class="card-body d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            {% if resort_images.first %}
+                            <div class="profile-avatar me-4">
+                                <img src="{{ resort_images.first.image.url }}" alt="{{ resort.resort_name }}" class="rounded-circle">
+                            </div>
+                            {% endif %}
+                            <div>
+                                <h1 class="resort-title mb-1">{{ resort.resort_name }}</h1>
+                                <p class="text-muted mb-0"><i class="fas fa-map-marker-alt me-2"></i>{{ resort.resort_address }}</p>
+                            </div>
+                        </div>
+                        <div class="profile-actions">
+                            <a href="{% url 'edit_profile' %}" class="btn btn-primary me-2">
+                                <i class="fas fa-edit me-2"></i>Edit Profile
+                            </a>
+                            <a href="{% url 'change_password' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-key me-2"></i>Change Password
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <!-- Resort Images -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="section-title"><i class="fas fa-images me-2"></i>Resort Gallery</h5>
+                            {% if resort_images %}
+                            <div id="resortCarousel" class="carousel slide mt-3" data-bs-ride="carousel">
+                                <div class="carousel-inner rounded-4">
+                                    {% for image in resort_images %}
+                                    <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                                        <img src="{{ image.image.url }}" class="d-block w-100" alt="Resort Image">
+                                        {% if image.is_primary %}
+                                        <div class="primary-badge">
+                                            <i class="fas fa-star me-1"></i>Primary Image
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button class="carousel-control-prev" type="button" data-bs-target="#resortCarousel" data-bs-slide="prev">
+                                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Previous</span>
+                                </button>
+                                <button class="carousel-control-next" type="button" data-bs-target="#resortCarousel" data-bs-slide="next">
+                                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                                    <span class="visually-hidden">Next</span>
+                                </button>
+                            </div>
+                            <div class="carousel-thumbnails mt-3">
+                                <div class="row g-2">
+                                    {% for image in resort_images %}
+                                    <div class="col-3">
+                                        <img src="{{ image.image.url }}" class="img-thumbnail cursor-pointer" onclick="showCarouselImage({{ forloop.counter0 }})" alt="Thumbnail">
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-image text-muted fa-3x mb-3"></i>
+                                <p class="text-muted">No images uploaded yet</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Basic Information -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="section-title"><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+                            <div class="info-list mt-4">
+                                <div class="info-item">
+                                    <span class="info-label">Resort Type</span>
+                                    <span class="info-value">{{ resort.resort_type }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Contact</span>
+                                    <span class="info-value">{{ resort.resort_contact }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Email</span>
+                                    <span class="info-value">{{ resort.resort_email }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Website</span>
+                                    <span class="info-value">
+                                        <a href="{{ resort.resort_website }}" target="_blank" class="text-primary">
+                                            {{ resort.resort_website }}
+                                        </a>
+                                    </span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Room Count</span>
+                                    <span class="info-value">{{ resort.room_count }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Check-in</span>
+                                    <span class="info-value">{{ resort.check_in_time }}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Check-out</span>
+                                    <span class="info-value">{{ resort.check_out_time }}</span>
+                                </div>
+                            </div>
+                            {% if resort.resort_description %}
+                            <div class="mt-4">
+                                <h6 class="fw-bold mb-3">Description</h6>
+                                <p class="text-muted">{{ resort.resort_description }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Packages -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="section-title"><i class="fas fa-gift me-2"></i>Packages</h5>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6 class="package-subtitle">Staycation Packages</h6>
+                                    <div class="feature-list">
+                                        {% if resort.has_romantic_package %}<div class="feature-item active"><i class="fas fa-heart text-danger me-2"></i>Romantic Package</div>{% endif %}
+                                        {% if resort.has_family_package %}<div class="feature-item active"><i class="fas fa-users text-primary me-2"></i>Family Package</div>{% endif %}
+                                        {% if resort.has_business_package %}<div class="feature-item active"><i class="fas fa-briefcase text-info me-2"></i>Business Package</div>{% endif %}
+                                        {% if resort.has_wellness_package %}<div class="feature-item active"><i class="fas fa-spa text-success me-2"></i>Wellness Package</div>{% endif %}
+                                        {% if resort.has_longstay_package %}<div class="feature-item active"><i class="fas fa-home text-warning me-2"></i>Long Stay Package</div>{% endif %}
+                                        {% if resort.has_workation_package %}<div class="feature-item active"><i class="fas fa-laptop text-secondary me-2"></i>Workation Package</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="package-subtitle">Daycation Packages</h6>
+                                    <div class="feature-list">
+                                        {% if resort.has_pool_access %}<div class="feature-item active"><i class="fas fa-swimming-pool text-info me-2"></i>Pool Access</div>{% endif %}
+                                        {% if resort.has_spa_day %}<div class="feature-item active"><i class="fas fa-hot-tub text-danger me-2"></i>Spa Day</div>{% endif %}
+                                        {% if resort.has_dining %}<div class="feature-item active"><i class="fas fa-utensils text-success me-2"></i>Dining</div>{% endif %}
+                                        {% if resort.has_workspace %}<div class="feature-item active"><i class="fas fa-desk text-primary me-2"></i>Workspace</div>{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Venues -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="section-title"><i class="fas fa-building me-2"></i>Venues & Functions</h5>
+                            <div class="feature-list mt-4">
+                                {% if resort.has_wedding_venue %}<div class="feature-item active"><i class="fas fa-ring text-warning me-2"></i>Wedding Venue</div>{% endif %}
+                                {% if resort.has_conference_hall %}<div class="feature-item active"><i class="fas fa-presentation-screen text-primary me-2"></i>Conference Hall</div>{% endif %}
+                                {% if resort.has_banquet_hall %}<div class="feature-item active"><i class="fas fa-glass-cheers text-success me-2"></i>Banquet Hall</div>{% endif %}
+                                {% if resort.has_outdoor_venue %}<div class="feature-item active"><i class="fas fa-tree text-success me-2"></i>Outdoor Venue</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Activities -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="section-title"><i class="fas fa-running me-2"></i>Activities & Recreation</h5>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6 class="package-subtitle">Adventure & Sports</h6>
+                                    <div class="feature-list">
+                                        {% if resort.has_water_sports %}<div class="feature-item active"><i class="fas fa-water text-info me-2"></i>Water Sports</div>{% endif %}
+                                        {% if resort.has_trekking %}<div class="feature-item active"><i class="fas fa-hiking text-success me-2"></i>Trekking</div>{% endif %}
+                                        {% if resort.has_cycling %}<div class="feature-item active"><i class="fas fa-bicycle text-primary me-2"></i>Cycling</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="package-subtitle">Wellness & Recreation</h6>
+                                    <div class="feature-list">
+                                        {% if resort.has_yoga %}<div class="feature-item active"><i class="fas fa-pray text-info me-2"></i>Yoga</div>{% endif %}
+                                        {% if resort.has_cooking_class %}<div class="feature-item active"><i class="fas fa-utensils text-warning me-2"></i>Cooking Class</div>{% endif %}
+                                        {% if resort.has_kids_club %}<div class="feature-item active"><i class="fas fa-child text-danger me-2"></i>Kids Club</div>{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Services -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="section-title"><i class="fas fa-concierge-bell me-2"></i>Services & Amenities</h5>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h6 class="package-subtitle">Basic Facilities</h6>
+                                    <div class="feature-list">
+                                        {% if resort.has_pool %}<div class="feature-item active"><i class="fas fa-swimming-pool text-info me-2"></i>Pool</div>{% endif %}
+                                        {% if resort.has_spa %}<div class="feature-item active"><i class="fas fa-spa text-purple me-2"></i>Spa</div>{% endif %}
+                                        {% if resort.has_restaurant %}<div class="feature-item active"><i class="fas fa-utensils text-danger me-2"></i>Restaurant</div>{% endif %}
+                                        {% if resort.has_gym %}<div class="feature-item active"><i class="fas fa-dumbbell text-dark me-2"></i>Gym</div>{% endif %}
+                                        {% if resort.has_wifi %}<div class="feature-item active"><i class="fas fa-wifi text-info me-2"></i>WiFi</div>{% endif %}
+                                        {% if resort.has_parking %}<div class="feature-item active"><i class="fas fa-parking text-primary me-2"></i>Parking</div>{% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="package-subtitle">Additional Services</h6>
+                                    <div class="feature-list">
+                                        {% if resort.has_laundry %}<div class="feature-item active"><i class="fas fa-tshirt text-info me-2"></i>Laundry</div>{% endif %}
+                                        {% if resort.has_childcare %}<div class="feature-item active"><i class="fas fa-baby text-warning me-2"></i>Childcare</div>{% endif %}
+                                        {% if resort.has_room_service %}<div class="feature-item active"><i class="fas fa-concierge-bell text-success me-2"></i>Room Service</div>{% endif %}
+                                        {% if resort.has_concierge %}<div class="feature-item active"><i class="fas fa-concierge-bell text-primary me-2"></i>Concierge</div>{% endif %}
+                                        {% if resort.has_medical %}<div class="feature-item active"><i class="fas fa-first-aid text-danger me-2"></i>Medical Services</div>{% endif %}
+                                        {% if resort.is_pet_friendly %}<div class="feature-item active"><i class="fas fa-paw text-warning me-2"></i>Pet Friendly</div>{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Transportation -->
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="section-title"><i class="fas fa-car me-2"></i>Transportation Services</h5>
+                            <div class="feature-list mt-4">
+                                {% if resort.has_airport_transfer %}<div class="feature-item active"><i class="fas fa-plane-arrival text-primary me-2"></i>Airport Transfer</div>{% endif %}
+                                {% if resort.has_car_rental %}<div class="feature-item active"><i class="fas fa-car text-success me-2"></i>Car Rental</div>{% endif %}
+                                {% if resort.has_shuttle %}<div class="feature-item active"><i class="fas fa-shuttle-van text-info me-2"></i>Shuttle Service</div>{% endif %}
+                                {% if resort.has_taxi %}<div class="feature-item active"><i class="fas fa-taxi text-warning me-2"></i>Taxi Service</div>{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showCarouselImage(index) {
+            $('#resortCarousel').carousel(index);
+        }
+    </script>
+</body>
+</html>
+
+<style>
+    /* Video Background Styles */
+    .video-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+    }
+
+    .video-background video {
+        min-width: 100%;
+        min-height: 100%;
+        width: auto;
+        height: auto;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        object-fit: cover;
+    }
+
+    .video-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .profile-wrapper {
+        background: transparent;
+        min-height: 100vh;
+        color: #fff;
+    }
+
+    .welcome-card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+    }
+
+    .welcome-icon {
+        font-size: 4rem;
+        color: #3498db;
+    }
+
+    .card {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(10px);
+        border: none;
+        border-radius: 1rem;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .profile-avatar img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .resort-title {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .section-title {
+        color: #2c3e50;
+    }
+
+    .package-subtitle {
+        color: #3498db;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+
+    .carousel-inner img {
+        height: 400px;
+        object-fit: cover;
+    }
+
+    .carousel-thumbnails img {
+        height: 80px;
+        object-fit: cover;
+        cursor: pointer;
+        transition: opacity 0.3s ease;
+    }
+
+    .carousel-thumbnails img:hover {
+        opacity: 0.8;
+    }
+
+    .primary-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(52, 152, 219, 0.9);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.9rem;
+    }
+
+    .info-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-label {
+        color: #2c3e50;
+    }
+
+    .info-value {
+        color: #2c3e50;
+    }
+
+    .feature-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .feature-item {
+        background: rgba(255, 255, 255, 0.8);
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        transition: all 0.3s ease;
+        opacity: 0.7;
+    }
+
+    .feature-item.active {
+        background: rgba(227, 242, 253, 0.9);
+        opacity: 1;
+    }
+
+    .feature-item:hover {
+        transform: translateX(5px);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        border: none;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+    }
+
+    .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+    }
+
+    .btn-outline-secondary:hover {
+        background: #6c757d;
+        color: white;
+    }
+
+    .alert {
+        border: none;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+</style> 
