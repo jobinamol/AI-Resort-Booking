@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 import os
+import dj_database_url
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -82,16 +84,9 @@ WSGI_APPLICATION = 'myproject.wsgi.application'
 
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',  # ✅ Ensure this line is present
-        'NAME': config('DB_NAME', default='ProjectDB'),  # Replace with actual DB name
-        'USER': config('DB_USER', default='root'),
-        'PASSWORD': config('DB_PASSWORD', default=''),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='3306'),
-        'OPTIONS': {'charset': 'utf8mb4'},  # ✅ Fixes character encoding issues
-    }
+    'default': dj_database_url.config(default=config('DATABASE_URL'))
 }
+
 
 # Email Configuration
 if DEBUG:
