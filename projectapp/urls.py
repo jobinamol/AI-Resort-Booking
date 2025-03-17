@@ -58,6 +58,7 @@ urlpatterns = [
     # Guest Features
     path('guest/', views.guestindex, name='guestindex'),
     path('rooms/', views.rooms, name='rooms'),
+    path('rooms/<int:room_id>/', views.rooms_single, name='rooms_single'),
     path('restaurant/', views.restaurants, name='restaurants'),
     
     # Blog

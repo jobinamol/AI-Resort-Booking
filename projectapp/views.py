@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm, PackageForm, RoomForm
-from .models import UserDB, Resort, ResortImage, Package, Room
+from .models import UserDB, Resort, ResortImage, Package, Room, GuestUser
 import random
 from django.core.mail import send_mail
 from django.conf import settings
