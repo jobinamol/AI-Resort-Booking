@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Signup - LuxAI Resorts</title>
+    {% load static %}
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:200,300,400,600,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animate.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .video-background video {
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .signup-container {
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            padding: 40px 0;
+            display: flex;
+            align-items: center;
+        }
+        .signup-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            padding: 40px;
+            max-width: 600px;
+            margin: auto;
+        }
+        .signup-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .signup-header h2 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-control {
+            border-radius: 8px;
+            padding: 12px 15px;
+            border: 1px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+        .form-control:focus {
+            border-color: #00c6ff;
+            box-shadow: 0 0 0 2px rgba(0,198,255,0.2);
+        }
+        .signup-btn {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 15px 25px;
+            font-weight: 500;
+            letter-spacing: 1px;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+        .signup-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,198,255,0.3);
+        }
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+        }
+        .login-link a {
+            color: #00c6ff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+        .alert {
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: flex;
+            margin: -10px;
+        }
+        .form-col {
+            flex: 1;
+            padding: 10px;
+        }
+        .password-requirements {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+        }
+        .requirement-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+        .requirement-item i {
+            margin-right: 5px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Video Background -->
+    <div class="video-background">
+        <video autoplay muted loop playsinline>
+            <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+
+    <div class="signup-container">
+        <div class="container">
+            <div class="signup-card">
+                <div class="signup-header">
+                    <h2>Create Your Account</h2>
+                    <p class="text-muted">Join LuxAI Resorts for an exceptional experience</p>
+                </div>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST" class="signup-form">
+                    {% csrf_token %}
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="full_name">Full Name</label>
+                                <input type="text" id="full_name" name="full_name" class="form-control" required>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="mobile_number">Mobile Number</label>
+                                <input type="tel" id="mobile_number" name="mobile_number" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" class="form-control" required>
+                                <div class="password-requirements">
+                                    <div class="requirement-item">
+                                        <i class="icon-check"></i> At least 8 characters
+                                    </div>
+                                    <div class="requirement-item">
+                                        <i class="icon-check"></i> Contains numbers and letters
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-col">
+                            <div class="form-group">
+                                <label for="confirm_password">Confirm Password</label>
+                                <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="custom-control custom-checkbox">
+                            <input type="checkbox" class="custom-control-input" id="terms" required>
+                            <label class="custom-control-label" for="terms">
+                                I agree to the <a href="#" class="text-primary">Terms of Service</a> and <a href="#" class="text-primary">Privacy Policy</a>
+                            </label>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="signup-btn">Create Account</button>
+                </form>
+
+                <div class="login-link">
+                    <p>Already have an account? <a href="{% url 'guest_login' %}">Sign in</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script>
+        // Password validation
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm_password');
+        const form = document.querySelector('form');
+
+        form.addEventListener('submit', function(e) {
+            if (password.value !== confirmPassword.value) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Login - LuxAI Resorts</title>
+    {% load static %}
+    <link href="https://fonts.googleapis.com/css?family=Nunito+Sans:200,300,400,600,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animate.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .video-background video {
+            min-width: 100%;
+            min-height: 100%;
+            width: auto;
+            height: auto;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            object-fit: cover;
+        }
+        .video-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.5) 100%);
+        }
+        .login-container {
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            overflow: hidden;
+        }
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+        }
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .login-header h2 {
+            color: #2c3e50;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 2.2em;
+        }
+        .login-header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        .form-group {
+            margin-bottom: 25px;
+            position: relative;
+        }
+        .form-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #00c6ff;
+            font-size: 1.2em;
+        }
+        .form-control {
+            border-radius: 12px;
+            padding: 15px 20px 15px 45px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+            font-size: 1em;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        .form-control:focus {
+            border-color: #00c6ff;
+            box-shadow: 0 0 0 3px rgba(0,198,255,0.2);
+            background: #fff;
+        }
+        .login-btn {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            padding: 15px 25px;
+            font-weight: 600;
+            font-size: 1.1em;
+            letter-spacing: 1px;
+            width: 100%;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0,198,255,0.3);
+        }
+        .login-btn:active {
+            transform: translateY(0);
+        }
+        .remember-forgot {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .custom-control-label {
+            color: #495057;
+            font-weight: 500;
+        }
+        .forgot-link {
+            color: #00c6ff;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .forgot-link:hover {
+            color: #0072ff;
+            text-decoration: none;
+        }
+        .social-login {
+            margin-top: 30px;
+            position: relative;
+        }
+        .social-divider {
+            text-align: center;
+            position: relative;
+            margin: 30px 0;
+        }
+        .social-divider::before,
+        .social-divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+        .social-divider::before { left: 0; }
+        .social-divider::after { right: 0; }
+        .social-divider span {
+            background: #fff;
+            padding: 0 15px;
+            color: #666;
+            font-weight: 500;
+        }
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            background: white;
+            margin-bottom: 15px;
+        }
+        .social-btn:hover {
+            border-color: #00c6ff;
+            background: #f8f9fa;
+            transform: translateY(-2px);
+        }
+        .social-btn img {
+            width: 24px;
+            margin-right: 10px;
+        }
+        .signup-link {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .signup-link p {
+            color: #495057;
+            margin-bottom: 0;
+        }
+        .signup-link a {
+            color: #00c6ff;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .signup-link a:hover {
+            color: #0072ff;
+        }
+        .alert {
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: none;
+            background: rgba(255,255,255,0.95);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Video Background -->
+    <div class="video-background">
+        <video autoplay muted loop playsinline>
+            <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
+        </video>
+        <div class="video-overlay"></div>
+    </div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="floating-icon mb-4">
+                    <i class="fas fa-hotel" style="font-size: 3em; color: #00c6ff;"></i>
+                </div>
+                <h2>Welcome Back</h2>
+                <p>Sign in to continue to LuxAI Resorts</p>
+            </div>
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST" class="login-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <i class="fas fa-envelope"></i>
+                    <input type="email" name="email" class="form-control" placeholder="Email Address" required>
+                </div>
+                <div class="form-group">
+                    <i class="fas fa-lock"></i>
+                    <input type="password" name="password" class="form-control" placeholder="Password" required>
+                </div>
+
+                <div class="remember-forgot">
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="remember-me">
+                        <label class="custom-control-label" for="remember-me">Remember me</label>
+                    </div>
+                    <a href="{% url 'forgot_password' %}" class="forgot-link">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="login-btn">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Sign In
+                </button>
+            </form>
+
+            <div class="social-divider">
+                <span>or continue with</span>
+            </div>
+
+            <div class="social-login">
+                <button class="social-btn w-100">
+                    <img src="{% static 'images/google-icon.png' %}" alt="Google">
+                    Continue with Google
+                </button>
+            </div>
+
+            <div class="signup-link">
+                <p>Don't have an account? <a href="{% url 'guest_signup' %}">Sign up now</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script>
+        // Add smooth transitions for form validation
+        const inputs = document.querySelectorAll('.form-control');
+        inputs.forEach(input => {
+            input.addEventListener('invalid', (e) => {
+                e.target.classList.add('is-invalid');
+            });
+            input.addEventListener('input', (e) => {
+                if (e.target.classList.contains('is-invalid')) {
+                    e.target.classList.remove('is-invalid');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

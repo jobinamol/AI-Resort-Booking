@@ -682,3 +682,58 @@ class Room(models.Model):
             self.save()
         else:
             raise ValueError(f"Invalid status: {status}")
+
+class GuestUser(models.Model):
+    email = models.EmailField(unique=True, verbose_name="Email Address")
+    full_name = models.CharField(max_length=255, verbose_name="Full Name")
+    mobile_number = models.CharField(max_length=15, unique=True, verbose_name="Mobile Number")
+    password = models.CharField(max_length=255, verbose_name="Password")
+    profile_image = models.ImageField(upload_to='guest_profiles/', null=True, blank=True, verbose_name="Profile Picture")
+    date_joined = models.DateTimeField(auto_now_add=True)
+    last_login = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True, verbose_name="Account Status")
+    preferences = models.JSONField(default=dict, blank=True)
+    
+    class Meta:
+        verbose_name = "Guest User"
+        verbose_name_plural = "Guest Users"
+        ordering = ['-date_joined']
+
+    def __str__(self):
+        return self.full_name
+
+    def get_full_name(self):
+        return self.full_name
+
+    def get_short_name(self):
+        return self.full_name.split()[0]
+
+    def update_last_login(self):
+        self.last_login = timezone.now()
+        self.save()
+
+    def deactivate(self):
+        self.is_active = False
+        self.save()
+
+    def activate(self):
+        self.is_active = True
+        self.save()
+
+    def update_preferences(self, new_preferences):
+        self.preferences.update(new_preferences)
+        self.save()
+
+    def clean(self):
+        # Validate mobile number format
+        if self.mobile_number:
+            if not self.mobile_number.isdigit():
+                raise ValidationError({'mobile_number': 'Mobile number must contain only digits'})
+            if len(self.mobile_number) < 10:
+                raise ValidationError({'mobile_number': 'Mobile number must be at least 10 digits'})
+
+    def save(self, *args, **kwargs):
+        self.full_name = self.full_name.title()  # Capitalize each word in full name
+        self.clean()
+        super().save(*args, **kwargs)
+

@@ -32,6 +32,13 @@ urlpatterns = [
     path('resort/bookings/', views.manage_bookings, name='manage_bookings'),
     path('resort/analytics/', views.resort_analytics, name='resort_analytics'),
     path('resort/rooms/', views.manage_rooms, name='manage_rooms'),
+    path('resort/rooms/add/', views.add_room, name='add_room'),
+    path('resort/rooms/<int:room_id>/edit/', views.edit_room, name='edit_room'),
+    path('resort/rooms/<int:room_id>/update/', views.update_room, name='update_room'),
+    path('resort/rooms/<int:room_id>/delete/', views.delete_room, name='delete_room'),
+    path('resort/rooms/<int:room_id>/mark-cleaned/', views.mark_room_cleaned, name='mark_room_cleaned'),
+    path('resort/rooms/<int:room_id>/schedule-maintenance/', views.schedule_maintenance, name='schedule_maintenance'),
+    path('resort/rooms/<int:room_id>/details/', views.room_details, name='room_details'),
     path('resort/guests/', views.manage_guests, name='manage_guests'),
     path('resort/reviews/', views.manage_reviews, name='manage_reviews'),
     path('resort/calendar/', views.booking_calendar, name='booking_calendar'),
@@ -56,4 +63,8 @@ urlpatterns = [
     # Blog
     path('blog/', views.blog, name='blog'),
     path('blog/<slug:slug>/', views.blog_single, name='blog_single'),
+
+    path('guest/signup/', views.guest_signup, name='guest_signup'),
+    path('guest/login/', views.guest_login, name='guest_login'),
+    path('guest/logout/', views.guest_logout, name='guest_logout')
 ]

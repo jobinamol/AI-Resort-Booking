@@ -18,6 +18,8 @@ from django.http import JsonResponse
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
 import json
+from django.contrib.auth.hashers import check_password, make_password
+from functools import wraps
 
 
 # Create your views here.
@@ -918,23 +920,53 @@ def manage_rooms(request):
         occupied_rooms = rooms.filter(current_status='occupied').count()
         needs_attention = rooms.filter(
             Q(current_status='maintenance') | 
-            Q(current_status='cleaning') |
-            Q(needs_cleaning=True)
+            Q(current_status='cleaning')
         ).count()
         
         if occupied_rooms > 0:
             occupancy_rate = (occupied_rooms / total_rooms) * 100
         else:
             occupancy_rate = 0
+
+        # Define status colors and labels
+        status_info = {
+            'available': {'color': 'success', 'label': 'Available'},
+            'occupied': {'color': 'primary', 'label': 'Occupied'},
+            'maintenance': {'color': 'warning', 'label': 'Under Maintenance'},
+            'reserved': {'color': 'info', 'label': 'Reserved'},
+            'cleaning': {'color': 'secondary', 'label': 'Being Cleaned'}
+        }
+
+        # Add status info to each room
+        rooms_with_status = []
+        for room in rooms:
+            # Calculate if room needs cleaning
+            needs_cleaning = False
+            if room.last_cleaned:
+                hours_since_cleaned = (timezone.now() - room.last_cleaned).total_seconds() / 3600
+                needs_cleaning = hours_since_cleaned >= 24
+
+            room_data = {
+                'room': room,
+                'status_color': status_info.get(room.current_status, {'color': 'dark', 'label': room.get_current_status_display()}),
+                'needs_cleaning': needs_cleaning,
+                'occupancy_rate': room.get_occupancy_stats()['occupancy_rate']
+            }
+            rooms_with_status.append(room_data)
+            
+            # Update needs_attention count
+            if needs_cleaning:
+                needs_attention += 1
         
         context = {
             'resort': resort,
-            'rooms': rooms,
+            'rooms': rooms_with_status,
             'total_rooms': total_rooms,
             'available_rooms': available_rooms,
             'occupancy_rate': occupancy_rate,
             'needs_attention': needs_attention,
-            'room_types': Room.ROOM_TYPES
+            'room_types': Room.ROOM_TYPES,
+            'status_info': status_info
         }
         
         return render(request, 'room_list.html', context)
@@ -945,64 +977,167 @@ def manage_rooms(request):
 @login_required
 def add_room(request):
     if request.method == 'POST':
-        form = RoomForm(request.POST, request.FILES)
-        if form.is_valid():
-            room = form.save(commit=False)
-            room.resort = Resort.objects.get(user=request.user)
+        try:
+            resort = Resort.objects.get(user=request.user)
+            
+            # Validate required fields
+            required_fields = ['room_number', 'room_type', 'floor', 'capacity', 'base_price']
+            for field in required_fields:
+                if not request.POST.get(field):
+                    raise ValidationError(f'{field.replace("_", " ").title()} is required')
+            
+            # Create new room
+            room = Room(resort=resort)
+            
+            # Set room fields
+            room.room_number = request.POST.get('room_number')
+            room.room_type = request.POST.get('room_type')
+            room.floor = int(request.POST.get('floor'))
+            room.capacity = int(request.POST.get('capacity'))
+            room.base_price = float(request.POST.get('base_price'))
+            
+            # Optional fields
+            if request.POST.get('size_sqft'):
+                room.size_sqft = float(request.POST.get('size_sqft'))
+            if request.POST.get('view_type'):
+                room.view_type = request.POST.get('view_type')
+            if request.POST.get('bed_type'):
+                room.bed_type = request.POST.get('bed_type')
+            if request.POST.get('amenities'):
+                room.amenities = request.POST.get('amenities')
+            if request.POST.get('description'):
+                room.description = request.POST.get('description')
+            
+            # Handle image upload
+            if 'image' in request.FILES:
+                room.image = request.FILES['image']
+            
+            # Validate and save
+            room.full_clean()
             room.save()
-            messages.success(request, 'Room added successfully.')
+            
+            messages.success(request, f'Room {room.room_number} added successfully!')
             return redirect('manage_rooms')
-        else:
-            messages.error(request, 'Error adding room. Please check the form.')
+            
+        except ValidationError as e:
+            messages.error(request, f'Validation error: {str(e)}')
+        except ValueError as e:
+            messages.error(request, 'Please enter valid numbers for floor, capacity, and price')
+        except Exception as e:
+            messages.error(request, f'Error adding room: {str(e)}')
+    
     return redirect('manage_rooms')
 
 @login_required
 def edit_room(request, room_id):
     room = get_object_or_404(Room, id=room_id, resort__user=request.user)
-    if request.method == 'GET':
-        data = {
-            'room_number': room.room_number,
-            'room_type': room.room_type,
-            'floor': room.floor,
-            'capacity': room.capacity,
-            'base_price': room.base_price,
-            'size_sqft': room.size_sqft,
-            'amenities': room.amenities,
-            'description': room.description,
-            'current_status': room.current_status
-        }
-        return JsonResponse(data)
-    return JsonResponse({'error': 'Invalid request'}, status=400)
+    if request.method == 'POST':
+        try:
+            # Update room data
+            room.room_number = request.POST.get('room_number', room.room_number)
+            room.room_type = request.POST.get('room_type', room.room_type)
+            room.floor = int(request.POST.get('floor', room.floor))
+            room.capacity = int(request.POST.get('capacity', room.capacity))
+            room.base_price = float(request.POST.get('base_price', room.base_price))
+            room.size_sqft = float(request.POST.get('size_sqft', room.size_sqft or 0)) or None
+            room.view_type = request.POST.get('view_type', room.view_type)
+            room.bed_type = request.POST.get('bed_type', room.bed_type)
+            room.amenities = request.POST.get('amenities', room.amenities)
+            room.description = request.POST.get('description', room.description)
+            room.current_status = request.POST.get('current_status', room.current_status)
+            
+            # Handle image upload
+            if 'image' in request.FILES:
+                room.image = request.FILES['image']
+            
+            # Validate and save
+            room.full_clean()
+            room.save()
+            
+            messages.success(request, f'Room {room.room_number} updated successfully!')
+            return redirect('manage_rooms')
+            
+        except ValidationError as e:
+            messages.error(request, f'Validation error: {str(e)}')
+        except ValueError as e:
+            messages.error(request, 'Please enter valid numbers for floor, capacity, and price')
+        except Exception as e:
+            messages.error(request, f'Error updating room: {str(e)}')
+            
+        return redirect('manage_rooms')
+    
+    # If GET request, return room data as JSON
+    data = {
+        'room_number': room.room_number,
+        'room_type': room.room_type,
+        'floor': room.floor,
+        'capacity': room.capacity,
+        'base_price': room.base_price,
+        'size_sqft': room.size_sqft or '',
+        'view_type': room.view_type or '',
+        'bed_type': room.bed_type or '',
+        'amenities': room.amenities or '',
+        'description': room.description or '',
+        'current_status': room.current_status,
+        'image_url': room.image.url if room.image else ''
+    }
+    return JsonResponse(data)
 
 @login_required
 def update_room(request, room_id):
-    room = get_object_or_404(Room, id=room_id, resort__user=request.user)
     if request.method == 'POST':
-        form = RoomForm(request.POST, request.FILES, instance=room)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Room updated successfully.')
-            return redirect('manage_rooms')
-        else:
-            messages.error(request, 'Error updating room. Please check the form.')
+        try:
+            room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+            
+            # Update room data
+            room.room_number = request.POST.get('room_number', room.room_number)
+            room.room_type = request.POST.get('room_type', room.room_type)
+            room.floor = int(request.POST.get('floor', room.floor))
+            room.capacity = int(request.POST.get('capacity', room.capacity))
+            room.base_price = float(request.POST.get('base_price', room.base_price))
+            room.size_sqft = float(request.POST.get('size_sqft', room.size_sqft or 0)) or None
+            room.view_type = request.POST.get('view_type', room.view_type)
+            room.bed_type = request.POST.get('bed_type', room.bed_type)
+            room.amenities = request.POST.get('amenities', room.amenities)
+            room.description = request.POST.get('description', room.description)
+            room.current_status = request.POST.get('current_status', room.current_status)
+            
+            # Handle image upload
+            if 'image' in request.FILES:
+                room.image = request.FILES['image']
+            
+            # Validate and save
+            room.full_clean()
+            room.save()
+            
+            messages.success(request, f'Room {room.room_number} updated successfully!')
+            
+        except ValidationError as e:
+            messages.error(request, f'Validation error: {str(e)}')
+        except ValueError as e:
+            messages.error(request, 'Please enter valid numbers for floor, capacity, and price')
+        except Exception as e:
+            messages.error(request, f'Error updating room: {str(e)}')
+    
     return redirect('manage_rooms')
 
 @login_required
 def delete_room(request, room_id):
-    room = get_object_or_404(Room, id=room_id, resort__user=request.user)
     if request.method == 'POST':
-        room.delete()
-        messages.success(request, 'Room deleted successfully.')
+        try:
+            room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+            room_number = room.room_number
+            room.delete()
+            messages.success(request, f'Room {room_number} deleted successfully!')
+        except Exception as e:
+            messages.error(request, f'Error deleting room: {str(e)}')
+    
     return redirect('manage_rooms')
 
 @login_required
 def room_details(request, room_id):
     room = get_object_or_404(Room, id=room_id, resort__user=request.user)
-    
-    # Get occupancy data for the last 30 days
-    end_date = timezone.now()
-    start_date = end_date - timedelta(days=30)
-    occupancy_data = room.get_occupancy_stats()
+    occupancy_stats = room.get_occupancy_stats()
     
     data = {
         'room_number': room.room_number,
@@ -1011,13 +1146,18 @@ def room_details(request, room_id):
         'current_price': str(room.get_current_price()),
         'capacity': room.capacity,
         'size_sqft': room.size_sqft or 'N/A',
+        'view_type': room.view_type or 'N/A',
+        'bed_type': room.bed_type or 'N/A',
         'amenities': room.get_amenities_list(),
         'description': room.description or 'No description available',
         'last_cleaned': room.last_cleaned.strftime('%Y-%m-%d %H:%M') if room.last_cleaned else 'Never',
+        'next_maintenance': room.next_maintenance.strftime('%Y-%m-%d %H:%M') if room.next_maintenance else 'Not scheduled',
         'image_url': room.image.url if room.image else '',
         'occupancy_data': {
-            'labels': [(start_date + timedelta(days=x)).strftime('%Y-%m-%d') for x in range(31)],
-            'values': [occupancy_data['occupancy_rate'] for _ in range(31)]  # Placeholder data
+            'rate': occupancy_stats['occupancy_rate'],
+            'revenue': str(occupancy_stats['revenue']),
+            'total_days': occupancy_stats['total_days'],
+            'occupied_days': occupancy_stats['occupied_days']
         }
     }
     
@@ -1026,23 +1166,42 @@ def room_details(request, room_id):
 @login_required
 def mark_room_cleaned(request, room_id):
     if request.method == 'POST':
-        room = get_object_or_404(Room, id=room_id, resort__user=request.user)
-        room.mark_as_cleaned()
-        return JsonResponse({'success': True})
-    return JsonResponse({'success': False}, status=400)
+        try:
+            room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+            room.mark_as_cleaned()
+            return JsonResponse({
+                'success': True,
+                'message': f'Room {room.room_number} marked as cleaned.'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=400)
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=400)
 
 @login_required
 def schedule_maintenance(request, room_id):
     if request.method == 'POST':
-        room = get_object_or_404(Room, id=room_id, resort__user=request.user)
         try:
-            maintenance_date = datetime.strptime(request.POST['maintenance_date'], '%Y-%m-%dT%H:%M')
+            room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+            maintenance_date = request.POST.get('maintenance_date')
+            if not maintenance_date:
+                raise ValidationError('Maintenance date is required')
+            
+            maintenance_date = timezone.datetime.strptime(maintenance_date, '%Y-%m-%dT%H:%M')
             room.schedule_maintenance(maintenance_date)
-            messages.success(request, 'Maintenance scheduled successfully.')
-            return JsonResponse({'success': True})
-        except (ValueError, KeyError):
-            return JsonResponse({'success': False, 'error': 'Invalid date format'}, status=400)
-    return JsonResponse({'success': False}, status=400)
+            
+            return JsonResponse({
+                'success': True,
+                'message': f'Maintenance scheduled for Room {room.room_number}'
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'message': str(e)
+            }, status=400)
+    return JsonResponse({'success': False, 'message': 'Invalid request method'}, status=400)
 
 @login_required
 def room_calendar(request):
@@ -1308,3 +1467,110 @@ def delete_package(request, package_id):
         except Exception as e:
             messages.error(request, f"Error deleting package: {str(e)}")
     return redirect('list_packages')
+
+#guest login and Signup
+def guest_signup(request):
+    if request.method == 'POST':
+        full_name = request.POST['full_name']
+        email = request.POST['email']
+        mobile_number = request.POST['mobile_number']
+        password = request.POST['password']
+        confirm_password = request.POST['confirm_password']
+
+        # Validation
+        if len(password) < 8:
+            messages.error(request, "Password must be at least 8 characters long")
+            return redirect('guest_signup')
+
+        if not any(char.isdigit() for char in password):
+            messages.error(request, "Password must contain at least one number")
+            return redirect('guest_signup')
+
+        if not any(char.isalpha() for char in password):
+            messages.error(request, "Password must contain at least one letter")
+            return redirect('guest_signup')
+
+        if password != confirm_password:
+            messages.error(request, "Passwords do not match")
+            return redirect('guest_signup')
+
+        # Check if email or mobile number already exists
+        if GuestUser.objects.filter(email=email).exists():
+            messages.error(request, "Email already registered")
+            return redirect('guest_signup')
+
+        if GuestUser.objects.filter(mobile_number=mobile_number).exists():
+            messages.error(request, "Mobile number already registered")
+            return redirect('guest_signup')
+
+        try:
+            # Create new guest user
+            guest = GuestUser(
+                full_name=full_name,
+                email=email,
+                mobile_number=mobile_number,
+                password=make_password(password)
+            )
+            guest.save()
+
+            # Send welcome email
+            try:
+                send_mail(
+                    'Welcome to LuxAI Resorts',
+                    f'Dear {full_name},\n\nWelcome to LuxAI Resorts! Your account has been successfully created.',
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                # Log the error but don't stop the signup process
+                print(f"Error sending welcome email: {str(e)}")
+
+            messages.success(request, "Account created successfully! Please log in.")
+            return redirect('guest_login')
+        except Exception as e:
+            messages.error(request, f"Error creating account: {str(e)}")
+            return redirect('guest_signup')
+
+    return render(request, 'guest_signup.html')
+
+def guest_login(request):
+    if request.method == 'POST':
+        email = request.POST['email']
+        password = request.POST['password']
+        
+        try:
+            guest = GuestUser.objects.get(email=email)
+            if check_password(password, guest.password):
+                # Create session
+                request.session['guest_id'] = guest.id
+                request.session['guest_name'] = guest.full_name
+                messages.success(request, f"Welcome back, {guest.full_name}!")
+                return redirect('guestindex')
+            else:
+                messages.error(request, "Invalid email or password")
+        except GuestUser.DoesNotExist:
+            messages.error(request, "Invalid email or password")
+        
+        return redirect('guest_login')
+    
+    return render(request, 'guest_login.html')
+
+def guest_logout(request):
+    # Clear guest session data
+    request.session.pop('guest_id', None)
+    request.session.pop('guest_name', None)
+    messages.success(request, "You have been successfully logged out")
+    return redirect('guestindex')
+
+def guest_login_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if 'guest_id' not in request.session:
+            messages.warning(request, "Please login to access this page")
+            return redirect('guest_login')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+def is_guest_authenticated(request):
+    return 'guest_id' in request.session

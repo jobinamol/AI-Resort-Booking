@@ -125,31 +125,21 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for room in rooms %}
-                        <tr data-status="{{ room.current_status }}">
-                            <td>{{ room.room_number }}</td>
-                            <td>{{ room.get_room_type_display }}</td>
-                            <td>{{ room.floor }}</td>
+                        {% for room_data in rooms %}
+                        <tr data-status="{{ room_data.room.current_status }}">
+                            <td>{{ room_data.room.room_number }}</td>
+                            <td>{{ room_data.room.get_room_type_display }}</td>
+                            <td>{{ room_data.room.floor }}</td>
                             <td>
-                                {% if room.current_status == 'available' %}
-                                    <span class="badge bg-success">Available</span>
-                                {% elif room.current_status == 'occupied' %}
-                                    <span class="badge bg-primary">Occupied</span>
-                                {% elif room.current_status == 'maintenance' %}
-                                    <span class="badge bg-warning">Under Maintenance</span>
-                                {% elif room.current_status == 'reserved' %}
-                                    <span class="badge bg-info">Reserved</span>
-                                {% elif room.current_status == 'cleaning' %}
-                                    <span class="badge bg-secondary">Being Cleaned</span>
-                                {% else %}
-                                    <span class="badge bg-dark">{{ room.get_current_status_display }}</span>
-                                {% endif %}
+                                <span class="badge bg-{{ room_data.status_color.color }}">
+                                    {{ room_data.status_color.label }}
+                                </span>
                             </td>
-                            <td>${{ room.get_current_price|floatformat:2 }}</td>
+                            <td>${{ room_data.room.get_current_price|floatformat:2 }}</td>
                             <td>
-                                {% if room.last_cleaned %}
-                                    {{ room.last_cleaned|timesince }} ago
-                                    {% if room.needs_cleaning %}
+                                {% if room_data.room.last_cleaned %}
+                                    {{ room_data.room.last_cleaned|timesince }} ago
+                                    {% if room_data.needs_cleaning %}
                                         <span class="badge bg-warning">Needs Cleaning</span>
                                     {% endif %}
                                 {% else %}
@@ -157,13 +147,13 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <div class="progress" style="height: 20px;">
+                                <div class="progress" style="height: 20px; background-color: #e9ecef; border-radius: 0.25rem;">
                                     <div class="progress-bar" role="progressbar" 
-                                         style="width: {{ room.get_occupancy_stats.occupancy_rate }}%"
-                                         aria-valuenow="{{ room.get_occupancy_stats.occupancy_rate }}" 
+                                         style="width: {{ room_data.occupancy_rate }}%; background-color: #4e73df; transition: width .6s ease;"
+                                         aria-valuenow="{{ room_data.occupancy_rate }}" 
                                          aria-valuemin="0" 
                                          aria-valuemax="100">
-                                        {{ room.get_occupancy_stats.occupancy_rate|floatformat:1 }}%
+                                        {{ room_data.occupancy_rate|floatformat:1 }}%
                                     </div>
                                 </div>
                             </td>
@@ -172,23 +162,23 @@
                                     <button type="button" class="btn btn-sm btn-info" 
                                             data-bs-toggle="modal" 
                                             data-bs-target="#viewRoomModal"
-                                            data-room-id="{{ room.id }}">
+                                            data-room-id="{{ room_data.room.id }}">
                                         <i class="fas fa-eye"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-primary"
                                             data-bs-toggle="modal" 
                                             data-bs-target="#editRoomModal"
-                                            data-room-id="{{ room.id }}">
+                                            data-room-id="{{ room_data.room.id }}">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-success"
-                                            onclick="markRoomAsCleaned({{ room.id }})">
+                                            onclick="markRoomAsCleaned('{{ room_data.room.id }}')">
                                         <i class="fas fa-broom"></i>
                                     </button>
                                     <button type="button" class="btn btn-sm btn-warning"
                                             data-bs-toggle="modal" 
                                             data-bs-target="#maintenanceModal"
-                                            data-room-id="{{ room.id }}">
+                                            data-room-id="{{ room_data.room.id }}">
                                         <i class="fas fa-tools"></i>
                                     </button>
                                 </div>
@@ -381,10 +371,62 @@ document.querySelectorAll('[data-filter]').forEach(filter => {
     });
 });
 
+// Add Room Form Submission
+document.getElementById('addRoomForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            return response.text().then(text => {
+                throw new Error(text);
+            });
+        }
+    })
+    .catch(error => {
+        alert('Error adding room: ' + error.message);
+    });
+});
+
+// Edit Room Form Submission
+document.getElementById('editRoomForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            window.location.reload();
+        } else {
+            return response.text().then(text => {
+                throw new Error(text);
+            });
+        }
+    })
+    .catch(error => {
+        alert('Error updating room: ' + error.message);
+    });
+});
+
 // Mark room as cleaned
 function markRoomAsCleaned(roomId) {
     if (confirm('Mark this room as cleaned?')) {
-        fetch(`/rooms/${roomId}/mark-cleaned/`, {
+        fetch(`/resort/rooms/${roomId}/mark-cleaned/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -393,10 +435,13 @@ function markRoomAsCleaned(roomId) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload();
+                window.location.reload();
             } else {
-                alert('Error marking room as cleaned');
+                alert(data.message || 'Error marking room as cleaned');
             }
+        })
+        .catch(error => {
+            alert('Error marking room as cleaned: ' + error.message);
         });
     }
 }
@@ -407,13 +452,16 @@ document.getElementById('viewRoomModal').addEventListener('show.bs.modal', funct
     const roomId = button.dataset.roomId;
     const modalBody = this.querySelector('.room-details');
     
-    fetch(`/rooms/${roomId}/details/`)
+    fetch(`/resort/rooms/${roomId}/details/`)
         .then(response => response.json())
         .then(data => {
             modalBody.innerHTML = `
                 <div class="row">
                     <div class="col-md-6">
-                        <img src="${data.image_url}" class="img-fluid mb-3" alt="Room Image">
+                        ${data.image_url ? 
+                            `<img src="${data.image_url}" class="img-fluid mb-3" alt="Room Image">` :
+                            '<div class="no-image-placeholder">No image available</div>'
+                        }
                     </div>
                     <div class="col-md-6">
                         <h4>Room ${data.room_number}</h4>
@@ -421,48 +469,32 @@ document.getElementById('viewRoomModal').addEventListener('show.bs.modal', funct
                         <p><strong>Status:</strong> ${data.status}</p>
                         <p><strong>Current Price:</strong> $${data.current_price}</p>
                         <p><strong>Capacity:</strong> ${data.capacity} persons</p>
-                        <p><strong>Size:</strong> ${data.size_sqft} sq ft</p>
+                        <p><strong>Size:</strong> ${data.size_sqft}</p>
                         <p><strong>Last Cleaned:</strong> ${data.last_cleaned}</p>
+                        <p><strong>Next Maintenance:</strong> ${data.next_maintenance}</p>
                     </div>
                 </div>
                 <div class="row mt-3">
                     <div class="col-12">
                         <h5>Amenities</h5>
-                        <p>${data.amenities}</p>
+                        <p>${data.amenities || 'No amenities listed'}</p>
                         <h5>Description</h5>
                         <p>${data.description}</p>
                     </div>
                 </div>
                 <div class="row mt-3">
-                    <div class="col-12">
-                        <h5>Occupancy Statistics (Last 30 Days)</h5>
-                        <canvas id="roomOccupancyChart"></canvas>
+                    <div class="col-md-6">
+                        <h5>Occupancy Statistics</h5>
+                        <p><strong>Rate:</strong> ${data.occupancy_data.rate}%</p>
+                        <p><strong>Revenue:</strong> $${data.occupancy_data.revenue}</p>
+                        <p><strong>Total Days:</strong> ${data.occupancy_data.total_days}</p>
+                        <p><strong>Occupied Days:</strong> ${data.occupancy_data.occupied_days}</p>
                     </div>
                 </div>
             `;
-            
-            // Initialize occupancy chart
-            new Chart(document.getElementById('roomOccupancyChart'), {
-                type: 'line',
-                data: {
-                    labels: data.occupancy_data.labels,
-                    datasets: [{
-                        label: 'Occupancy Rate',
-                        data: data.occupancy_data.values,
-                        borderColor: '#4e73df',
-                        tension: 0.1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100
-                        }
-                    }
-                }
-            });
+        })
+        .catch(error => {
+            modalBody.innerHTML = `<div class="alert alert-danger">Error loading room details: ${error.message}</div>`;
         });
 });
 
@@ -472,18 +504,60 @@ document.getElementById('editRoomModal').addEventListener('show.bs.modal', funct
     const roomId = button.dataset.roomId;
     const form = this.querySelector('#editRoomForm');
     
-    fetch(`/rooms/${roomId}/edit/`)
+    fetch(`/resort/rooms/${roomId}/edit/`)
         .then(response => response.json())
         .then(data => {
-            form.action = `/rooms/${roomId}/update/`;
+            form.action = `/resort/rooms/${roomId}/update/`;
+            
             // Populate form fields with room data
             for (const [key, value] of Object.entries(data)) {
                 const input = form.querySelector(`[name=${key}]`);
                 if (input) {
+                    if (input.type === 'file') {
+                        // Skip file inputs
+                        continue;
+                    }
                     input.value = value;
                 }
             }
+            
+            // Show current image if exists
+            const currentImageDiv = form.querySelector('.current-image');
+            if (currentImageDiv) {
+                currentImageDiv.innerHTML = data.image_url ? 
+                    `<img src="${data.image_url}" class="img-thumbnail" style="max-height: 100px">` :
+                    'No image uploaded';
+            }
+        })
+        .catch(error => {
+            alert('Error loading room data: ' + error.message);
         });
+});
+
+// Maintenance form submission
+document.getElementById('maintenanceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    const roomId = this.closest('.modal').querySelector('[data-room-id]').dataset.roomId;
+    
+    fetch(`/resort/rooms/${roomId}/schedule-maintenance/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.reload();
+        } else {
+            alert(data.message || 'Error scheduling maintenance');
+        }
+    })
+    .catch(error => {
+        alert('Error scheduling maintenance: ' + error.message);
+    });
 });
 </script>
 {% endblock %}
