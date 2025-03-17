@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from .models import UserDB, Package
+from .models import UserDB, Package, Room
 from django.core.exceptions import ValidationError
 
 class CustomUserCreationForm(UserCreationForm):
@@ -81,3 +81,45 @@ class PackageForm(forms.ModelForm):
             if not image.content_type.startswith('image/'):
                 raise forms.ValidationError("File must be an image")
         return image
+
+class RoomForm(forms.ModelForm):
+    class Meta:
+        model = Room
+        fields = [
+            'room_number', 'room_type', 'floor', 'capacity',
+            'base_price', 'current_status', 'amenities',
+            'description', 'size_sqft', 'view_type',
+            'bed_type', 'image'
+        ]
+        widgets = {
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'amenities': forms.Textarea(attrs={'rows': 2}),
+        }
+
+    def clean_base_price(self):
+        base_price = self.cleaned_data.get('base_price')
+        if base_price and base_price < 0:
+            raise forms.ValidationError("Price cannot be negative")
+        return base_price
+
+    def clean_room_number(self):
+        room_number = self.cleaned_data.get('room_number')
+        if not room_number:
+            raise forms.ValidationError("Room number is required")
+        
+        # Check if room number already exists for this resort
+        if self.instance.pk:  # If editing existing room
+            exists = Room.objects.exclude(pk=self.instance.pk).filter(
+                resort=self.instance.resort,
+                room_number=room_number
+            ).exists()
+        else:  # If creating new room
+            exists = Room.objects.filter(
+                resort=self.instance.resort,
+                room_number=room_number
+            ).exists()
+        
+        if exists:
+            raise forms.ValidationError("Room number already exists")
+        
+        return room_number

@@ -1,9 +1,11 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.utils.timezone import now, timedelta
+from django.utils.timezone import now, timedelta, timezone
 from django.core.exceptions import ValidationError
 import random
 import json
+from decimal import Decimal
+from django.db.models import Q
 
 
 class UserDB(AbstractUser):
@@ -519,3 +521,164 @@ class Package(models.Model):
             self.amenities = ', '.join(amenities_list)
         
         super().save(*args, **kwargs)
+
+class Room(models.Model):
+    ROOM_TYPES = [
+        ('single', 'Single'),
+        ('double', 'Double'),
+        ('suite', 'Suite'),
+        ('villa', 'Villa'),
+    ]
+
+    ROOM_STATUS = [
+        ('available', 'Available'),
+        ('occupied', 'Occupied'),
+        ('maintenance', 'Under Maintenance'),
+        ('reserved', 'Reserved'),
+        ('cleaning', 'Being Cleaned'),
+    ]
+
+    resort = models.ForeignKey(Resort, on_delete=models.CASCADE, related_name='rooms')
+    room_number = models.CharField(max_length=10, unique=True)
+    room_type = models.CharField(max_length=10, choices=ROOM_TYPES)
+    floor = models.PositiveIntegerField(default=1)
+    capacity = models.PositiveIntegerField(default=2)
+    price_per_night = models.DecimalField(max_digits=10, decimal_places=2)
+    base_price = models.DecimalField(max_digits=10, decimal_places=2)
+    current_status = models.CharField(max_length=20, choices=ROOM_STATUS, default='available')
+    is_active = models.BooleanField(default=True)
+    amenities = models.TextField(help_text="List of amenities, separated by commas")
+    description = models.TextField(blank=True, null=True)
+    size_sqft = models.PositiveIntegerField(null=True, blank=True)
+    view_type = models.CharField(max_length=50, blank=True, null=True)
+    bed_type = models.CharField(max_length=50, blank=True, null=True)
+    last_cleaned = models.DateTimeField(null=True, blank=True)
+    next_maintenance = models.DateTimeField(null=True, blank=True)
+    image = models.ImageField(upload_to='room_images/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['room_number']
+        unique_together = ['resort', 'room_number']
+
+    def __str__(self):
+        return f"Room {self.room_number} - {self.get_room_type_display()} at {self.resort.resort_name}"
+
+    def get_amenities_list(self):
+        return [amenity.strip() for amenity in self.amenities.split(',') if amenity.strip()]
+
+    def get_current_price(self):
+        """Calculate current price based on various factors"""
+        price = self.base_price
+        
+        # Apply weekend pricing
+        if timezone.now().weekday() >= 5:  # Saturday or Sunday
+            price *= Decimal('1.2')
+        
+        # Apply seasonal pricing
+        if self.is_peak_season():
+            price *= Decimal('1.5')
+        
+        # Apply last-minute discount
+        if self.has_last_minute_availability():
+            price *= Decimal('0.8')
+        
+        return price
+
+    def is_peak_season(self):
+        """Check if current date falls in peak season"""
+        current_month = timezone.now().month
+        # Example: Peak season is June through August
+        return 6 <= current_month <= 8
+
+    def has_last_minute_availability(self):
+        """Check if room has last-minute availability"""
+        tomorrow = timezone.now() + timedelta(days=1)
+        return self.is_available_on(tomorrow)
+
+    def is_available_on(self, date):
+        """Check if room is available on a specific date"""
+        return not self.bookings.filter(
+            Q(check_in__lte=date, check_out__gt=date) |
+            Q(check_in__lt=date + timedelta(days=1), check_out__gt=date)
+        ).exists()
+
+    def get_availability_calendar(self, start_date, end_date):
+        """Get room availability calendar for a date range"""
+        bookings = self.bookings.filter(
+            Q(check_in__range=(start_date, end_date)) |
+            Q(check_out__range=(start_date, end_date))
+        ).order_by('check_in')
+        
+        calendar = []
+        current_date = start_date
+        
+        while current_date <= end_date:
+            is_available = self.is_available_on(current_date)
+            calendar.append({
+                'date': current_date,
+                'available': is_available,
+                'price': self.get_current_price() if is_available else None
+            })
+            current_date += timedelta(days=1)
+        
+        return calendar
+
+    def get_occupancy_stats(self, days=30):
+        """Get occupancy statistics for the last X days"""
+        end_date = timezone.now()
+        start_date = end_date - timedelta(days=days)
+        
+        total_days = (end_date - start_date).days
+        occupied_days = self.bookings.filter(
+            check_in__lte=end_date,
+            check_out__gt=start_date
+        ).count()
+        
+        return {
+            'occupancy_rate': (occupied_days / total_days) * 100 if total_days > 0 else 0,
+            'total_days': total_days,
+            'occupied_days': occupied_days,
+            'revenue': self.get_revenue_for_period(start_date, end_date)
+        }
+
+    def get_revenue_for_period(self, start_date, end_date):
+        """Calculate revenue for a specific period"""
+        bookings = self.bookings.filter(
+            check_in__lte=end_date,
+            check_out__gt=start_date
+        )
+        return sum(booking.total_amount for booking in bookings)
+
+    def needs_cleaning(self):
+        """Check if room needs cleaning based on last cleaned timestamp"""
+        if not self.last_cleaned:
+            return True
+        hours_since_cleaned = (timezone.now() - self.last_cleaned).total_seconds() / 3600
+        return hours_since_cleaned >= 24
+
+    def needs_maintenance(self):
+        """Check if room needs maintenance"""
+        if not self.next_maintenance:
+            return False
+        return timezone.now() >= self.next_maintenance
+
+    def mark_as_cleaned(self):
+        """Mark room as cleaned"""
+        self.last_cleaned = timezone.now()
+        self.current_status = 'available'
+        self.save()
+
+    def schedule_maintenance(self, maintenance_date):
+        """Schedule maintenance for the room"""
+        self.next_maintenance = maintenance_date
+        self.save()
+
+    def update_status(self, status):
+        """Update room status"""
+        if status in dict(self.ROOM_STATUS):
+            self.current_status = status
+            self.save()
+        else:
+            raise ValueError(f"Invalid status: {status}")

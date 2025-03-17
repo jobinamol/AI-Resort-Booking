@@ -3,8 +3,8 @@ from django.contrib.auth import authenticate, login, logout, update_session_auth
 from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.decorators import login_required
-from .forms import CustomUserCreationForm, PackageForm
-from .models import UserDB, Resort, ResortImage, Package
+from .forms import CustomUserCreationForm, PackageForm, RoomForm
+from .models import UserDB, Resort, ResortImage, Package, Room
 import random
 from django.core.mail import send_mail
 from django.conf import settings
@@ -14,6 +14,10 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import datetime, timedelta
 from django.core.exceptions import ValidationError
+from django.http import JsonResponse
+from django.db.models import Q, Count
+from django.core.paginator import Paginator
+import json
 
 
 # Create your views here.
@@ -639,6 +643,8 @@ def edit_profile(request):
                     'has_pool', 'has_spa', 'has_restaurant', 'has_gym', 'has_wifi', 'has_parking',
                     'has_romantic_package', 'has_family_package', 'has_business_package',
                     'has_wellness_package', 'has_longstay_package', 'has_workation_package',
+                    'has_pool_access', 'has_spa_day', 'has_dining', 'has_workspace',
+                    'has_wedding_venue', 'has_conference_hall', 'has_banquet_hall', 'has_outdoor_venue',
                     'has_water_sports', 'has_trekking', 'has_cycling', 'has_yoga',
                     'has_cooking_class', 'has_kids_club', 'has_airport_transfer', 'has_car_rental',
                     'has_shuttle', 'has_taxi', 'has_student_package', 'has_senior_package',
@@ -904,10 +910,172 @@ def resort_analytics(request):
 def manage_rooms(request):
     try:
         resort = Resort.objects.get(user=request.user)
-        return render(request, 'dashboard/rooms.html', {'resort': resort})
+        rooms = Room.objects.filter(resort=resort)
+        
+        # Calculate statistics
+        total_rooms = rooms.count()
+        available_rooms = rooms.filter(current_status='available').count()
+        occupied_rooms = rooms.filter(current_status='occupied').count()
+        needs_attention = rooms.filter(
+            Q(current_status='maintenance') | 
+            Q(current_status='cleaning') |
+            Q(needs_cleaning=True)
+        ).count()
+        
+        if occupied_rooms > 0:
+            occupancy_rate = (occupied_rooms / total_rooms) * 100
+        else:
+            occupancy_rate = 0
+        
+        context = {
+            'resort': resort,
+            'rooms': rooms,
+            'total_rooms': total_rooms,
+            'available_rooms': available_rooms,
+            'occupancy_rate': occupancy_rate,
+            'needs_attention': needs_attention,
+            'room_types': Room.ROOM_TYPES
+        }
+        
+        return render(request, 'room_list.html', context)
     except Resort.DoesNotExist:
         messages.warning(request, 'Please create your resort profile first.')
         return redirect('add_profile')
+
+@login_required
+def add_room(request):
+    if request.method == 'POST':
+        form = RoomForm(request.POST, request.FILES)
+        if form.is_valid():
+            room = form.save(commit=False)
+            room.resort = Resort.objects.get(user=request.user)
+            room.save()
+            messages.success(request, 'Room added successfully.')
+            return redirect('manage_rooms')
+        else:
+            messages.error(request, 'Error adding room. Please check the form.')
+    return redirect('manage_rooms')
+
+@login_required
+def edit_room(request, room_id):
+    room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+    if request.method == 'GET':
+        data = {
+            'room_number': room.room_number,
+            'room_type': room.room_type,
+            'floor': room.floor,
+            'capacity': room.capacity,
+            'base_price': room.base_price,
+            'size_sqft': room.size_sqft,
+            'amenities': room.amenities,
+            'description': room.description,
+            'current_status': room.current_status
+        }
+        return JsonResponse(data)
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+@login_required
+def update_room(request, room_id):
+    room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+    if request.method == 'POST':
+        form = RoomForm(request.POST, request.FILES, instance=room)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Room updated successfully.')
+            return redirect('manage_rooms')
+        else:
+            messages.error(request, 'Error updating room. Please check the form.')
+    return redirect('manage_rooms')
+
+@login_required
+def delete_room(request, room_id):
+    room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+    if request.method == 'POST':
+        room.delete()
+        messages.success(request, 'Room deleted successfully.')
+    return redirect('manage_rooms')
+
+@login_required
+def room_details(request, room_id):
+    room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+    
+    # Get occupancy data for the last 30 days
+    end_date = timezone.now()
+    start_date = end_date - timedelta(days=30)
+    occupancy_data = room.get_occupancy_stats()
+    
+    data = {
+        'room_number': room.room_number,
+        'room_type': room.get_room_type_display(),
+        'status': room.get_current_status_display(),
+        'current_price': str(room.get_current_price()),
+        'capacity': room.capacity,
+        'size_sqft': room.size_sqft or 'N/A',
+        'amenities': room.get_amenities_list(),
+        'description': room.description or 'No description available',
+        'last_cleaned': room.last_cleaned.strftime('%Y-%m-%d %H:%M') if room.last_cleaned else 'Never',
+        'image_url': room.image.url if room.image else '',
+        'occupancy_data': {
+            'labels': [(start_date + timedelta(days=x)).strftime('%Y-%m-%d') for x in range(31)],
+            'values': [occupancy_data['occupancy_rate'] for _ in range(31)]  # Placeholder data
+        }
+    }
+    
+    return JsonResponse(data)
+
+@login_required
+def mark_room_cleaned(request, room_id):
+    if request.method == 'POST':
+        room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+        room.mark_as_cleaned()
+        return JsonResponse({'success': True})
+    return JsonResponse({'success': False}, status=400)
+
+@login_required
+def schedule_maintenance(request, room_id):
+    if request.method == 'POST':
+        room = get_object_or_404(Room, id=room_id, resort__user=request.user)
+        try:
+            maintenance_date = datetime.strptime(request.POST['maintenance_date'], '%Y-%m-%dT%H:%M')
+            room.schedule_maintenance(maintenance_date)
+            messages.success(request, 'Maintenance scheduled successfully.')
+            return JsonResponse({'success': True})
+        except (ValueError, KeyError):
+            return JsonResponse({'success': False, 'error': 'Invalid date format'}, status=400)
+    return JsonResponse({'success': False}, status=400)
+
+@login_required
+def room_calendar(request):
+    resort = get_object_or_404(Resort, user=request.user)
+    rooms = Room.objects.filter(resort=resort)
+    
+    # Get date range from request or default to current month
+    start_date = request.GET.get('start_date', timezone.now().replace(day=1))
+    end_date = request.GET.get('end_date', (timezone.now() + timedelta(days=30)))
+    
+    if isinstance(start_date, str):
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+    if isinstance(end_date, str):
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+    
+    calendar_data = []
+    for room in rooms:
+        availability = room.get_availability_calendar(start_date, end_date)
+        calendar_data.append({
+            'room_id': room.id,
+            'room_number': room.room_number,
+            'room_type': room.get_room_type_display(),
+            'availability': availability
+        })
+    
+    context = {
+        'resort': resort,
+        'calendar_data': calendar_data,
+        'start_date': start_date,
+        'end_date': end_date
+    }
+    
+    return render(request, 'room_calendar.html', context)
 
 @login_required
 def manage_guests(request):
