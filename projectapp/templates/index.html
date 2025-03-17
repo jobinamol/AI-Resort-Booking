@@ -110,32 +110,40 @@
   </head>
   <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
-	    <div class="container">
-	      <a class="navbar-brand" href="{% url 'index' %}">Lux<span style="color: #00c6ff;">AI</span> <small style="font-size: 0.5em; letter-spacing: 2px;">RESORTS</small></a>
-	      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-	        <span class="oi oi-menu"></span> Menu
-	      </button>
-
-	      <div class="collapse navbar-collapse" id="ftco-nav">
-	        <ul class="navbar-nav ml-auto">
-	          <li class="nav-item active"><a href="{% url 'index' %}" class="nav-link">Home</a></li>
-	          <li class="nav-item"><a href="{% url 'rooms' %}" class="nav-link">Our Rooms</a></li>
-	          <li class="nav-item"><a href="{% url 'restaurants' %}" class="nav-link">Restaurant</a></li>
-	          <li class="nav-item"><a href="{% url 'about' %}" class="nav-link">About Us</a></li>
-	          <li class="nav-item"><a href="{% url 'blog' %}" class="nav-link">Blog</a></li>
-	          <li class="nav-item"><a href="{% url 'contact' %}" class="nav-link">Contact</a></li>
-                  {% if user.is_authenticated %}
-                    <li class="nav-item"><a href="#" class="nav-link">Welcome, {{ user.username }}</a></li>
-                    <li class="nav-item"><a href="{% url 'user_logout' %}" class="nav-link">Logout</a></li>
-                  {% else %}
-                    <li class="nav-item"><a href="{% url 'user_login' %}" class="nav-link">Login</a></li>
-                  
-                  {% endif %}
-	        </ul>
-	      </div>
-	    </div>
-	  </nav>
+	<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+		<div class="container">
+			<a class="navbar-brand" href="{% url 'index' %}">
+				Lux<span style="color: #00c6ff;">AI</span>
+				<small style="font-size: 0.5em; letter-spacing: 2px;">RESORTS</small>
+			</a>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav"
+				aria-expanded="false" aria-label="Toggle navigation">
+				<span class="oi oi-menu"></span> Menu
+			</button>
+	
+			<div class="collapse navbar-collapse" id="ftco-nav">
+				<ul class="navbar-nav ml-auto">
+					<li class="nav-item active"><a href="{% url 'index' %}" class="nav-link">Home</a></li>
+					<li class="nav-item"><a href="{% url 'about' %}" class="nav-link">About Us</a></li>
+					<li class="nav-item"><a href="{% url 'blog' %}" class="nav-link">Blog</a></li>
+					<li class="nav-item"><a href="{% url 'contact' %}" class="nav-link">Contact</a></li>
+	
+					<!-- Login Dropdown -->
+					<li class="nav-item dropdown">
+						<a class="nav-link dropdown-toggle" href="#" id="loginDropdown" role="button" data-toggle="dropdown"
+							aria-haspopup="true" aria-expanded="false">
+							Login
+						</a>
+						<div class="dropdown-menu" aria-labelledby="loginDropdown">
+							<a class="dropdown-item" href="{% url 'guest_login' %}">Guest Login</a>
+							<a class="dropdown-item" href="{% url 'user_login' %}">Resort Owner Login</a>
+						</div>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+	
     <!-- END nav -->
 		<div class="hero-wrap position-relative">
 			<div class="video-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
