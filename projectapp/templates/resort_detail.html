@@ -4,35 +4,63 @@
 {% block content %}
 <!-- Hero Section with Resort Image Carousel -->
 <div class="hero-section position-relative">
-    <div class="resort-carousel">
-        {% for image in resort.gallery.all %}
-        <div class="carousel-item {% if forloop.first %}active{% endif %}">
-            <img src="{{ image.image.url }}" alt="{{ resort.resort_name }}" class="w-100">
+    <div id="resortCarousel" class="carousel slide" data-bs-ride="carousel">
+        <div class="carousel-indicators">
+            {% for image in resort.gallery.all %}
+            <button type="button" data-bs-target="#resortCarousel" data-bs-slide-to="{{ forloop.counter0 }}" 
+                    {% if forloop.first %}class="active" aria-current="true"{% endif %}
+                    aria-label="Slide {{ forloop.counter }}">
+            </button>
+            {% endfor %}
         </div>
-        {% endfor %}
+        <div class="carousel-inner">
+            {% for image in resort.gallery.all %}
+            <div class="carousel-item {% if forloop.first %}active{% endif %}">
+                <img src="{{ image.image.url }}" alt="{{ resort.resort_name }} - {{ image.caption|default:'Resort Image' }}" 
+                     class="d-block w-100 carousel-img">
+                {% if image.caption %}
+                <div class="carousel-caption d-none d-md-block">
+                    <p>{{ image.caption }}</p>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        <button class="carousel-control-prev" type="button" data-bs-target="#resortCarousel" data-bs-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#resortCarousel" data-bs-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="visually-hidden">Next</span>
+        </button>
     </div>
     <div class="hero-content">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8">
-                    <h1 class="text-white mb-2">{{ resort.resort_name }}</h1>
-                    <p class="text-white mb-3">
-                        <i class="fas fa-map-marker-alt"></i> {{ resort.resort_address }}
+                    <h1 class="display-4 text-white mb-2 resort-title">{{ resort.resort_name }}</h1>
+                    <p class="text-white mb-3 location-text">
+                        <i class="fas fa-map-marker-alt me-2"></i> {{ resort.resort_address }}
                     </p>
-                    <div class="rating-badge">
-                        <span class="rating">{{ resort.avg_rating|floatformat:1 }}</span>
-                        <div class="stars">
-                            {% for i in "12345"|make_list %}
-                            <i class="fas fa-star {% if forloop.counter <= resort.avg_rating %}text-warning{% else %}text-muted{% endif %}"></i>
-                            {% endfor %}
+                    <div class="rating-badge glass-effect">
+                        <div class="d-flex align-items-center">
+                            <span class="rating display-6 me-2">{{ resort.avg_rating|floatformat:1 }}</span>
+                            <div class="rating-details">
+                                <div class="stars">
+                                    {% for i in "12345"|make_list %}
+                                    <i class="fas fa-star {% if forloop.counter <= resort.avg_rating %}text-warning{% else %}text-light{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                                <span class="reviews text-white">({{ resort.total_reviews }} reviews)</span>
+                            </div>
                         </div>
-                        <span class="reviews">({{ resort.total_reviews }} reviews)</span>
                     </div>
                 </div>
                 <div class="col-lg-4 text-end">
-                    <div class="price-badge">
-                        Starting from
-                        <span class="price">₹{{ resort.min_price|floatformat:0 }}</span>
+                    <div class="price-badge glass-effect">
+                        <span class="label">Starting from</span>
+                        <span class="price display-5">₹{{ resort.min_price|floatformat:0 }}</span>
                         <span class="per-night">per night</span>
                     </div>
                 </div>
@@ -44,29 +72,49 @@
 <!-- Quick Info Bar -->
 <div class="quick-info-bar">
     <div class="container">
-        <div class="row">
-            <div class="col-md-3">
-                <div class="info-item">
-                    <i class="fas fa-bed"></i>
-                    <span>{{ resort.room_count }} Rooms</span>
+        <div class="row g-4">
+            <div class="col-md-3 col-6">
+                <div class="info-card">
+                    <div class="info-icon">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <div class="info-content">
+                        <h4>{{ resort.room_count }}</h4>
+                        <p>Luxury Rooms</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="info-item">
-                    <i class="fas fa-swimming-pool"></i>
-                    <span>{{ resort.amenities.count }} Amenities</span>
+            <div class="col-md-3 col-6">
+                <div class="info-card">
+                    <div class="info-icon">
+                        <i class="fas fa-swimming-pool"></i>
+                    </div>
+                    <div class="info-content">
+                        <h4>{{ resort.amenities.count }}</h4>
+                        <p>Premium Amenities</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="info-item">
-                    <i class="fas fa-gift"></i>
-                    <span>{{ packages.count }} Packages</span>
+            <div class="col-md-3 col-6">
+                <div class="info-card">
+                    <div class="info-icon">
+                        <i class="fas fa-gift"></i>
+                    </div>
+                    <div class="info-content">
+                        <h4>{{ packages.count }}</h4>
+                        <p>Exclusive Packages</p>
+                    </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="info-item">
-                    <i class="fas fa-star"></i>
-                    <span>{{ resort.avg_rating|floatformat:1 }} Rating</span>
+            <div class="col-md-3 col-6">
+                <div class="info-card">
+                    <div class="info-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="info-content">
+                        <h4>{{ resort.avg_rating|floatformat:1 }}</h4>
+                        <p>Guest Rating</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -81,7 +129,10 @@
             <div class="col-lg-8">
                 <!-- About Section -->
                 <section class="content-section">
-                    <h2>About {{ resort.resort_name }}</h2>
+                    <div class="section-header">
+                        <h2>About {{ resort.resort_name }}</h2>
+                        <div class="section-line"></div>
+                    </div>
                     <div class="description">
                         {{ resort.description|linebreaks }}
                     </div>
@@ -89,63 +140,158 @@
 
                 <!-- Amenities Section -->
                 <section class="content-section">
-                    <h2>Resort Amenities</h2>
+                    <div class="section-header">
+                        <h2>Resort Amenities</h2>
+                        <div class="section-line"></div>
+                    </div>
                     <div class="amenities-grid">
                         {% for category, items in amenities.items %}
                         <div class="amenity-category">
-                            <h3>{{ category }}</h3>
-                            <ul class="amenity-list">
+                            <h3 class="category-title">{{ category }}</h3>
+                            <div class="amenity-cards">
                                 {% for item in items %}
-                                <li>
-                                    <i class="{{ item.icon }}"></i>
+                                <div class="amenity-card">
+                                    <div class="amenity-icon">
+                                        <i class="{{ item.icon }}"></i>
+                                    </div>
                                     <span>{{ item.name }}</span>
-                                </li>
+                                </div>
                                 {% endfor %}
-                            </ul>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Gallery Section -->
+                <section class="content-section">
+                    <div class="section-header">
+                        <h2>Resort Gallery</h2>
+                        <div class="section-line"></div>
+                    </div>
+                    <div class="gallery-grid">
+                        {% for image in resort.gallery.all %}
+                        <div class="gallery-item" data-bs-toggle="modal" data-bs-target="#imageModal{{ image.id }}">
+                            <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Resort Image' }}" class="gallery-img">
+                            {% if image.caption %}
+                            <div class="gallery-caption">
+                                <p>{{ image.caption }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Image Modal -->
+                        <div class="modal fade" id="imageModal{{ image.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-xl">
+                                <div class="modal-content">
+                                    <div class="modal-body p-0">
+                                        <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        <img src="{{ image.image.url }}" alt="{{ image.caption|default:'Resort Image' }}" class="img-fluid">
+                                        {% if image.caption %}
+                                        <div class="modal-caption p-3">
+                                            <p class="mb-0">{{ image.caption }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         {% endfor %}
                     </div>
                 </section>
 
                 <!-- Packages Section -->
-                <section class="content-section">
-                    <h2>Available Packages</h2>
-                    <div class="packages-grid">
-                        {% for package in packages %}
-                        <div class="package-card">
-                            <div class="package-image">
-                                <img src="{{ package.image.url }}" alt="{{ package.package_name }}">
-                                {% if package.discount_percentage > 0 %}
-                                <div class="discount-badge">
-                                    {{ package.discount_percentage }}% OFF
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="package-content">
-                                <h3>{{ package.package_name }}</h3>
-                                <div class="package-meta">
-                                    <span class="duration">
-                                        <i class="fas fa-clock"></i>
-                                        {{ package.get_duration_display }}
-                                    </span>
-                                    <span class="guests">
-                                        <i class="fas fa-user"></i>
-                                        Up to {{ package.max_guests }} guests
-                                    </span>
-                                </div>
-                                <p>{{ package.description|truncatewords:20 }}</p>
-                                <div class="package-price">
-                                    {% if package.discount_percentage > 0 %}
-                                    <span class="original-price">₹{{ package.price }}</span>
-                                    {% endif %}
-                                    <span class="final-price">₹{{ package.get_discounted_price }}</span>
-                                </div>
-                                <a href="{% url 'package_detail' package.id %}" class="btn btn-primary">View Details</a>
-                            </div>
+                <section class="content-section" id="packages">
+                    <div class="section-header mb-4">
+                        <h2>Available Packages</h2>
+                        <div class="section-line"></div>
+                        <div class="package-filters mt-3">
+                            <button class="btn btn-outline-primary active" data-filter="all">All Packages</button>
+                            <button class="btn btn-outline-primary" data-filter="staycation">Staycation</button>
+                            <button class="btn btn-outline-primary" data-filter="daycation">Daycation</button>
                         </div>
-                        {% empty %}
-                        <p>No packages available at the moment.</p>
-                        {% endfor %}
+                    </div>
+                    <div class="packages-container">
+                        <div class="packages-grid">
+                            {% for package in packages %}
+                            <div class="package-item" data-type="{{ package.package_type|lower }}" data-aos="fade-up" data-aos-delay="{{ forloop.counter0 }}00">
+                                <div class="package-card">
+                                    <div class="package-image-wrapper">
+                                        <div class="image-skeleton"></div>
+                                        {% if package.image %}
+                                        <img src="{{ package.image.url }}" alt="{{ package.package_name }}" class="package-image lazy-load">
+                                        {% else %}
+                                        <img src="{% static 'images/default-package.jpg' %}" alt="{{ package.package_name }}" class="package-image">
+                                        {% endif %}
+                                        {% if package.discount_percentage > 0 %}
+                                        <div class="package-badge discount">
+                                            <span>{{ package.discount_percentage }}% OFF</span>
+                                        </div>
+                                        {% endif %}
+                                        {% if package.is_featured %}
+                                        <div class="package-badge featured">
+                                            <i class="fas fa-crown"></i> Featured
+                                        </div>
+                                        {% endif %}
+                                        <div class="package-type-badge">
+                                            <span class="{% if package.package_type == 'Staycation' %}staycation{% else %}daycation{% endif %}">
+                                                {{ package.package_type }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="package-content">
+                                        <h3 class="package-title">{{ package.package_name }}</h3>
+                                        <div class="package-meta">
+                                            <div class="meta-item">
+                                                <i class="fas fa-clock"></i>
+                                                {{ package.get_duration_display }}
+                                            </div>
+                                            <div class="meta-item">
+                                                <i class="fas fa-user-friends"></i>
+                                                Up to {{ package.max_guests }} guests
+                                            </div>
+                                        </div>
+                                        <p class="package-description">{{ package.description|truncatewords:20 }}</p>
+                                        <div class="package-amenities">
+                                            {% for amenity in package.amenities.all|slice:":4" %}
+                                            <span class="amenity-tag">
+                                                <i class="{{ amenity.icon }}"></i> {{ amenity.name }}
+                                            </span>
+                                            {% endfor %}
+                                            {% if package.amenities.count > 4 %}
+                                            <span class="amenity-tag more">+{{ package.amenities.count|add:"-4" }} more</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="package-price">
+                                            {% if package.discount_percentage > 0 %}
+                                            <div class="original-price">
+                                                <span class="label">Original Price</span>
+                                                <span class="amount">₹{{ package.price|floatformat:0 }}</span>
+                                            </div>
+                                            {% endif %}
+                                            <div class="final-price">
+                                                <span class="label">Special Price</span>
+                                                <span class="amount">₹{{ package.get_discounted_price|floatformat:0 }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="package-actions">
+                                            <a href="{% url 'package_detail' package.id %}" class="btn btn-outline-primary">View Details</a>
+                                            <button class="btn btn-primary book-now-btn" data-package-id="{{ package.id }}">
+                                                Book Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="no-packages">
+                                <div class="alert alert-info text-center">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    No packages available at the moment.
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                 </section>
 
@@ -357,24 +503,59 @@
 
 <!-- Custom Styles -->
 <style>
-    /* Hero Section */
+    /* Hero Section Styles */
     .hero-section {
-        height: 70vh;
+        height: 80vh;
         position: relative;
         overflow: hidden;
     }
 
-    .resort-carousel {
+    .carousel {
         height: 100%;
     }
 
-    .resort-carousel .carousel-item {
+    .carousel-inner {
         height: 100%;
     }
 
-    .resort-carousel img {
+    .carousel-item {
+        height: 100%;
+    }
+
+    .carousel-img {
         object-fit: cover;
         height: 100%;
+        width: 100%;
+        filter: brightness(0.8);
+    }
+
+    .carousel-indicators {
+        margin-bottom: 2rem;
+    }
+
+    .carousel-indicators button {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin: 0 6px;
+        background-color: rgba(255, 255, 255, 0.5);
+        border: 2px solid rgba(255, 255, 255, 0.7);
+    }
+
+    .carousel-indicators button.active {
+        background-color: white;
+    }
+
+    .carousel-control-prev,
+    .carousel-control-next {
+        width: 5%;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .hero-section:hover .carousel-control-prev,
+    .hero-section:hover .carousel-control-next {
+        opacity: 1;
     }
 
     .hero-content {
@@ -382,30 +563,144 @@
         bottom: 0;
         left: 0;
         right: 0;
-        padding: 2rem 0;
-        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        padding: 3rem 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+    }
+
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .resort-title {
+        font-weight: 600;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .location-text {
+        font-size: 1.2rem;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .rating-badge {
+        display: inline-block;
+    }
+
+    .rating-badge .rating {
+        color: white;
+        font-weight: 600;
+    }
+
+    .rating-details {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .stars {
+        font-size: 1.2rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .price-badge {
+        text-align: center;
+        color: white;
+    }
+
+    .price-badge .label {
+        display: block;
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 0.5rem;
+    }
+
+    .price-badge .price {
+        display: block;
+        font-weight: 600;
+        color: #ffd700;
+        margin-bottom: 0.3rem;
+    }
+
+    .price-badge .per-night {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    @media (max-width: 768px) {
+        .hero-section {
+            height: 60vh;
+        }
+
+        .resort-title {
+            font-size: 2rem;
+        }
+
+        .location-text {
+            font-size: 1rem;
+        }
+
+        .price-badge {
+            margin-top: 1rem;
+        }
+
+        .glass-effect {
+            padding: 1rem;
+        }
     }
 
     /* Quick Info Bar */
     .quick-info-bar {
         background: white;
-        padding: 1rem 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 2rem 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         position: sticky;
         top: 0;
         z-index: 100;
     }
 
-    .info-item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        color: #2c3e50;
+    .info-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
 
-    .info-item i {
-        font-size: 1.5rem;
-        color: #3498db;
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .info-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+
+    .info-icon i {
+        font-size: 1.8rem;
+        color: white;
+    }
+
+    .info-content h4 {
+        font-size: 1.8rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.3rem;
+    }
+
+    .info-content p {
+        color: #7f8c8d;
+        margin: 0;
+        font-size: 0.9rem;
     }
 
     /* Content Sections */
@@ -420,20 +715,144 @@
     /* Amenities Grid */
     .amenities-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
         gap: 2rem;
     }
 
-    .amenity-list {
-        list-style: none;
-        padding: 0;
+    .category-title {
+        font-size: 1.3rem;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e0e0e0;
     }
 
-    .amenity-list li {
+    .amenity-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 1rem;
+    }
+
+    .amenity-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1rem;
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.5rem;
+        gap: 1rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        transition: transform 0.3s ease;
+    }
+
+    .amenity-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .amenity-icon {
+        width: 40px;
+        height: 40px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .amenity-icon i {
+        font-size: 1.2rem;
+        color: #3498db;
+    }
+
+    /* Gallery Grid Styles */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .gallery-item {
+        position: relative;
+        border-radius: 10px;
+        overflow: hidden;
+        cursor: pointer;
+        aspect-ratio: 4/3;
+    }
+
+    .gallery-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.3s ease;
+    }
+
+    .gallery-item:hover .gallery-img {
+        transform: scale(1.05);
+    }
+
+    .gallery-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 0.5rem;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+    }
+
+    .gallery-item:hover .gallery-caption {
+        transform: translateY(0);
+    }
+
+    /* Modal Styles */
+    .modal-content {
+        background: transparent;
+        border: none;
+    }
+
+    .modal-body {
+        position: relative;
+        padding: 0;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .modal-caption {
+        background: rgba(0,0,0,0.8);
+        color: white;
+    }
+
+    .btn-close {
+        background-color: white;
+        opacity: 0.8;
+        border-radius: 50%;
+        padding: 0.5rem;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .info-card {
+            padding: 1rem;
+        }
+
+        .info-icon {
+            width: 50px;
+            height: 50px;
+        }
+
+        .info-content h4 {
+            font-size: 1.5rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.8rem;
+        }
+
+        .amenity-cards {
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        }
     }
 
     /* Package and Room Cards */
@@ -512,6 +931,364 @@
             grid-template-columns: 1fr;
         }
     }
+
+    .packages-grid {
+        margin: 0 -15px;
+    }
+
+    .package-card {
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .package-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .package-image {
+        height: 200px;
+        overflow: hidden;
+    }
+
+    .package-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .discount-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+
+    .featured-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+    }
+
+    .package-type .badge {
+        font-size: 0.8rem;
+        padding: 0.5em 1em;
+    }
+
+    .package-meta {
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .package-description {
+        font-size: 0.95rem;
+        color: #555;
+        line-height: 1.5;
+    }
+
+    .package-price .original-price {
+        font-size: 0.9rem;
+    }
+
+    .package-price .final-price {
+        font-weight: bold;
+    }
+
+    .package-filters {
+        display: flex;
+        gap: 10px;
+    }
+
+    .package-filters .btn {
+        font-size: 0.9rem;
+        padding: 0.4rem 1rem;
+    }
+
+    .package-filters .btn.active {
+        background-color: var(--bs-primary);
+        color: white;
+    }
+
+    /* Updated Package Styles */
+    .packages-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .packages-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin: 0;
+    }
+
+    .package-card {
+        background: white;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+    }
+
+    .package-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+
+    .package-image-wrapper {
+        position: relative;
+        height: 250px;
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+
+    .image-skeleton {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    .package-image {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+        opacity: 0;
+    }
+
+    .package-image.loaded {
+        opacity: 1;
+    }
+
+    .package-card:hover .package-image {
+        transform: scale(1.1);
+    }
+
+    .package-badge {
+        position: absolute;
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        z-index: 2;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .package-badge.discount {
+        top: 1rem;
+        right: 1rem;
+        background: linear-gradient(135deg, #ff4e50, #f9d423);
+        color: white;
+    }
+
+    .package-badge.featured {
+        top: 1rem;
+        left: 1rem;
+        background: linear-gradient(135deg, #4facfe, #00f2fe);
+        color: white;
+    }
+
+    .package-type-badge {
+        position: absolute;
+        bottom: 1rem;
+        left: 1rem;
+        right: 1rem;
+        text-align: center;
+        z-index: 2;
+    }
+
+    .package-type-badge span {
+        padding: 0.5rem 1.5rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: white;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .package-type-badge span.staycation {
+        background: rgba(52, 152, 219, 0.9);
+    }
+
+    .package-type-badge span.daycation {
+        background: rgba(46, 204, 113, 0.9);
+    }
+
+    .package-content {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1;
+    }
+
+    .package-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 1rem;
+    }
+
+    .package-meta {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+    }
+
+    .meta-item i {
+        color: #3498db;
+    }
+
+    .package-description {
+        color: #666;
+        line-height: 1.6;
+        margin-bottom: 1.5rem;
+    }
+
+    .package-amenities {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .amenity-tag {
+        background: #f8f9fa;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        color: #666;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .amenity-tag i {
+        color: #3498db;
+    }
+
+    .amenity-tag.more {
+        background: #e8f4f8;
+        color: #3498db;
+    }
+
+    .package-price {
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid #eee;
+        margin-bottom: 1rem;
+    }
+
+    .original-price {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .original-price .label {
+        color: #999;
+        font-size: 0.9rem;
+    }
+
+    .original-price .amount {
+        color: #999;
+        text-decoration: line-through;
+        font-size: 1.1rem;
+    }
+
+    .final-price {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .final-price .label {
+        color: #2c3e50;
+        font-size: 0.9rem;
+    }
+
+    .final-price .amount {
+        color: #2ecc71;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    .package-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+
+    .package-filters {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .package-filters .btn {
+        border-radius: 25px;
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+    }
+
+    @media (max-width: 1200px) {
+        .packages-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .packages-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .package-image-wrapper {
+            height: 200px;
+        }
+    }
+
+    /* Smooth Scrolling */
+    .package-item {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .package-item.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* Loading Animation */
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
 </style>
 
 <!-- Initialize Map -->
@@ -541,5 +1318,75 @@
 </script>
 <script async defer
     src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap">
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Lazy loading for images
+    const lazyImages = document.querySelectorAll('.lazy-load');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.addEventListener('load', () => {
+                    img.classList.add('loaded');
+                    img.previousElementSibling?.remove(); // Remove skeleton
+                });
+                img.src = img.getAttribute('src');
+                observer.unobserve(img);
+            }
+        });
+    });
+
+    lazyImages.forEach(img => imageObserver.observe(img));
+
+    // Smooth scroll animation for package cards
+    const packageItems = document.querySelectorAll('.package-item');
+    const packageObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('visible');
+            }
+        });
+    }, {
+        threshold: 0.1
+    });
+
+    packageItems.forEach(item => packageObserver.observe(item));
+
+    // Package filtering with smooth transitions
+    const filterButtons = document.querySelectorAll('.package-filters .btn');
+    filterButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const filterValue = this.getAttribute('data-filter');
+            
+            // Update active button state
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            this.classList.add('active');
+
+            // Filter packages with animation
+            packageItems.forEach(item => {
+                const itemType = item.getAttribute('data-type');
+                if (filterValue === 'all' || itemType === filterValue) {
+                    item.style.display = 'block';
+                    setTimeout(() => item.classList.add('visible'), 10);
+                } else {
+                    item.classList.remove('visible');
+                    setTimeout(() => item.style.display = 'none', 300);
+                }
+            });
+        });
+    });
+
+    // Book Now button handler with smooth transition
+    const bookButtons = document.querySelectorAll('.book-now-btn');
+    bookButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const packageId = this.getAttribute('data-package-id');
+            this.classList.add('loading');
+            window.location.href = `/package/${packageId}/book/`;
+        });
+    });
+});
 </script>
 {% endblock %}

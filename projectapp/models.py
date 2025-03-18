@@ -81,6 +81,11 @@ class Resort(models.Model):
     check_in_time = models.TimeField(verbose_name="Check-in Time", null=True, blank=True)
     check_out_time = models.TimeField(verbose_name="Check-out Time", null=True, blank=True)
     min_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Starting Price")
+    average_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0, verbose_name="Average Rating")
+    total_reviews = models.PositiveIntegerField(default=0, verbose_name="Total Reviews")
+    featured = models.BooleanField(default=False, verbose_name="Featured Resort")
+    gallery = models.ManyToManyField('ResortImage', related_name='resort_galleries', blank=True)
+    main_image = models.ForeignKey('ResortImage', on_delete=models.SET_NULL, null=True, blank=True, related_name='resort_main_image')
     
     # Basic Facilities
     has_pool = models.BooleanField(default=False, verbose_name="Swimming Pool")
@@ -812,3 +817,202 @@ class GuestUser(models.Model):
     def member_since(self):
         """Get formatted member since date."""
         return self.date_joined.strftime("%B %Y")
+
+class Review(models.Model):
+    RATING_CHOICES = [
+        (1, '1 Star'),
+        (2, '2 Stars'),
+        (3, '3 Stars'),
+        (4, '4 Stars'),
+        (5, '5 Stars'),
+    ]
+
+    guest = models.ForeignKey(GuestUser, on_delete=models.CASCADE, related_name='reviews')
+    resort = models.ForeignKey(Resort, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='reviews', null=True, blank=True)
+    rating = models.IntegerField(choices=RATING_CHOICES)
+    comment = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_verified = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Review'
+        verbose_name_plural = 'Reviews'
+
+    def __str__(self):
+        reviewed_item = self.resort or self.package or self.room
+        return f"{self.guest.full_name}'s {self.rating}-star review for {reviewed_item}"
+
+    def clean(self):
+        # Ensure only one of resort, package, or room is set
+        if sum(bool(x) for x in [self.resort, self.package, self.room]) != 1:
+            raise ValidationError("Review must be associated with exactly one of: resort, package, or room")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+        
+        # Update average rating for the reviewed item
+        if self.resort:
+            self.update_resort_rating()
+        elif self.package:
+            self.update_package_rating()
+        elif self.room:
+            self.update_room_rating()
+
+    def update_resort_rating(self):
+        """Update the resort's average rating"""
+        avg_rating = self.resort.reviews.aggregate(models.Avg('rating'))['rating__avg'] or 0
+        self.resort.average_rating = round(avg_rating, 2)
+        self.resort.total_reviews = self.resort.reviews.count()
+        self.resort.save()
+
+    def update_package_rating(self):
+        """Update the package's average rating"""
+        avg_rating = self.package.reviews.aggregate(models.Avg('rating'))['rating__avg'] or 0
+        self.package.average_rating = round(avg_rating, 2)
+        self.package.save()
+
+    def update_room_rating(self):
+        """Update the room's rating statistics"""
+        # If you have rating fields in the Room model, update them here
+        pass
+
+class Booking(models.Model):
+    BOOKING_STATUS = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+        ('completed', 'Completed')
+    ]
+
+    FOOD_PREFERENCE = [
+        ('veg', 'Vegetarian'),
+        ('non_veg', 'Non-Vegetarian'),
+        ('both', 'Both')
+    ]
+
+    PAYMENT_STATUS = [
+        ('pending', 'Pending'),
+        ('partial', 'Partially Paid'),
+        ('paid', 'Fully Paid'),
+        ('refunded', 'Refunded')
+    ]
+
+    guest = models.ForeignKey(GuestUser, on_delete=models.CASCADE)
+    resort = models.ForeignKey(Resort, on_delete=models.CASCADE)
+    package = models.ForeignKey(Package, on_delete=models.SET_NULL, null=True, blank=True)
+    room = models.ForeignKey(Room, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    # Booking Details
+    check_in = models.DateField()
+    check_out = models.DateField()
+    adults = models.PositiveIntegerField(default=1)
+    children = models.PositiveIntegerField(default=0)
+    booking_status = models.CharField(max_length=20, choices=BOOKING_STATUS, default='pending')
+    
+    # Guest Preferences
+    food_preference = models.CharField(max_length=10, choices=FOOD_PREFERENCE, default='both')
+    special_requests = models.TextField(blank=True, null=True)
+    
+    # Payment Information
+    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    paid_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        if self.check_in and self.check_out:
+            if self.check_in < timezone.now().date():
+                raise ValidationError("Check-in date cannot be in the past")
+            if self.check_out <= self.check_in:
+                raise ValidationError("Check-out date must be after check-in date")
+            if self.package and self.room:
+                raise ValidationError("Cannot book both package and room. Choose one.")
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    @property
+    def total_nights(self):
+        return (self.check_out - self.check_in).days
+
+    @property
+    def balance_amount(self):
+        return self.total_amount - self.paid_amount
+
+    def __str__(self):
+        return f"Booking #{self.id} - {self.guest.name}"
+
+class BookingPayment(models.Model):
+    PAYMENT_METHOD = [
+        ('card', 'Credit/Debit Card'),
+        ('upi', 'UPI'),
+        ('netbanking', 'Net Banking'),
+        ('wallet', 'Digital Wallet')
+    ]
+
+    PAYMENT_STATUS = [
+        ('pending', 'Pending'),
+        ('success', 'Success'),
+        ('failed', 'Failed'),
+        ('refunded', 'Refunded')
+    ]
+
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD)
+    transaction_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    razorpay_order_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    razorpay_payment_id = models.CharField(max_length=100, unique=True, null=True, blank=True)
+    razorpay_signature = models.CharField(max_length=200, null=True, blank=True)
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS, default='pending')
+    payment_response = models.JSONField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Payment {self.transaction_id or self.razorpay_order_id} for Booking #{self.booking.id}"
+
+    class Meta:
+        ordering = ['-created_at']
+
+class RoomAvailability(models.Model):
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    date = models.DateField()
+    is_available = models.BooleanField(default=True)
+    booking = models.ForeignKey(Booking, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('room', 'date')
+
+    def __str__(self):
+        status = "Available" if self.is_available else "Booked"
+        return f"{self.room.room_type} - {self.date} - {status}"
+
+class PackageAvailability(models.Model):
+    package = models.ForeignKey(Package, on_delete=models.CASCADE)
+    date = models.DateField()
+    total_slots = models.PositiveIntegerField()
+    booked_slots = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        unique_together = ('package', 'date')
+
+    @property
+    def available_slots(self):
+        return max(0, self.total_slots - self.booked_slots)
+
+    @property
+    def is_available(self):
+        return self.available_slots > 0
+
+    def __str__(self):
+        return f"{self.package.package_name} - {self.date} ({self.available_slots} slots available)"

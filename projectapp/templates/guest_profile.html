@@ -1,1173 +1,291 @@
-{% extends 'guestindex.html' %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guest Profile - LuxAI Resorts</title>
+    
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f8f9fa;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #1a73e8;
+        }
+        .profile-header {
+            background: linear-gradient(135deg, #1a73e8, #0d47a1);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+        }
+        .profile-image {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 5px solid white;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            object-fit: cover;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-primary {
+            background: #1a73e8;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+        }
+        .btn-primary:hover {
+            background: #1557b0;
+            transform: translateY(-1px);
+        }
+        .nav-pills .nav-link {
+            color: #444;
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+        }
+        .nav-pills .nav-link.active {
+            background: #1a73e8;
+            color: white;
+        }
+        .booking-card {
+            border-left: 4px solid #1a73e8;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .status-confirmed {
+            background: #e3f2fd;
+            color: #1a73e8;
+        }
+        .status-pending {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        .status-cancelled {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">LuxAI</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'index' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'explore_page' %}">Explore</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link active" href="{% url 'view_profile' %}">Profile</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'user_logout' %}">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'user_login' %}">Login</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-{% block content %}
-<!-- Video Background -->
-<div class="video-background">
-    <video autoplay muted loop playsinline>
-        <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
-    </video>
-    <div class="video-overlay"></div>
-</div>
-
-<!-- Navigation Bar -->
-<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-transparent ftco-navbar-light fixed-top" id="ftco-navbar">
-    <div class="container-fluid px-md-5">
-        <!-- Brand Logo -->
-        <a class="navbar-brand d-flex align-items-center" href="{% url 'index' %}">
-            <span class="brand-text">Lux<span class="text-gradient">AI</span></span>
-            <small class="ml-2 text-gradient" style="font-size: 0.5em; letter-spacing: 3px;">RESORTS</small>
-        </a>
-
-        <!-- Search Bar -->
-        <div class="navbar-search d-none d-lg-flex mx-lg-5">
-            <div class="search-wrapper">
-                <div class="input-group">
-                    <input type="text" class="form-control search-input" placeholder="Search resorts, locations, packages...">
-                    <div class="input-group-append">
-                        <button class="btn search-btn" type="button"><i class="icon-search"></i></button>
-                    </div>
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-3 text-center">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Profile Picture" class="profile-image">
+                    {% else %}
+                        <img src="{% static 'images/default-avatar.jpg' %}" alt="Default Profile Picture" class="profile-image">
+                    {% endif %}
+                </div>
+                <div class="col-md-9">
+                    <h1 class="mb-2">{{ user.first_name }} {{ user.last_name }}</h1>
+                    <p class="mb-1"><i class="fas fa-envelope me-2"></i>{{ user.email }}</p>
+                    <p class="mb-0"><i class="fas fa-phone me-2"></i>{{ user.phone_number|default:"Not provided" }}</p>
                 </div>
             </div>
         </div>
-
-        <!-- Mobile Toggle Button -->
-        <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#ftco-nav">
-            <span class="icon-menu h4 m-0 text-white"></span>
-        </button>
-
-        <!-- Main Navigation -->
-        <div class="collapse navbar-collapse" id="ftco-nav">
-            <ul class="navbar-nav align-items-center ml-auto">
-                <!-- Home -->
-                <li class="nav-item">
-                    <a href="{% url 'guestindex' %}" class="nav-link px-3">
-                        <i class="icon-home"></i>
-                        <span class="d-none d-lg-inline ml-2">Home</span>
-                    </a>
-                </li>
-
-                <!-- Explore Dropdown -->
-                <li class="nav-item dropdown">
-                    <a class="nav-link px-3 dropdown-toggle" href="#" id="exploreDropdown" data-toggle="dropdown">
-                        <i class="icon-map-marker"></i>
-                        <span class="d-none d-lg-inline ml-2">Explore</span>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-right animate slideIn">
-                        <a class="dropdown-item" href="{% url 'rooms' %}">
-                            <i class="icon-hotel mr-2"></i>Staycation Resorts
-                        </a>
-                        <a class="dropdown-item" href="{% url 'restaurants' %}">
-                            <i class="icon-sun mr-2"></i>Daycation Experiences
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a class="dropdown-item" href="#">
-                            <i class="icon-tag mr-2"></i>Special Offers
-                        </a>
-                    </div>
-                </li>
-
-                <!-- Bookings -->
-                <li class="nav-item">
-                    <a href="#" class="nav-link px-3">
-                        <i class="icon-calendar"></i>
-                        <span class="d-none d-lg-inline ml-2">Bookings</span>
-                    </a>
-                </li>
-
-                <!-- Membership -->
-                <li class="nav-item">
-                    <a href="#" class="nav-link px-3">
-                        <i class="icon-star"></i>
-                        <span class="d-none d-lg-inline ml-2">Membership</span>
-                    </a>
-                </li>
-
-                <!-- Notifications -->
-                <li class="nav-item ml-lg-3">
-                    <a href="#" class="nav-link position-relative icon-btn">
-                        <i class="icon-bell"></i>
-                        <span class="notification-badge">3</span>
-                    </a>
-                </li>
-
-                <!-- Cart -->
-                <li class="nav-item ml-lg-3">
-                    <a href="#" class="nav-link position-relative icon-btn">
-                        <i class="icon-shopping-cart"></i>
-                        <span class="cart-badge">2</span>
-                    </a>
-                </li>
-
-                <!-- User Profile -->
-                <li class="nav-item dropdown ml-lg-3">
-                    {% if request.session.guest_id %}
-                        <a class="nav-link dropdown-toggle d-flex align-items-center user-profile-link" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <div class="user-avatar-wrapper">
-                                {% if guest.profile_image %}
-                                    <img src="{{ guest.profile_image.url }}" alt="{{ request.session.guest_name }}" class="user-avatar-img">
-                                {% else %}
-                                    <div class="user-avatar-placeholder">
-                                        <span>{{ request.session.guest_name|make_list|first|upper }}</span>
-                                    </div>
-                                {% endif %}
-                                <span class="d-none d-lg-inline ml-2 user-name">{{ request.session.guest_name }}</span>
-                                <i class="icon-chevron-down ml-1 dropdown-icon"></i>
-                            </div>
-                        </a>
-                        <div class="dropdown-menu user-dropdown animate slideIn" aria-labelledby="userDropdown">
-                            <div class="dropdown-header">
-                                <div class="d-flex align-items-center">
-                                    <div class="user-avatar-large">
-                                        {% if guest.profile_image %}
-                                            <img src="{{ guest.profile_image.url }}" alt="{{ request.session.guest_name }}" class="user-avatar-img-large">
-                                        {% else %}
-                                            <div class="user-avatar-placeholder-large">
-                                                <span>{{ request.session.guest_name|make_list|first|upper }}</span>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                    <div class="ml-3">
-                                        <h6 class="mb-0">{{ request.session.guest_name }}</h6>
-                                        <small class="text-muted">Guest Member</small>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item hover-effect" href="{% url 'guest_profile_view' %}">
-                                <i class="icon-user-o mr-2 menu-icon"></i>My Profile
-                            </a>
-                            <a class="dropdown-item hover-effect" href="{% url 'guest_profile_view' %}#preferences">
-                                <i class="icon-heart mr-2 menu-icon"></i>My Preferences
-                            </a>
-                            <a class="dropdown-item hover-effect" href="{% url 'guest_profile_view' %}#security">
-                                <i class="icon-lock mr-2 menu-icon"></i>Security
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <form action="{% url 'guest_logout' %}" method="POST" class="dropdown-item p-0">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-link dropdown-item text-danger hover-effect w-100 text-left">
-                                    <i class="icon-power mr-2 menu-icon"></i>Logout
-                                </button>
-                            </form>
-                        </div>
-                    {% else %}
-                        <a class="nav-link dropdown-toggle d-flex align-items-center user-profile-link" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <div class="user-avatar-wrapper">
-                                <div class="user-avatar-placeholder">
-                                    <i class="icon-user"></i>
-                                </div>
-                                <span class="d-none d-lg-inline ml-2">Account</span>
-                                <i class="icon-chevron-down ml-1 dropdown-icon"></i>
-                            </div>
-                        </a>
-                        <div class="dropdown-menu user-dropdown animate slideIn" aria-labelledby="userDropdown">
-                            <a class="dropdown-item hover-effect" href="{% url 'guest_login' %}">
-                                <i class="icon-login mr-2 menu-icon"></i>Login
-                            </a>
-                            <a class="dropdown-item hover-effect" href="{% url 'guest_signup' %}">
-                                <i class="icon-user-plus mr-2 menu-icon"></i>Sign Up
-                            </a>
-                        </div>
-                    {% endif %}
-                </li>
-            </ul>
-        </div>
     </div>
-</nav>
 
-<div class="profile-wrapper">
-    <div class="container py-5">
+    <!-- Main Content -->
+    <div class="container">
         {% if messages %}
         <div class="messages mb-4">
             {% for message in messages %}
-            <div class="alert alert-{% if message.tags == 'error' %}danger{% elif message.tags == 'warning' %}warning{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
                 {{ message }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
             {% endfor %}
         </div>
         {% endif %}
 
-        <!-- Profile Header -->
-        <div class="profile-header mb-4">
-            <div class="row align-items-center">
-                <div class="col-md-3 text-center">
-                    <div class="profile-image-container">
-                        <div class="profile-image-wrapper">
-                            {% if guest.profile_image %}
-                                <img src="{{ guest.profile_image.url }}" alt="{{ guest.full_name }}" class="profile-image">
-                            {% else %}
-                                <div class="profile-image-placeholder">
-                                    <span>{{ guest.full_name|make_list|first|upper }}</span>
-                                </div>
-                            {% endif %}
-                            <div class="profile-image-overlay">
-                                <label for="profileImage" class="mb-0 upload-trigger">
-                                    <i class="icon-camera"></i>
-                                </label>
-                            </div>
-                        </div>
-                        <div class="profile-image-info mt-2">
-                            <small class="text-muted">Click to update photo</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-9">
-                    <div class="profile-info-wrapper">
-                        <div class="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h1 class="profile-name">{{ guest.full_name }}</h1>
-                                <p class="profile-email"><i class="icon-envelope-o mr-2"></i>{{ guest.email }}</p>
-                            </div>
-                            <button class="btn btn-outline-primary btn-sm edit-profile-btn" data-toggle="tab" data-target="#personal">
-                                <i class="icon-edit mr-1"></i> Edit Profile
-                            </button>
-                        </div>
-                        <div class="profile-stats">
-                            <div class="stat-item">
-                                <i class="icon-calendar-o stat-icon"></i>
-                                <div class="stat-details">
-                                    <span class="stat-value">{{ guest.date_joined|date:"F Y" }}</span>
-                                    <span class="stat-label">Member Since</span>
-                                </div>
-                            </div>
-                            <div class="stat-divider"></div>
-                            <div class="stat-item">
-                                <i class="icon-clock-o stat-icon"></i>
-                                <div class="stat-details">
-                                    <span class="stat-value">{{ guest.last_login|date:"F d, Y" }}</span>
-                                    <span class="stat-label">Last Login</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
         <!-- Profile Navigation -->
-        <ul class="nav nav-tabs profile-tabs mb-4" id="profileTabs" role="tablist">
-            <li class="nav-item">
-                <a class="nav-link active" id="personal-tab" data-toggle="tab" href="#personal" role="tab">
-                    <i class="icon-user mr-2"></i>Personal Info
-                </a>
+        <ul class="nav nav-pills mb-4" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#bookings">
+                    <i class="fas fa-calendar-check me-2"></i>My Bookings
+                </button>
             </li>
-            <li class="nav-item">
-                <a class="nav-link" id="security-tab" data-toggle="tab" href="#security" role="tab">
-                    <i class="icon-shield mr-2"></i>Security
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" id="preferences-tab" data-toggle="tab" href="#preferences" role="tab">
-                    <i class="icon-heart mr-2"></i>Preferences
-                </a>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#settings">
+                    <i class="fas fa-cog me-2"></i>Settings
+                </button>
             </li>
         </ul>
 
-        <!-- Profile Content -->
-        <div class="tab-content profile-content" id="profileTabsContent">
-            <!-- Personal Information Tab -->
-            <div class="tab-pane fade show active" id="personal" role="tabpanel">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h3 class="card-title mb-4">Personal Information</h3>
-                        <form action="{% url 'guest_update_profile' %}" method="POST" enctype="multipart/form-data" class="profile-form">
-                            {% csrf_token %}
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Full Name</label>
-                                        <input type="text" name="full_name" value="{{ guest.full_name }}" class="form-control" required>
-                                    </div>
+        <!-- Tab Content -->
+        <div class="tab-content">
+            <!-- Bookings Tab -->
+            <div class="tab-pane fade show active" id="bookings">
+                <div class="row">
+                    {% for booking in bookings %}
+                    <div class="col-md-6 mb-4">
+                        <div class="card booking-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <h5 class="card-title mb-0">{{ booking.resort.name }}</h5>
+                                    <span class="status-badge status-{{ booking.status|lower }}">
+                                        {{ booking.status }}
+                                    </span>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Email Address</label>
-                                        <input type="email" value="{{ guest.email }}" class="form-control" disabled>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Mobile Number</label>
-                                        <input type="text" name="mobile_number" value="{{ guest.mobile_number }}" class="form-control" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Profile Picture</label>
-                                        <div class="custom-file">
-                                            <input type="file" name="profile_image" class="custom-file-input d-none" id="profileImage" accept="image/*">
-                                            <div class="upload-box">
-                                                <i class="icon-cloud-upload"></i>
-                                                <span class="upload-text">Drop your image here or click to browse</span>
-                                                <small class="upload-info">Supports: JPG, PNG, GIF (Max 2MB)</small>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <p class="card-text text-muted mb-2">
+                                    <i class="fas fa-calendar me-2"></i>
+                                    {{ booking.check_in|date:"M d, Y" }} - {{ booking.check_out|date:"M d, Y" }}
+                                </p>
+                                <p class="card-text text-muted mb-3">
+                                    <i class="fas fa-users me-2"></i>
+                                    {{ booking.guests }} Guests
+                                </p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="h5 mb-0">₹{{ booking.total_amount }}</span>
+                                    <a href="{% url 'booking_detail' booking.id %}" class="btn btn-sm btn-outline-primary">
+                                        View Details
+                                    </a>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-primary mt-3">
-                                <i class="icon-check mr-2"></i>Update Profile
-                            </button>
-                        </form>
+                        </div>
                     </div>
+                    {% empty %}
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+                        <h4>No Bookings Yet</h4>
+                        <p class="text-muted">Start exploring our resorts and make your first booking!</p>
+                        <a href="{% url 'explore_page' %}" class="btn btn-primary mt-3">
+                            <i class="fas fa-search me-2"></i>Explore Resorts
+                        </a>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
 
-            <!-- Security Tab -->
-            <div class="tab-pane fade" id="security" role="tabpanel">
-                <div class="card shadow-sm">
+            <!-- Settings Tab -->
+            <div class="tab-pane fade" id="settings">
+                <div class="card">
                     <div class="card-body">
-                        <h3 class="card-title mb-4">Security Settings</h3>
-                        <form action="{% url 'guest_change_password' %}" method="POST" class="profile-form">
+                        <form method="post" enctype="multipart/form-data">
                             {% csrf_token %}
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Current Password</label>
-                                        <input type="password" name="current_password" class="form-control" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>New Password</label>
-                                        <input type="password" name="new_password" class="form-control" required>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label>Confirm New Password</label>
-                                        <input type="password" name="confirm_password" class="form-control" required>
-                                    </div>
-                                </div>
+                            {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                    {% if field.field.required %}
+                                        <span class="text-danger">*</span>
+                                    {% endif %}
+                                </label>
+                                {{ field }}
+                                {% if field.help_text %}
+                                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                                {% endif %}
+                                {% if field.errors %}
+                                    {% for error in field.errors %}
+                                        <div class="invalid-feedback d-block">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
                             </div>
-                            <button type="submit" class="btn btn-primary mt-3">
-                                <i class="icon-lock mr-2"></i>Change Password
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Preferences Tab -->
-            <div class="tab-pane fade" id="preferences" role="tabpanel">
-                <div class="card shadow-sm">
-                    <div class="card-body">
-                        <h3 class="card-title mb-4">Your Preferences</h3>
-                        <form action="{% url 'guest_update_preferences' %}" method="POST" class="profile-form">
-                            {% csrf_token %}
-                            <div class="row">
-                                <div class="col-md-12">
-                                    <div class="form-group">
-                                        <label>Travel Interests</label>
-                                        <select name="preferences[]" class="form-control select2" multiple>
-                                            <option value="Beach & Relaxation" {% if 'Beach & Relaxation' in guest.preferences %}selected{% endif %}>Beach & Relaxation</option>
-                                            <option value="Spa & Wellness" {% if 'Spa & Wellness' in guest.preferences %}selected{% endif %}>Spa & Wellness</option>
-                                            <option value="Hiking & Adventure" {% if 'Hiking & Adventure' in guest.preferences %}selected{% endif %}>Hiking & Adventure</option>
-                                            <option value="Cultural Experience" {% if 'Cultural Experience' in guest.preferences %}selected{% endif %}>Cultural Experience</option>
-                                            <option value="Food & Dining" {% if 'Food & Dining' in guest.preferences %}selected{% endif %}>Food & Dining</option>
-                                            <option value="Nightlife" {% if 'Nightlife' in guest.preferences %}selected{% endif %}>Nightlife</option>
-                                        </select>
-                                    </div>
-                                </div>
+                            {% endfor %}
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>Save Changes
+                                </button>
                             </div>
-                            <button type="submit" class="btn btn-primary mt-3">
-                                <i class="icon-heart mr-2"></i>Save Preferences
-                            </button>
                         </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Custom Styles -->
-<style>
-    /* Video Background Styles */
-    .video-background {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        overflow: hidden;
-    }
-
-    .video-background video {
-        min-width: 100%;
-        min-height: 100%;
-        width: auto;
-        height: auto;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        object-fit: cover;
-    }
-
-    .video-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-    }
-
-    /* Navbar Styles */
-    .navbar {
-        background: rgba(0, 0, 0, 0.2);
-        backdrop-filter: blur(10px);
-        transition: all 0.3s ease;
-        padding: 1rem 0;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .navbar-scrolled {
-        background: rgba(0, 0, 0, 0.8);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    }
-
-    .navbar-brand {
-        font-size: 1.5rem;
-        font-weight: 600;
-    }
-
-    .brand-text {
-        background: linear-gradient(135deg, #fff, #e6e6e6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .text-gradient {
-        background: linear-gradient(135deg, #3498db, #2980b9);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    /* Search Bar Styles */
-    .navbar-search {
-        flex: 1;
-        max-width: 500px;
-        margin: 0 2rem;
-    }
-
-    .search-wrapper {
-        position: relative;
-        width: 100%;
-    }
-
-    .search-input {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 8px;
-        color: white;
-        padding: 0.75rem 1rem;
-        width: 100%;
-        transition: all 0.3s ease;
-    }
-
-    .search-input:focus {
-        background: rgba(255, 255, 255, 0.15);
-        border-color: rgba(255, 255, 255, 0.3);
-        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
-    }
-
-    .search-input::placeholder {
-        color: rgba(255, 255, 255, 0.6);
-    }
-
-    .search-btn {
-        background: transparent;
-        border: none;
-        color: rgba(255, 255, 255, 0.6);
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .search-btn:hover {
-        color: white;
-    }
-
-    /* Navigation Items */
-    .navbar-nav .nav-item {
-        margin: 0 0.25rem;
-    }
-
-    .nav-link {
-        color: rgba(255, 255, 255, 0.8) !important;
-        padding: 0.5rem 1rem !important;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .nav-link:hover {
-        color: white !important;
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .nav-link i {
-        font-size: 1.2em;
-        vertical-align: middle;
-    }
-
-    /* Dropdown Styles */
-    .dropdown-menu {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-        padding: 0.5rem;
-        margin-top: 0.5rem;
-        min-width: 200px;
-    }
-
-    .dropdown-item {
-        color: #2c3e50;
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .dropdown-item:hover {
-        background: rgba(52, 152, 219, 0.1);
-        color: #3498db;
-    }
-
-    .dropdown-divider {
-        border-color: rgba(0, 0, 0, 0.1);
-        margin: 0.5rem 0;
-    }
-
-    /* User Profile Dropdown */
-    .user-avatar-wrapper {
-        display: flex;
-        align-items: center;
-        padding: 0.25rem;
-        border-radius: 25px;
-        background: rgba(255, 255, 255, 0.1);
-        transition: all 0.3s ease;
-    }
-
-    .user-avatar-wrapper:hover {
-        background: rgba(255, 255, 255, 0.15);
-    }
-
-    .user-avatar-img {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid rgba(255, 255, 255, 0.8);
-    }
-
-    .user-avatar-placeholder {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #3498db, #2980b9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1em;
-        color: white;
-        border: 2px solid rgba(255, 255, 255, 0.8);
-    }
-
-    .user-name {
-        color: white;
-        margin: 0 0.5rem;
-        font-weight: 500;
-    }
-
-    .dropdown-icon {
-        color: rgba(255, 255, 255, 0.8);
-        transition: transform 0.3s ease;
-    }
-
-    .show .dropdown-icon {
-        transform: rotate(180deg);
-    }
-
-    /* Notification and Cart Badges */
-    .icon-btn {
-        position: relative;
-        padding: 0.5rem;
-        border-radius: 8px;
-        transition: all 0.3s ease;
-    }
-
-    .icon-btn:hover {
-        background: rgba(255, 255, 255, 0.1);
-    }
-
-    .notification-badge,
-    .cart-badge {
-        position: absolute;
-        top: 0;
-        right: 0;
-        background: #e74c3c;
-        color: white;
-        font-size: 0.7em;
-        padding: 0.25rem 0.5rem;
-        border-radius: 10px;
-        min-width: 18px;
-        height: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border: 2px solid rgba(0, 0, 0, 0.8);
-    }
-
-    /* User Dropdown Header */
-    .user-dropdown {
-        min-width: 280px;
-        padding: 0;
-    }
-
-    .dropdown-header {
-        background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.05));
-        padding: 1rem;
-        border-radius: 12px 12px 0 0;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-    }
-
-    .user-avatar-large {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        overflow: hidden;
-    }
-
-    .user-avatar-img-large {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .user-avatar-placeholder-large {
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(135deg, #3498db, #2980b9);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-size: 1.5em;
-    }
-
-    .menu-icon {
-        width: 20px;
-        text-align: center;
-        color: #6c757d;
-        transition: all 0.3s ease;
-    }
-
-    .hover-effect {
-        transition: all 0.3s ease;
-    }
-
-    .hover-effect:hover {
-        background: rgba(52, 152, 219, 0.1);
-        padding-left: 1.5rem;
-    }
-
-    .hover-effect:hover .menu-icon {
-        color: #3498db;
-    }
-
-    /* Mobile Responsive Styles */
-    @media (max-width: 991.98px) {
-        .navbar-search {
-            margin: 1rem 0;
-            max-width: 100%;
-        }
-
-        .nav-link {
-            padding: 0.75rem 1rem !important;
-        }
-
-        .user-avatar-wrapper {
-            width: 100%;
-            justify-content: space-between;
-        }
-
-        .user-name {
-            display: inline-block !important;
-        }
-
-        .dropdown-menu {
-            width: 100%;
-            margin-top: 0.5rem;
-        }
-    }
-
-    /* Animation Classes */
-    .animate {
-        animation-duration: 0.3s;
-        animation-fill-mode: both;
-    }
-
-    .slideIn {
-        animation-name: slideIn;
-    }
-
-    @keyframes slideIn {
-        from {
-            transform: translateY(10px);
-            opacity: 0;
-        }
-        to {
-            transform: translateY(0);
-            opacity: 1;
-        }
-    }
-
-    /* Update your existing profile styles to work with the new background */
-    .profile-wrapper {
-        padding-top: 6rem;
-        min-height: 100vh;
-        background: rgba(255, 255, 255, 0.02);
-        backdrop-filter: blur(10px);
-    }
-
-    .profile-header {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
-    .profile-image-container {
-        position: relative;
-        padding: 0.5rem;
-    }
-
-    .profile-image-wrapper {
-        position: relative;
-        width: 120px;
-        height: 120px;
-        margin: 0 auto;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #3498db, #2980b9);
-        padding: 3px;
-        box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
-        transition: all 0.3s ease;
-    }
-
-    .profile-image-wrapper:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
-    }
-
-    .profile-image {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: 50%;
-        border: 3px solid #fff;
-    }
-
-    .profile-image-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        background: rgba(0, 0, 0, 0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 0;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(2px);
-    }
-
-    .profile-image-wrapper:hover .profile-image-overlay {
-        opacity: 1;
-    }
-
-    .upload-trigger {
-        color: white;
-        cursor: pointer;
-        transform: scale(0.9);
-        transition: all 0.3s ease;
-    }
-
-    .profile-image-wrapper:hover .upload-trigger {
-        transform: scale(1);
-    }
-
-    .upload-trigger i {
-        font-size: 1.8em;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
-    }
-
-    .profile-info-wrapper {
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.8);
-        border-radius: 12px;
-        backdrop-filter: blur(8px);
-    }
-
-    .profile-name {
-        font-size: 1.8em;
-        font-weight: 600;
-        color: #2c3e50;
-        margin-bottom: 0.25rem;
-        letter-spacing: -0.5px;
-    }
-
-    .profile-email {
-        font-size: 1em;
-        color: #6c757d;
-        margin-bottom: 1.5rem;
-        display: flex;
-        align-items: center;
-    }
-
-    .profile-stats {
-        display: flex;
-        align-items: center;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 12px;
-        padding: 1rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .stat-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.5rem 1rem;
-    }
-
-    .stat-divider {
-        width: 1px;
-        height: 40px;
-        background: rgba(0, 0, 0, 0.1);
-        margin: 0 1rem;
-    }
-
-    .stat-icon {
-        font-size: 1.25em;
-        color: #3498db;
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(52, 152, 219, 0.1);
-        border-radius: 10px;
-        transition: all 0.3s ease;
-    }
-
-    .stat-item:hover .stat-icon {
-        background: #3498db;
-        color: white;
-        transform: scale(1.05);
-    }
-
-    .stat-details {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .stat-value {
-        font-size: 0.95em;
-        font-weight: 600;
-        color: #2c3e50;
-    }
-
-    .stat-label {
-        font-size: 0.8em;
-        color: #6c757d;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .edit-profile-btn {
-        padding: 0.5rem 1.25rem;
-        font-size: 0.875rem;
-        border-radius: 8px;
-        border: 2px solid #3498db;
-        color: #3498db;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        background: rgba(255, 255, 255, 0.9);
-    }
-
-    .edit-profile-btn:hover {
-        background: #3498db;
-        color: white;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-    }
-
-    /* Tab Styles */
-    .profile-tabs {
-        border-bottom: none;
-        margin-top: 2rem;
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 12px;
-        padding: 0.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    }
-
-    .nav-tabs .nav-link {
-        border: none;
-        color: #6c757d;
-        padding: 1rem 1.5rem;
-        font-size: 0.95em;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        border-radius: 8px;
-        margin: 0 0.25rem;
-    }
-
-    .nav-tabs .nav-link:hover {
-        color: #3498db;
-        background: rgba(52, 152, 219, 0.05);
-    }
-
-    .nav-tabs .nav-link.active {
-        color: #3498db;
-        background: rgba(52, 152, 219, 0.1);
-        font-weight: 600;
-    }
-
-    /* Form Styles */
-    .profile-content .card {
-        background: rgba(255, 255, 255, 0.95);
-        border-radius: 16px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        backdrop-filter: blur(8px);
-        overflow: hidden;
-    }
-
-    .profile-form .form-control {
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        font-size: 0.95em;
-        background: rgba(255, 255, 255, 0.9);
-        transition: all 0.3s ease;
-    }
-
-    .profile-form .form-control:focus {
-        border-color: #3498db;
-        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
-        background: white;
-    }
-
-    .btn-primary {
-        background: linear-gradient(135deg, #3498db, #2980b9);
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
-    }
-
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
-    }
-
-    /* Upload Box Styles */
-    .upload-box {
-        border: 2px dashed rgba(52, 152, 219, 0.3);
-        border-radius: 12px;
-        padding: 2rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        background: rgba(255, 255, 255, 0.8);
-    }
-
-    .upload-box:hover {
-        border-color: #3498db;
-        background: rgba(52, 152, 219, 0.05);
-        transform: translateY(-2px);
-    }
-
-    .upload-box i {
-        font-size: 2.2em;
-        color: #3498db;
-        margin-bottom: 1rem;
-        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-    }
-
-    .upload-text {
-        font-size: 1em;
-        color: #2c3e50;
-        margin-bottom: 0.5rem;
-        font-weight: 500;
-    }
-
-    .upload-info {
-        font-size: 0.85em;
-        color: #6c757d;
-    }
-
-    /* Messages Styling */
-    .messages {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 1050;
-        min-width: 300px;
-        max-width: 400px;
-    }
-
-    .alert {
-        border-radius: 12px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 1rem;
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-        backdrop-filter: blur(8px);
-        animation: slideIn 0.3s ease-out;
-    }
-
-    .alert-success {
-        background: rgba(47, 223, 132, 0.95);
-        color: white;
-    }
-
-    .alert-danger {
-        background: rgba(231, 76, 60, 0.95);
-        color: white;
-    }
-
-    .alert-warning {
-        background: rgba(241, 196, 15, 0.95);
-        color: white;
-    }
-
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    /* Select2 Customization */
-    .select2-container--bootstrap4 .select2-selection {
-        border-radius: 8px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        min-height: 45px;
-        background: rgba(255, 255, 255, 0.9);
-    }
-
-    .select2-container--bootstrap4.select2-container--focus .select2-selection {
-        border-color: #3498db;
-        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.15);
-    }
-
-    .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice {
-        background: #3498db;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        padding: 0.25rem 0.75rem;
-    }
-
-    .select2-container--bootstrap4 .select2-selection--multiple .select2-selection__choice__remove {
-        color: white;
-        margin-right: 0.5rem;
-    }
-</style>
-
-<!-- Custom Scripts -->
-<script>
-    $(document).ready(function() {
-        // Add shadow to navbar on scroll
-        $(window).scroll(function() {
-            if ($(window).scrollTop() > 50) {
-                $('.navbar').addClass('navbar-scrolled');
-            } else {
-                $('.navbar').removeClass('navbar-scrolled');
-            }
-        });
-
-        // Initialize Select2
-        $('.select2').select2({
-            theme: 'bootstrap4',
-            placeholder: 'Select your interests',
-            allowClear: true
-        });
-
-        // Custom file input
-        $('.custom-file-input').on('change', function() {
-            let fileName = $(this).val().split('\\').pop();
-            $(this).next('.custom-file-label').addClass("selected").html(fileName);
-        });
-
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
         // Auto-hide alerts after 5 seconds
         setTimeout(function() {
-            $('.alert').fadeOut('slow');
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                bootstrap.Alert.getOrCreateInstance(alert).close();
+            });
         }, 5000);
 
-        // Enhanced profile image upload
-        $('.upload-box, .upload-trigger').click(function(e) {
-            e.preventDefault();
-            $('#profileImage').click();
-        });
-
-        // Profile image preview with validation
-        $("#profileImage").change(function() {
-            if (this.files && this.files[0]) {
-                const file = this.files[0];
-                const fileSize = file.size / 1024 / 1024; // in MB
-                const validTypes = ['image/jpeg', 'image/png', 'image/gif'];
-                
-                if (fileSize > 2) {
-                    alert('File size exceeds 2MB. Please choose a smaller file.');
-                    this.value = '';
-                    return;
-                }
-                
-                if (!validTypes.includes(file.type)) {
-                    alert('Please choose a valid image file (JPG, PNG, or GIF).');
-                    this.value = '';
-                    return;
-                }
-
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    $('.profile-image').attr('src', e.target.result);
-                    $('.profile-image-placeholder').hide();
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
         // Initialize tooltips
-        $('[data-toggle="tooltip"]').tooltip();
-
-        // Smooth scroll to tabs
-        $('.edit-profile-btn').click(function() {
-            const target = $($(this).data('target'));
-            $('html, body').animate({
-                scrollTop: target.offset().top - 100
-            }, 500);
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
         });
-    });
-</script>
-{% endblock %}
+
+        // Handle tab persistence
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get active tab from URL hash or localStorage
+            var activeTab = window.location.hash || localStorage.getItem('activeProfileTab') || '#bookings';
+            
+            // Activate the tab
+            var tab = new bootstrap.Tab(document.querySelector('button[data-bs-target="' + activeTab + '"]'));
+            tab.show();
+
+            // Store active tab when changed
+            document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(el) {
+                el.addEventListener('shown.bs.tab', function (e) {
+                    localStorage.setItem('activeProfileTab', e.target.dataset.bsTarget);
+                });
+            });
+        });
+    </script>
+</body>
+</html>

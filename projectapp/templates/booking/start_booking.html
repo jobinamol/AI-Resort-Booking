@@ -1,0 +1,217 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Book Your Stay at {{ resort.name }}</h3>
+                </div>
+                <div class="card-body">
+                    <form id="bookingForm" method="POST" action="{% url 'guest_details' resort.id %}">
+                        {% csrf_token %}
+                        
+                        <!-- Date Selection -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="check_in" class="form-label">Check-in Date</label>
+                                <input type="date" class="form-control" id="check_in" name="check_in" 
+                                       min="{{ min_date }}" max="{{ max_date }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="check_out" class="form-label">Check-out Date</label>
+                                <input type="date" class="form-control" id="check_out" name="check_out"
+                                       min="{{ min_date }}" max="{{ max_date }}" required>
+                            </div>
+                        </div>
+
+                        <!-- Guest Count -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="adults" class="form-label">Adults</label>
+                                <select class="form-select" id="adults" name="adults" required>
+                                    {% for i in "12345"|make_list %}
+                                        <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="children" class="form-label">Children</label>
+                                <select class="form-select" id="children" name="children">
+                                    <option value="0">0</option>
+                                    {% for i in "1234"|make_list %}
+                                        <option value="{{ forloop.counter }}">{{ forloop.counter }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Package Selection -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Select a Package (Optional)</h5>
+                            <div class="row row-cols-1 row-cols-md-2 g-4">
+                                {% for package in packages %}
+                                <div class="col">
+                                    <div class="card h-100 package-card">
+                                        <div class="card-body">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="package_id"
+                                                       id="package_{{ package.id }}" value="{{ package.id }}">
+                                                <label class="form-check-label" for="package_{{ package.id }}">
+                                                    <h6 class="card-title mb-2">{{ package.name }}</h6>
+                                                    <p class="card-text small mb-1">{{ package.description|truncatewords:20 }}</p>
+                                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                                        <span class="badge bg-primary">{{ package.duration }} Days</span>
+                                                        <strong class="text-success">₹{{ package.get_discounted_price }}</strong>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Room Selection -->
+                        <div class="mb-4">
+                            <h5 class="mb-3">Or Select a Room Type</h5>
+                            <div class="row row-cols-1 row-cols-md-2 g-4">
+                                {% for room in rooms %}
+                                <div class="col">
+                                    <div class="card h-100 room-card">
+                                        <div class="card-body">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="room_type"
+                                                       id="room_{{ room.id }}" value="{{ room.room_type }}">
+                                                <label class="form-check-label" for="room_{{ room.id }}">
+                                                    <h6 class="card-title mb-2">{{ room.get_room_type_display }}</h6>
+                                                    <p class="card-text small mb-1">
+                                                        <i class="fas fa-user-friends"></i> Capacity: {{ room.capacity }} persons
+                                                    </p>
+                                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                                        <span class="badge bg-info">{{ room.get_room_view_display }}</span>
+                                                        <strong class="text-success">₹{{ room.price }}/night</strong>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary btn-lg">Continue to Guest Details</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .package-card, .room-card {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .package-card:hover, .room-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .form-check-input:checked + .form-check-label {
+        font-weight: bold;
+    }
+
+    .form-check-label {
+        width: 100%;
+        cursor: pointer;
+    }
+
+    .card-header {
+        background: linear-gradient(45deg, #1a73e8, #0d47a1);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkInInput = document.getElementById('check_in');
+    const checkOutInput = document.getElementById('check_out');
+    const packageInputs = document.querySelectorAll('input[name="package_id"]');
+    const roomInputs = document.querySelectorAll('input[name="room_type"]');
+    const form = document.getElementById('bookingForm');
+
+    // Set minimum dates
+    const today = new Date().toISOString().split('T')[0];
+    checkInInput.min = today;
+    
+    // Update check-out min date when check-in changes
+    checkInInput.addEventListener('change', function() {
+        const checkInDate = new Date(this.value);
+        checkInDate.setDate(checkInDate.getDate() + 1);
+        checkOutInput.min = checkInDate.toISOString().split('T')[0];
+        
+        if (checkOutInput.value && new Date(checkOutInput.value) <= new Date(this.value)) {
+            checkOutInput.value = checkInDate.toISOString().split('T')[0];
+        }
+    });
+
+    // Ensure only package OR room is selected
+    packageInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.checked) {
+                roomInputs.forEach(roomInput => {
+                    roomInput.checked = false;
+                });
+            }
+        });
+    });
+
+    roomInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            if (this.checked) {
+                packageInputs.forEach(packageInput => {
+                    packageInput.checked = false;
+                });
+            }
+        });
+    });
+
+    // Check availability before form submission
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        try {
+            const response = await fetch("{% url 'check_availability' %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                this.submit();
+            } else {
+                alert(data.error || 'Please select different dates or accommodation options.');
+            }
+        } catch (error) {
+            alert('An error occurred. Please try again.');
+        }
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 

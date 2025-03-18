@@ -158,7 +158,7 @@
   </head>
   <body>
 
-    <!-- Updated Navbar with Modern Transparent Design -->
+    <!-- Navbar Section -->
     <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-transparent ftco-navbar-light fixed-top" id="ftco-navbar">
         <div class="container-fluid px-md-5">
             <!-- Brand Logo -->
@@ -195,24 +195,12 @@
                         </a>
                     </li>
 
-                    <!-- Explore Dropdown -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link px-3 dropdown-toggle" href="#" id="exploreDropdown" data-toggle="dropdown">
+                    <!-- Explore Link -->
+                    <li class="nav-item">
+                        <a href="{% url 'explore_page' %}" class="nav-link px-3">
                             <i class="icon-map-marker"></i>
                             <span class="d-none d-lg-inline ml-2">Explore</span>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right animate slideIn">
-                            <a class="dropdown-item" href="{% url 'rooms' %}">
-                                <i class="icon-hotel mr-2"></i>Staycation Resorts
-                            </a>
-                            <a class="dropdown-item" href="{% url 'restaurants' %}">
-                                <i class="icon-sun mr-2"></i>Daycation Experiences
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#">
-                                <i class="icon-tag mr-2"></i>Special Offers
-                            </a>
-                        </div>
                     </li>
 
                     <!-- Bookings -->
@@ -337,7 +325,7 @@
         </div>
     </nav>
 
-    <!-- Updated Navbar Styles -->
+    <!-- Navbar Styles -->
     <style>
         /* Navbar Base Styles */
         .navbar {
@@ -637,7 +625,7 @@
         }
     </style>
 
-    <!-- Updated Navbar Behavior Script -->
+    <!-- Navbar Behavior Script -->
     <script>
         $(window).scroll(function() {
             if ($(this).scrollTop() > 50) {
@@ -674,6 +662,7 @@
         });
     </script>
 
+    {% block content %}
     <div class="hero-wrap position-relative">
 			<div class="video-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
 				<video autoplay muted loop playsinline style="min-width: 100%; min-height: 100%; width: auto; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); object-fit: cover;">
@@ -1052,7 +1041,6 @@
     					</div>
     				</div>
     			</div>
-
     			<div class="col-lg-6">
     				<div class="room-wrap d-md-flex ftco-animate">
     					<a href="#" class="img" style="background-image: url({% static 'images/room-4.jpg' %});"></a>
@@ -1291,6 +1279,7 @@
         </div>
       </div>
     </section>
+    {% endblock %}
 
     <footer class="ftco-footer ftco-section img" style="background-image: url('{% static 'images/bg_4.jpg' %}');">
     	<div class="overlay"></div>

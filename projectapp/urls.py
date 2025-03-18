@@ -81,6 +81,7 @@ urlpatterns = [
     # Resort Details
     path('resort/<int:resort_id>/', views.resort_detail, name='resort_detail'),
     path('resort/<int:resort_id>/reviews/', views.resort_reviews, name='resort_reviews'),
+    path('resort/<int:resort_id>/book/', views.resort_booking, name='resort_booking'),
 
     # Package Details & Booking
     path('package/<int:package_id>/', views.package_detail, name='package_detail'),
@@ -92,5 +93,14 @@ urlpatterns = [
     path('room/<int:room_id>/reviews/', views.room_reviews, name='room_reviews'),
     path('room/<int:room_id>/book/', views.room_booking, name='room_booking'),
     path('room/<int:room_id>/availability/', views.room_availability, name='room_availability'),
+
+    # Booking URLs
+    path('resort/<int:resort_id>/book/', views.start_booking, name='start_booking'),
+    path('resort/<int:resort_id>/guest-details/', views.guest_details, name='guest_details'),
+    path('resort/<int:resort_id>/preferences/', views.booking_preferences, name='booking_preferences'),
+    path('resort/<int:resort_id>/payment/', views.booking_payment, name='booking_payment'),
+    path('booking/payment/callback/', views.payment_callback, name='payment_callback'),
+    path('booking/<int:booking_id>/confirmation/', views.booking_confirmation, name='booking_confirmation'),
+    path('check-availability/', views.check_availability, name='check_availability'),
 
 ]

@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Complete Your Payment</h3>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h4>Total Amount: ₹{{ total_amount }}</h4>
+                        <p class="text-muted">Please complete your payment to confirm your booking</p>
+                    </div>
+
+                    <div class="payment-info mb-4">
+                        <h5 class="mb-3">Booking Details</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Check-in:</strong> {{ booking_data.check_in }}</p>
+                                <p><strong>Adults:</strong> {{ booking_data.adults }}</p>
+                                {% if booking_data.package_id %}
+                                <p><strong>Package:</strong> {{ booking.package.package_name }}</p>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Check-out:</strong> {{ booking_data.check_out }}</p>
+                                <p><strong>Children:</strong> {{ booking_data.children }}</p>
+                                {% if booking_data.room_type %}
+                                <p><strong>Room Type:</strong> {{ booking.room.get_room_type_display }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="text-center">
+                        <button id="rzp-button" class="btn btn-primary btn-lg">
+                            <i class="fas fa-lock me-2"></i>Pay Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    .card-header {
+        background: linear-gradient(45deg, #1a73e8, #0d47a1);
+    }
+
+    .payment-info {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+    }
+
+    #rzp-button {
+        background: linear-gradient(45deg, #1a73e8, #0d47a1);
+        border: none;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    #rzp-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.getElementById('rzp-button').onclick = function(e) {
+    var options = {
+        "key": "{{ razorpay_merchant_key }}",
+        "amount": "{{ amount_in_paise }}",
+        "currency": "{{ currency }}",
+        "name": "{{ booking.resort.resort_name }}",
+        "description": "Booking Payment",
+        "order_id": "{{ razorpay_order_id }}",
+        "handler": function (response) {
+            // Create a form to submit payment details
+            var form = document.createElement('form');
+            form.method = 'POST';
+            form.action = "{{ callback_url }}";
+
+            // Add CSRF token
+            var csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = '{{ csrf_token }}';
+            form.appendChild(csrfInput);
+
+            // Add payment details
+            var fields = {
+                'razorpay_payment_id': response.razorpay_payment_id,
+                'razorpay_order_id': response.razorpay_order_id,
+                'razorpay_signature': response.razorpay_signature
+            };
+
+            for (var key in fields) {
+                var input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = fields[key];
+                form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+        },
+        "prefill": {
+            "name": "{{ booking.guest.full_name }}",
+            "email": "{{ booking.guest.email }}",
+            "contact": "{{ booking.guest.mobile_number }}"
+        },
+        "theme": {
+            "color": "#1a73e8"
+        }
+    };
+    var rzp1 = new Razorpay(options);
+    rzp1.open();
+    e.preventDefault();
+}
+</script>
+{% endblock %}
+{% endblock %} 

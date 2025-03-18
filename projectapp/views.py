@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm, PackageForm, RoomForm
-from .models import UserDB, Resort, ResortImage, Package, Room, GuestUser
+from .models import UserDB, Resort, ResortImage, Package, Room, GuestUser, Review, Booking, PackageAvailability, BookingPayment, RoomAvailability
 import random
 from django.core.mail import send_mail
 from django.conf import settings
@@ -21,8 +21,11 @@ import json
 from django.contrib.auth.hashers import check_password, make_password
 from functools import wraps
 from django.db.models import Q, Count, F
+from django.views.decorators.http import require_POST
+import razorpay
 
-
+# Initialize Razorpay client
+razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
 
 # Create your views here.
 def index(request):
@@ -1679,8 +1682,8 @@ def explore_page(request):
 
     # Base Querysets with related data for better performance
     resorts = Resort.objects.filter(is_active=True).prefetch_related('gallery')
-    packages = Package.objects.filter(is_active=True).select_related('resort').prefetch_related('gallery')
-    rooms = Room.objects.filter(is_available=True).select_related('resort')
+    packages = Package.objects.filter(is_active=True).select_related('resort')
+    rooms = Room.objects.filter(current_status='available').select_related('resort')
 
     # Apply search filters if query exists
     if query:
@@ -1707,26 +1710,26 @@ def explore_page(request):
 
     # Get personalized recommendations if user is logged in
     recommended_packages = []
-    guest = None  # Default guest to None
+    guest = None
 
     if 'guest_id' in request.session:
         try:
-            guest = Guest.objects.get(id=request.session['guest_id'])
+            guest = GuestUser.objects.get(id=request.session['guest_id'])
 
             # Score packages based on user preferences
             scored_packages = []
             for package in Package.objects.filter(is_active=True):
                 score = 0
                 # Match user preferences
-                if guest.preferred_resort_type and package.resort.resort_type == guest.preferred_resort_type:
+                if guest.preferences.get('preferred_resort_type') and package.resort.resort_type == guest.preferences.get('preferred_resort_type'):
                     score += 2
-                if guest.preferred_package_type and package.package_type == guest.preferred_package_type:
+                if guest.preferences.get('preferred_package_type') and package.package_type == guest.preferences.get('preferred_package_type'):
                     score += 2
                 # Consider price range
-                if guest.budget_range and package.price <= guest.budget_range:
+                if guest.preferences.get('budget_range') and package.price <= guest.preferences.get('budget_range'):
                     score += 1
                 # Consider popularity
-                score += package.bookings.count() * 0.1
+                score += package.total_bookings * 0.1
 
                 scored_packages.append((package, score))
 
@@ -1734,16 +1737,14 @@ def explore_page(request):
             scored_packages.sort(key=lambda x: x[1], reverse=True)
             recommended_packages = [package for package, _ in scored_packages[:3]]
 
-        except Guest.DoesNotExist:
+        except GuestUser.DoesNotExist:
             print("Guest ID not found in session")
 
     else:
         # For non-logged in users, show popular packages
         recommended_packages = Package.objects.filter(
             is_active=True
-        ).annotate(
-            booking_count=Count('bookings')
-        ).order_by('-booking_count')[:3]
+        ).order_by('-total_bookings')[:3]
 
     context = {
         'resorts': resorts,
@@ -1841,7 +1842,7 @@ def resort_detail(request, resort_id):
     """Display detailed information about a specific resort"""
     resort = get_object_or_404(Resort.objects.prefetch_related('gallery'), id=resort_id)
     packages = Package.objects.filter(resort=resort, is_active=True)
-    rooms = Room.objects.filter(resort=resort, is_available=True)
+    rooms = Room.objects.filter(resort=resort, current_status='available')
     reviews = Review.objects.filter(resort=resort)
 
     context = {
@@ -1866,7 +1867,7 @@ def resort_reviews(request, resort_id):
 # Package Detail, Reviews & Booking
 def package_detail(request, package_id):
     """Display detailed information about a specific package"""
-    package = get_object_or_404(Package.objects.select_related('resort', 'gallery'), id=package_id)
+    package = get_object_or_404(Package.objects.select_related('resort'), id=package_id)
     related_packages = Package.objects.filter(resort=package.resort, is_active=True).exclude(id=package_id)[:3]
     reviews = Review.objects.filter(package=package)
 
@@ -1979,3 +1980,341 @@ def room_availability(request, room_id):
     is_available = room.is_available
 
     return JsonResponse({'room_id': room.id, 'is_available': is_available})
+
+def resort_booking(request, resort_id):
+    """Handle resort booking"""
+    resort = get_object_or_404(Resort, id=resort_id)
+
+    if request.method == "POST":
+        guest_name = request.POST.get('guest_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        check_in = request.POST.get('check_in')
+        check_out = request.POST.get('check_out')
+        payment_method = request.POST.get('payment_method')
+
+        if not all([guest_name, email, phone, check_in, check_out, payment_method]):
+            messages.error(request, "All fields are required.")
+            return redirect('resort_detail', resort_id=resort.id)
+
+        try:
+            # Convert string dates to datetime objects
+            check_in_date = datetime.strptime(check_in, '%Y-%m-%d').date()
+            check_out_date = datetime.strptime(check_out, '%Y-%m-%d').date()
+
+            # Validate dates
+            if check_in_date < timezone.now().date():
+                messages.error(request, "Check-in date cannot be in the past.")
+                return redirect('resort_detail', resort_id=resort.id)
+            
+            if check_out_date <= check_in_date:
+                messages.error(request, "Check-out date must be after check-in date.")
+                return redirect('resort_detail', resort_id=resort.id)
+
+            # Create booking (assuming you have a Booking model)
+            Booking.objects.create(
+                resort=resort,
+                guest_name=guest_name,
+                email=email,
+                phone=phone,
+                check_in=check_in_date,
+                check_out=check_out_date,
+                payment_method=payment_method,
+                status="Pending"
+            )
+
+            messages.success(request, "Your booking request has been submitted successfully!")
+        except ValueError:
+            messages.error(request, "Invalid date format.")
+        except Exception as e:
+            messages.error(request, f"An error occurred: {str(e)}")
+
+    return redirect('resort_detail', resort_id=resort.id)
+
+def check_availability(request):
+    """Check room or package availability for given dates"""
+    if request.method == 'POST':
+        check_in = request.POST.get('check_in')
+        check_out = request.POST.get('check_out')
+        adults = int(request.POST.get('adults', 1))
+        children = int(request.POST.get('children', 0))
+        resort_id = request.POST.get('resort_id')
+        package_id = request.POST.get('package_id')
+        room_type = request.POST.get('room_type')
+
+        try:
+            check_in_date = datetime.strptime(check_in, '%Y-%m-%d').date()
+            check_out_date = datetime.strptime(check_out, '%Y-%m-%d').date()
+            
+            # Validate dates
+            if check_in_date < timezone.now().date():
+                return JsonResponse({'error': 'Check-in date cannot be in the past'})
+            if check_out_date <= check_in_date:
+                return JsonResponse({'error': 'Check-out date must be after check-in date'})
+
+            # Check package availability
+            if package_id:
+                package = Package.objects.get(id=package_id)
+                dates_range = [check_in_date + timedelta(days=x) for x in range((check_out_date - check_in_date).days)]
+                
+                availability = PackageAvailability.objects.filter(
+                    package=package,
+                    date__in=dates_range
+                )
+                
+                if not all(a.is_available for a in availability):
+                    return JsonResponse({'error': 'Package not available for selected dates'})
+
+            # Check room availability
+            if room_type:
+                rooms = Room.objects.filter(
+                    resort_id=resort_id,
+                    room_type=room_type,
+                    capacity__gte=adults + children
+                )
+                
+                available_rooms = []
+                for room in rooms:
+                    bookings = RoomAvailability.objects.filter(
+                        room=room,
+                        date__range=[check_in_date, check_out_date - timedelta(days=1)],
+                        is_available=False
+                    )
+                    if not bookings.exists():
+                        available_rooms.append(room)
+
+                if not available_rooms:
+                    return JsonResponse({'error': 'No rooms available for selected dates'})
+
+            return JsonResponse({'success': True})
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)})
+
+    return JsonResponse({'error': 'Invalid request method'})
+
+def start_booking(request, resort_id):
+    """Initialize the booking process"""
+    resort = get_object_or_404(Resort, id=resort_id)
+    packages = Package.objects.filter(resort=resort, is_active=True)
+    rooms = Room.objects.filter(resort=resort, current_status='available')
+
+    context = {
+        'resort': resort,
+        'packages': packages,
+        'rooms': rooms,
+        'min_date': timezone.now().date().strftime('%Y-%m-%d'),
+        'max_date': (timezone.now().date() + timedelta(days=365)).strftime('%Y-%m-%d')
+    }
+    return render(request, 'booking/start_booking.html', context)
+
+def guest_details(request, resort_id):
+    """Collect guest details and preferences"""
+    if request.method == 'POST':
+        # Save booking details to session
+        booking_data = {
+            'check_in': request.POST.get('check_in'),
+            'check_out': request.POST.get('check_out'),
+            'adults': request.POST.get('adults'),
+            'children': request.POST.get('children'),
+            'package_id': request.POST.get('package_id'),
+            'room_type': request.POST.get('room_type')
+        }
+        request.session['booking_data'] = booking_data
+        return redirect('booking_preferences', resort_id=resort_id)
+
+    return redirect('start_booking', resort_id=resort_id)
+
+def booking_preferences(request, resort_id):
+    """Collect guest preferences"""
+    if 'booking_data' not in request.session:
+        return redirect('start_booking', resort_id=resort_id)
+
+    if request.method == 'POST':
+        # Update booking data with preferences
+        booking_data = request.session['booking_data']
+        booking_data.update({
+            'food_preference': request.POST.get('food_preference'),
+            'special_requests': request.POST.get('special_requests')
+        })
+        request.session['booking_data'] = booking_data
+        return redirect('booking_payment', resort_id=resort_id)
+
+    return render(request, 'booking/preferences.html')
+
+def booking_payment(request, resort_id):
+    """Handle payment process"""
+    if 'booking_data' not in request.session:
+        return redirect('start_booking', resort_id=resort_id)
+
+    booking_data = request.session['booking_data']
+    resort = get_object_or_404(Resort, id=resort_id)
+
+    # Calculate total amount
+    total_amount = calculate_booking_amount(booking_data, resort)
+    amount_in_paise = int(total_amount * 100)  # Convert to paise for Razorpay
+
+    if request.method == 'POST':
+        try:
+            # Create booking
+            booking = create_booking(request.user.guestuser, resort, booking_data, total_amount)
+            
+            # Create Razorpay Order
+            razorpay_order = razorpay_client.order.create({
+                'amount': amount_in_paise,
+                'currency': 'INR',
+                'payment_capture': '1'
+            })
+            
+            # Create payment record
+            payment = BookingPayment.objects.create(
+                booking=booking,
+                amount=total_amount,
+                payment_method=request.POST.get('payment_method'),
+                razorpay_order_id=razorpay_order['id'],
+                payment_status='pending'
+            )
+            
+            # Save order ID in session for verification
+            request.session['razorpay_order_id'] = razorpay_order['id']
+            request.session['booking_id'] = booking.id
+            
+            context = {
+                'booking_data': booking_data,
+                'total_amount': total_amount,
+                'razorpay_order_id': razorpay_order['id'],
+                'razorpay_merchant_key': settings.RAZORPAY_KEY_ID,
+                'callback_url': request.build_absolute_uri(reverse('payment_callback')),
+                'amount_in_paise': amount_in_paise,
+                'currency': 'INR',
+                'booking': booking,
+            }
+            return render(request, 'booking/razorpay_payment.html', context)
+
+        except Exception as e:
+            messages.error(request, str(e))
+            return redirect('booking_payment', resort_id=resort_id)
+
+    context = {
+        'booking_data': booking_data,
+        'total_amount': total_amount,
+        'payment_methods': BookingPayment.PAYMENT_METHOD
+    }
+    return render(request, 'booking/payment.html', context)
+
+@require_POST
+def payment_callback(request):
+    """Handle Razorpay payment callback"""
+    razorpay_payment_id = request.POST.get('razorpay_payment_id')
+    razorpay_order_id = request.POST.get('razorpay_order_id')
+    razorpay_signature = request.POST.get('razorpay_signature')
+    booking_id = request.session.get('booking_id')
+
+    try:
+        # Verify payment signature
+        params_dict = {
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_signature': razorpay_signature
+        }
+        razorpay_client.utility.verify_payment_signature(params_dict)
+
+        # Update booking and payment status
+        booking = get_object_or_404(Booking, id=booking_id)
+        payment = BookingPayment.objects.get(razorpay_order_id=razorpay_order_id)
+        
+        payment.payment_status = 'success'
+        payment.transaction_id = razorpay_payment_id
+        payment.payment_response = params_dict
+        payment.save()
+
+        booking.payment_status = 'paid'
+        booking.booking_status = 'confirmed'
+        booking.save()
+
+        # Clear session data
+        del request.session['booking_data']
+        del request.session['razorpay_order_id']
+        del request.session['booking_id']
+
+        messages.success(request, 'Payment successful! Your booking is confirmed.')
+        return redirect('booking_confirmation', booking_id=booking.id)
+
+    except Exception as e:
+        messages.error(request, f'Payment verification failed: {str(e)}')
+        return redirect('booking_payment', resort_id=booking.resort.id)
+
+def booking_confirmation(request, booking_id):
+    """Display booking confirmation"""
+    booking = get_object_or_404(Booking, id=booking_id)
+    if booking.guest.user != request.user:
+        messages.error(request, 'Invalid booking access')
+        return redirect('home')
+
+    context = {
+        'booking': booking,
+        'payment': booking.payments.last()
+    }
+    return render(request, 'booking/confirmation.html', context)
+
+# Helper functions
+def calculate_booking_amount(booking_data, resort):
+    """Calculate total booking amount"""
+    total_amount = 0
+    check_in = datetime.strptime(booking_data['check_in'], '%Y-%m-%d').date()
+    check_out = datetime.strptime(booking_data['check_out'], '%Y-%m-%d').date()
+    nights = (check_out - check_in).days
+
+    if booking_data.get('package_id'):
+        package = Package.objects.get(id=booking_data['package_id'])
+        total_amount = package.get_discounted_price()
+    elif booking_data.get('room_type'):
+        room = Room.objects.filter(resort=resort, room_type=booking_data['room_type']).first()
+        total_amount = room.price * nights
+
+    # Add additional charges for extra guests if applicable
+    return total_amount
+
+def create_booking(guest, resort, booking_data, total_amount):
+    """Create a new booking record"""
+    booking = Booking.objects.create(
+        guest=guest,
+        resort=resort,
+        check_in=booking_data['check_in'],
+        check_out=booking_data['check_out'],
+        adults=booking_data['adults'],
+        children=booking_data['children'],
+        food_preference=booking_data['food_preference'],
+        special_requests=booking_data['special_requests'],
+        total_amount=total_amount
+    )
+
+    if booking_data.get('package_id'):
+        booking.package_id = booking_data['package_id']
+    elif booking_data.get('room_type'):
+        room = Room.objects.filter(
+            resort=resort,
+            room_type=booking_data['room_type'],
+            current_status='available'
+        ).first()
+        booking.room = room
+
+    booking.save()
+    return booking
+
+def process_payment(booking, amount, payment_method):
+    """Process payment for booking"""
+    # Integrate with payment gateway here
+    # This is a placeholder implementation
+    try:
+        payment = BookingPayment.objects.create(
+            booking=booking,
+            amount=amount,
+            payment_method=payment_method,
+            transaction_id=f"TXN_{booking.id}_{int(timezone.now().timestamp())}",
+            payment_status='success',
+            payment_response={'status': 'success'}
+        )
+        return {'status': 'success', 'payment_id': payment.id}
+    except Exception as e:
+        return {'status': 'failed', 'error': str(e)}

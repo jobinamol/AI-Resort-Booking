@@ -1,143 +1,166 @@
-{% extends 'base.html' %}
 {% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Packages - LuxAI Resorts</title>
+    
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #f8f9fa;
+        }
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #1a73e8;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-primary {
+            background: #1a73e8;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+        }
+        .btn-primary:hover {
+            background: #1557b0;
+            transform: translateY(-1px);
+        }
+        .package-image {
+            height: 200px;
+            object-fit: cover;
+            border-radius: 15px 15px 0 0;
+        }
+        .badge {
+            font-size: 0.8rem;
+            padding: 0.5em 1em;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">LuxAI</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'index' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'explore_page' %}">Explore</a>
+                    </li>
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'view_profile' %}">Profile</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'user_logout' %}">Logout</a>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'user_login' %}">Login</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
 
-{% block content %}
-<div class="container-fluid py-5">
-    <!-- Page Header -->
-    <div class="text-center mb-5">
-        <h1 class="display-4">Package Management</h1>
-        <p class="lead text-muted">Manage your resort's packages and special offers</p>
-    </div>
+    <!-- Main Content -->
+    <div class="container mt-5 pt-5">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Packages</h2>
+            <a href="{% url 'create_package' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>Create Package
+            </a>
+        </div>
 
-    <!-- Package Type Filter -->
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-outline-primary active" data-filter="all">All Packages</button>
-                            <button type="button" class="btn btn-outline-primary" data-filter="Staycation">Staycation</button>
-                            <button type="button" class="btn btn-outline-primary" data-filter="Daycation">Daycation</button>
+        {% if messages %}
+        <div class="messages mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Packages Grid -->
+        <div class="row g-4">
+            {% for package in packages %}
+            <div class="col-md-4">
+                <div class="card h-100">
+                    {% if package.image %}
+                        <img src="{{ package.image.url }}" class="package-image" alt="{{ package.package_name }}">
+                    {% else %}
+                        <img src="{% static 'images/default-package.jpg' %}" class="package-image" alt="{{ package.package_name }}">
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">{{ package.package_name }}</h5>
+                            <span class="badge bg-primary">{{ package.package_type }}</span>
                         </div>
-                        <a href="{% url 'create_package' %}" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Add New Package
-                        </a>
+                        <p class="card-text text-muted">{{ package.description|truncatechars:100 }}</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="h5 mb-0">₹{{ package.price }}</span>
+                            <div>
+                                <a href="{% url 'edit_package' package.id %}" class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'delete_package' package.id %}" class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Packages Grid -->
-    <div class="row" id="packages-grid">
-        {% for package in packages %}
-        <div class="col-md-4 mb-4 package-item" data-type="{{ package.package_type }}">
-            <div class="card h-100 shadow-sm hover-shadow">
-                {% if package.image %}
-                <img src="{{ package.image.url }}" class="card-img-top" alt="{{ package.package_name }}" style="height: 200px; object-fit: cover;">
-                {% else %}
-                <img src="{% static 'images/default-package.jpg' %}" class="card-img-top" alt="Default Package Image" style="height: 200px; object-fit: cover;">
-                {% endif %}
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title mb-0">{{ package.package_name }}</h5>
-                        <span class="badge {% if package.package_type == 'Staycation' %}bg-primary{% else %}bg-success{% endif %}">
-                            {{ package.package_type }}
-                        </span>
-                    </div>
-                    <p class="card-text text-muted">{{ package.description|truncatewords:20 }}</p>
-                    <div class="package-details">
-                        <p class="mb-1"><i class="fas fa-clock"></i> Duration: {{ package.duration }} {% if package.package_type == 'Staycation' %}days{% else %}hours{% endif %}</p>
-                        <p class="mb-1"><i class="fas fa-dollar-sign"></i> Price: ${{ package.price }}</p>
-                        <div class="amenities mt-2">
-                            <small class="text-muted">Amenities:</small><br>
-                            {% for amenity in package.amenities.split|slice:":3" %}
-                            <span class="badge bg-light text-dark me-1">{{ amenity }}</span>
-                            {% endfor %}
-                            {% if package.amenities.split|length > 3 %}
-                            <span class="badge bg-light text-dark">+{{ package.amenities.split|length|add:"-3" }} more</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <div class="card-footer bg-transparent border-top-0">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div class="btn-group">
-                            <a href="{% url 'edit_package' package.id %}" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-edit"></i> Edit
-                            </a>
-                            <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ package.id }}">
-                                <i class="fas fa-trash"></i> Delete
-                            </button>
-                        </div>
-                        <small class="text-muted">Created {{ package.created_at|date:"M d, Y" }}</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Delete Modal -->
-        <div class="modal fade" id="deleteModal{{ package.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ package.id }}" aria-hidden="true">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="deleteModalLabel{{ package.id }}">Confirm Delete</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body">
-                        Are you sure you want to delete the package "{{ package.package_name }}"?
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <form action="{% url 'delete_package' package.id %}" method="post" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-danger">Delete</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="col-12 text-center py-5">
-            <div class="empty-state">
-                <i class="fas fa-box-open fa-4x text-muted mb-3"></i>
-                <h3>No Packages Found</h3>
-                <p class="text-muted">Start by adding your first package!</p>
-                <a href="{% url 'create_package' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Add New Package
+            {% empty %}
+            <div class="col-12 text-center py-5">
+                <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                <h4>No Packages Found</h4>
+                <p class="text-muted">Start by creating your first package.</p>
+                <a href="{% url 'create_package' %}" class="btn btn-primary mt-3">
+                    <i class="fas fa-plus me-2"></i>Create Package
                 </a>
             </div>
+            {% endfor %}
         </div>
-        {% endfor %}
     </div>
-</div>
 
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Package filtering
-        const filterButtons = document.querySelectorAll('[data-filter]');
-        const packages = document.querySelectorAll('.package-item');
-
-        filterButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                // Update active button
-                filterButtons.forEach(btn => btn.classList.remove('active'));
-                button.classList.add('active');
-
-                // Filter packages
-                const filterValue = button.getAttribute('data-filter');
-                packages.forEach(package => {
-                    if (filterValue === 'all' || package.getAttribute('data-type') === filterValue) {
-                        package.style.display = '';
-                    } else {
-                        package.style.display = 'none';
-                    }
-                });
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            document.querySelectorAll('.alert').forEach(function(alert) {
+                bootstrap.Alert.getOrCreateInstance(alert).close();
             });
-        });
-    });
-</script>
-{% endblock %}
-{% endblock %} 
+        }, 5000);
+    </script>
+</body>
+</html> 
