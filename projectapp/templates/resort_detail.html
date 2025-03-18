@@ -1,0 +1,545 @@
+{% extends 'guestindex.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section with Resort Image Carousel -->
+<div class="hero-section position-relative">
+    <div class="resort-carousel">
+        {% for image in resort.gallery.all %}
+        <div class="carousel-item {% if forloop.first %}active{% endif %}">
+            <img src="{{ image.image.url }}" alt="{{ resort.resort_name }}" class="w-100">
+        </div>
+        {% endfor %}
+    </div>
+    <div class="hero-content">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="text-white mb-2">{{ resort.resort_name }}</h1>
+                    <p class="text-white mb-3">
+                        <i class="fas fa-map-marker-alt"></i> {{ resort.resort_address }}
+                    </p>
+                    <div class="rating-badge">
+                        <span class="rating">{{ resort.avg_rating|floatformat:1 }}</span>
+                        <div class="stars">
+                            {% for i in "12345"|make_list %}
+                            <i class="fas fa-star {% if forloop.counter <= resort.avg_rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                            {% endfor %}
+                        </div>
+                        <span class="reviews">({{ resort.total_reviews }} reviews)</span>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="price-badge">
+                        Starting from
+                        <span class="price">₹{{ resort.min_price|floatformat:0 }}</span>
+                        <span class="per-night">per night</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Info Bar -->
+<div class="quick-info-bar">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="info-item">
+                    <i class="fas fa-bed"></i>
+                    <span>{{ resort.room_count }} Rooms</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-item">
+                    <i class="fas fa-swimming-pool"></i>
+                    <span>{{ resort.amenities.count }} Amenities</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-item">
+                    <i class="fas fa-gift"></i>
+                    <span>{{ packages.count }} Packages</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-item">
+                    <i class="fas fa-star"></i>
+                    <span>{{ resort.avg_rating|floatformat:1 }} Rating</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Left Column - Resort Details -->
+            <div class="col-lg-8">
+                <!-- About Section -->
+                <section class="content-section">
+                    <h2>About {{ resort.resort_name }}</h2>
+                    <div class="description">
+                        {{ resort.description|linebreaks }}
+                    </div>
+                </section>
+
+                <!-- Amenities Section -->
+                <section class="content-section">
+                    <h2>Resort Amenities</h2>
+                    <div class="amenities-grid">
+                        {% for category, items in amenities.items %}
+                        <div class="amenity-category">
+                            <h3>{{ category }}</h3>
+                            <ul class="amenity-list">
+                                {% for item in items %}
+                                <li>
+                                    <i class="{{ item.icon }}"></i>
+                                    <span>{{ item.name }}</span>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Packages Section -->
+                <section class="content-section">
+                    <h2>Available Packages</h2>
+                    <div class="packages-grid">
+                        {% for package in packages %}
+                        <div class="package-card">
+                            <div class="package-image">
+                                <img src="{{ package.image.url }}" alt="{{ package.package_name }}">
+                                {% if package.discount_percentage > 0 %}
+                                <div class="discount-badge">
+                                    {{ package.discount_percentage }}% OFF
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="package-content">
+                                <h3>{{ package.package_name }}</h3>
+                                <div class="package-meta">
+                                    <span class="duration">
+                                        <i class="fas fa-clock"></i>
+                                        {{ package.get_duration_display }}
+                                    </span>
+                                    <span class="guests">
+                                        <i class="fas fa-user"></i>
+                                        Up to {{ package.max_guests }} guests
+                                    </span>
+                                </div>
+                                <p>{{ package.description|truncatewords:20 }}</p>
+                                <div class="package-price">
+                                    {% if package.discount_percentage > 0 %}
+                                    <span class="original-price">₹{{ package.price }}</span>
+                                    {% endif %}
+                                    <span class="final-price">₹{{ package.get_discounted_price }}</span>
+                                </div>
+                                <a href="{% url 'package_detail' package.id %}" class="btn btn-primary">View Details</a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p>No packages available at the moment.</p>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Rooms Section -->
+                <section class="content-section">
+                    <h2>Available Rooms</h2>
+                    <div class="rooms-grid">
+                        {% for room in rooms %}
+                        <div class="room-card">
+                            <div class="room-image">
+                                <img src="{{ room.image.url }}" alt="{{ room.room_type }}">
+                                <div class="room-type-badge">{{ room.get_room_type_display }}</div>
+                            </div>
+                            <div class="room-content">
+                                <h3>{{ room.room_type }}</h3>
+                                <div class="room-meta">
+                                    <span class="capacity">
+                                        <i class="fas fa-user"></i>
+                                        {{ room.capacity }} Guests
+                                    </span>
+                                    <span class="size">
+                                        <i class="fas fa-vector-square"></i>
+                                        {{ room.size_sqft }} sq.ft
+                                    </span>
+                                </div>
+                                <div class="room-amenities">
+                                    {% for amenity in room.get_amenities_list|slice:":3" %}
+                                    <span class="amenity-tag">{{ amenity }}</span>
+                                    {% endfor %}
+                                    {% if room.get_amenities_list|length > 3 %}
+                                    <span class="amenity-tag more">+{{ room.get_amenities_list|length|add:"-3" }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="room-price">
+                                    <span class="price">₹{{ room.price }}</span>
+                                    <span class="per-night">per night</span>
+                                </div>
+                                <a href="{% url 'room_detail' room.id %}" class="btn btn-outline-primary">View Details</a>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <p>No rooms available at the moment.</p>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Reviews Section -->
+                <section class="content-section" id="reviews">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2>Guest Reviews</h2>
+                        <a href="{% url 'resort_reviews' resort.id %}" class="btn btn-link">View All Reviews</a>
+                    </div>
+                    <div class="rating-summary">
+                        <div class="overall-rating">
+                            <div class="rating-number">{{ resort.avg_rating|floatformat:1 }}</div>
+                            <div class="rating-stars">
+                                {% for i in "12345"|make_list %}
+                                <i class="fas fa-star {% if forloop.counter <= resort.avg_rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                {% endfor %}
+                            </div>
+                            <div class="total-reviews">{{ resort.total_reviews }} reviews</div>
+                        </div>
+                        <div class="rating-bars">
+                            {% for rating, count in rating_distribution.items %}
+                            <div class="rating-bar">
+                                <span class="rating-label">{{ rating }} star</span>
+                                <div class="progress">
+                                    <div class="progress-bar bg-warning" role="progressbar" 
+                                         style="width: {% widthratio count resort.total_reviews 100 %}%">
+                                    </div>
+                                </div>
+                                <span class="rating-count">{{ count }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <div class="reviews-list">
+                        {% for review in reviews %}
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    {% if review.guest.profile_image %}
+                                    <img src="{{ review.guest.profile_image.url }}" alt="{{ review.guest.name }}" class="reviewer-image">
+                                    {% else %}
+                                    <div class="reviewer-initial">{{ review.guest.name|first }}</div>
+                                    {% endif %}
+                                    <div class="reviewer-details">
+                                        <h4>{{ review.guest.name }}</h4>
+                                        <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
+                                    </div>
+                                </div>
+                                <div class="review-rating">
+                                    {% for i in "12345"|make_list %}
+                                    <i class="fas fa-star {% if forloop.counter <= review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="review-content">
+                                {{ review.comment|linebreaks }}
+                            </div>
+                            {% if review.images.exists %}
+                            <div class="review-images">
+                                {% for image in review.images.all %}
+                                <img src="{{ image.image.url }}" alt="Review image" class="review-image">
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p>No reviews yet. Be the first to review this resort!</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column - Sidebar -->
+            <div class="col-lg-4">
+                <!-- Quick Booking Widget -->
+                <div class="booking-widget">
+                    <h3>Quick Booking</h3>
+                    <form action="{% url 'resort_booking' resort.id %}" method="POST" class="booking-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Check In</label>
+                            <input type="date" name="check_in" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Check Out</label>
+                            <input type="date" name="check_out" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Guests</label>
+                            <input type="number" name="guests" class="form-control" min="1" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Check Availability</button>
+                    </form>
+                </div>
+
+                <!-- Special Offers Widget -->
+                <div class="special-offers-widget">
+                    <h3>Special Offers</h3>
+                    {% for offer in special_offers %}
+                    <div class="special-offer-card">
+                        <div class="offer-image">
+                            <img src="{{ offer.image.url }}" alt="{{ offer.package_name }}">
+                            <div class="offer-badge">
+                                Save {{ offer.discount_percentage }}%
+                            </div>
+                        </div>
+                        <div class="offer-content">
+                            <h4>{{ offer.package_name }}</h4>
+                            <p>{{ offer.description|truncatewords:10 }}</p>
+                            <div class="offer-price">
+                                <span class="original-price">₹{{ offer.price }}</span>
+                                <span class="final-price">₹{{ offer.get_discounted_price }}</span>
+                            </div>
+                            <a href="{% url 'package_detail' offer.id %}" class="btn btn-outline-primary btn-sm">View Offer</a>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p>No special offers available at the moment.</p>
+                    {% endfor %}
+                </div>
+
+                <!-- Resort Highlights Widget -->
+                <div class="highlights-widget">
+                    <h3>Resort Highlights</h3>
+                    <ul class="highlights-list">
+                        <li>
+                            <i class="fas fa-clock"></i>
+                            <div class="highlight-content">
+                                <strong>Check-in/Check-out</strong>
+                                <p>{{ resort.check_in_time|time:"g:i A" }} / {{ resort.check_out_time|time:"g:i A" }}</p>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fas fa-map-marker-alt"></i>
+                            <div class="highlight-content">
+                                <strong>Location</strong>
+                                <p>{{ resort.resort_address }}</p>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fas fa-phone"></i>
+                            <div class="highlight-content">
+                                <strong>Contact</strong>
+                                <p>{{ resort.resort_contact }}</p>
+                            </div>
+                        </li>
+                        <li>
+                            <i class="fas fa-envelope"></i>
+                            <div class="highlight-content">
+                                <strong>Email</strong>
+                                <p>{{ resort.resort_email }}</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Map Widget -->
+                <div class="map-widget">
+                    <h3>Location</h3>
+                    <div id="resortMap" class="resort-map"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    /* Hero Section */
+    .hero-section {
+        height: 70vh;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .resort-carousel {
+        height: 100%;
+    }
+
+    .resort-carousel .carousel-item {
+        height: 100%;
+    }
+
+    .resort-carousel img {
+        object-fit: cover;
+        height: 100%;
+    }
+
+    .hero-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 2rem 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    }
+
+    /* Quick Info Bar */
+    .quick-info-bar {
+        background: white;
+        padding: 1rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #2c3e50;
+    }
+
+    .info-item i {
+        font-size: 1.5rem;
+        color: #3498db;
+    }
+
+    /* Content Sections */
+    .content-section {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Amenities Grid */
+    .amenities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+
+    .amenity-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .amenity-list li {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    /* Package and Room Cards */
+    .packages-grid,
+    .rooms-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .package-card,
+    .room-card {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: transform 0.3s ease;
+    }
+
+    .package-card:hover,
+    .room-card:hover {
+        transform: translateY(-5px);
+    }
+
+    /* Reviews Section */
+    .rating-summary {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .rating-bars {
+        flex-grow: 1;
+    }
+
+    .rating-bar {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .progress {
+        flex-grow: 1;
+        height: 8px;
+    }
+
+    /* Sidebar Widgets */
+    .booking-widget,
+    .special-offers-widget,
+    .highlights-widget,
+    .map-widget {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .resort-map {
+        height: 300px;
+        border-radius: 8px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-section {
+            height: 50vh;
+        }
+
+        .rating-summary {
+            flex-direction: column;
+        }
+
+        .packages-grid,
+        .rooms-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Initialize Map -->
+<script>
+(function() {
+    function initMap() {
+        const resortLocation = {
+            lat: parseFloat('{{ resort.latitude }}'),
+            lng: parseFloat('{{ resort.longitude }}')
+        };
+
+        const map = new google.maps.Map(document.getElementById('resortMap'), {
+            zoom: 15,
+            center: resortLocation
+        });
+
+        new google.maps.Marker({
+            position: resortLocation,
+            map: map,
+            title: '{{ resort.resort_name|escapejs }}'
+        });
+    }
+
+    // Make initMap available globally
+    window.initMap = initMap;
+})();
+</script>
+<script async defer
+    src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&callback=initMap">
+</script>
+{% endblock %}

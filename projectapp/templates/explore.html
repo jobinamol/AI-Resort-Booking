@@ -1,0 +1,688 @@
+{% extends 'guestindex.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="explore-hero">
+    <div class="container">
+        <div class="hero-content text-center">
+            <h1 class="display-4 mb-4">Discover Your Perfect Getaway</h1>
+            <p class="lead mb-5">Explore our handpicked collection of luxury resorts, exclusive packages, and premium rooms.</p>
+            
+            <!-- Enhanced Search and Filter Section -->
+            <div class="search-container">
+                <form method="GET" class="search-form" id="exploreSearchForm">
+                    <div class="row g-3 justify-content-center">
+                        <div class="col-md-5">
+                            <div class="search-input-group">
+                                <i class="icon-search"></i>
+                                <input type="text" name="q" class="form-control search-input" placeholder="Search resorts, packages, or rooms..." value="{{ query }}" id="searchQuery">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="search-input-group">
+                                <i class="icon-tag"></i>
+                                <select name="category" class="form-control category-select" id="categoryFilter">
+                                    <option value="">All Categories</option>
+                                    <option value="Staycation" {% if category_filter == "Staycation" %}selected{% endif %}>Staycation</option>
+                                    <option value="Daycation" {% if category_filter == "Daycation" %}selected{% endif %}>Daycation</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-search w-100">
+                                <i class="icon-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="explore-content">
+    <div class="container">
+        <!-- Quick Stats -->
+        <div class="quick-stats mb-5">
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="icon-hotel"></i>
+                        <h3>{{ resorts.count }}</h3>
+                        <p>Luxury Resorts</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="icon-gift"></i>
+                        <h3>{{ packages.count }}</h3>
+                        <p>Exclusive Packages</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="icon-bed"></i>
+                        <h3>{{ rooms.count }}</h3>
+                        <p>Available Rooms</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <i class="icon-star"></i>
+                        <h3>{{ recommended_packages.count }}</h3>
+                        <p>Recommendations</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resorts Section -->
+        <section class="explore-section" id="resortsSection">
+            <div class="section-header">
+                <h2><i class="icon-hotel"></i> Luxury Resorts</h2>
+                <p>Discover our collection of premium resorts</p>
+            </div>
+            <div class="row g-4">
+                {% for resort in resorts %}
+                <div class="col-md-4">
+                    <div class="resort-card">
+                        <div class="resort-image">
+                            {% if resort.image %}
+                                <img src="{{ resort.image.url }}" alt="{{ resort.resort_name }}">
+                            {% else %}
+                                <img src="{% static 'images/resort-placeholder.jpg' %}" alt="{{ resort.resort_name }}">
+                            {% endif %}
+                            <div class="resort-type">{{ resort.get_resort_type_display }}</div>
+                        </div>
+                        <div class="resort-content">
+                            <h3>{{ resort.resort_name }}</h3>
+                            <div class="resort-info">
+                                <p><i class="icon-map-marker"></i> {{ resort.resort_address }}</p>
+                                <p><i class="icon-info-circle"></i> {{ resort.description|truncatechars:100 }}</p>
+                            </div>
+                            <div class="resort-footer">
+                                <a href="{% url 'resort_detail' resort.id %}" class="btn btn-outline-primary">View Details</a>
+                                <div class="resort-rating">
+                                    <i class="icon-star"></i>
+                                    <span>{{ resort.rating|default:"4.5" }}/5</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="icon-hotel"></i>
+                        <h3>No Resorts Found</h3>
+                        <p>We couldn't find any resorts matching your criteria.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Packages Section -->
+        <section class="explore-section" id="packagesSection">
+            <div class="section-header">
+                <h2><i class="icon-gift"></i> Exclusive Packages</h2>
+                <p>Special offers and curated experiences</p>
+            </div>
+            <div class="row g-4">
+                {% for package in packages %}
+                <div class="col-md-4">
+                    <div class="package-card">
+                        <div class="package-image">
+                            {% if package.image %}
+                                <img src="{{ package.image.url }}" alt="{{ package.package_name }}">
+                            {% else %}
+                                <img src="{% static 'images/package-placeholder.jpg' %}" alt="{{ package.package_name }}">
+                            {% endif %}
+                            <div class="package-badge">{{ package.package_type }}</div>
+                        </div>
+                        <div class="package-content">
+                            <h3>{{ package.package_name }}</h3>
+                            <p class="package-description">{{ package.description|truncatechars:100 }}</p>
+                            <div class="package-details">
+                                <div class="detail-item">
+                                    <i class="icon-clock"></i>
+                                    <span>{{ package.get_duration_display }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="icon-users"></i>
+                                    <span>{{ package.max_guests }} Guests</span>
+                                </div>
+                            </div>
+                            <div class="package-price">
+                                {% if package.discount %}
+                                <div class="original-price">₹{{ package.price }}</div>
+                                {% endif %}
+                                <div class="final-price">₹{{ package.get_discounted_price }}</div>
+                            </div>
+                            <a href="{% url 'package_detail' package.id %}" class="btn btn-primary btn-block">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="icon-gift"></i>
+                        <h3>No Packages Available</h3>
+                        <p>We couldn't find any packages matching your criteria.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Rooms Section -->
+        <section class="explore-section" id="roomsSection">
+            <div class="section-header">
+                <h2><i class="icon-bed"></i> Premium Rooms</h2>
+                <p>Find your perfect accommodation</p>
+            </div>
+            <div class="row g-4">
+                {% for room in rooms %}
+                <div class="col-md-4">
+                    <div class="room-card">
+                        <div class="room-image">
+                            {% if room.image %}
+                                <img src="{{ room.image.url }}" alt="{{ room.room_type }}">
+                            {% else %}
+                                <img src="{% static 'images/room-placeholder.jpg' %}" alt="{{ room.room_type }}">
+                            {% endif %}
+                            <div class="room-status {% if room.is_available %}available{% else %}unavailable{% endif %}">
+                                {{ room.is_available|yesno:"Available,Booked" }}
+                            </div>
+                        </div>
+                        <div class="room-content">
+                            <h3>{{ room.room_type }}</h3>
+                            <div class="room-amenities">
+                                <span><i class="icon-users"></i> {{ room.capacity }} Guests</span>
+                                <span><i class="icon-vector"></i> {{ room.size }} sqft</span>
+                                <span><i class="icon-bed"></i> {{ room.bed_type }}</span>
+                            </div>
+                            <div class="room-price">
+                                <span class="price-label">Per Night</span>
+                                <span class="price-amount">₹{{ room.price }}</span>
+                            </div>
+                            <a href="{% url 'room_detail' room.id %}" class="btn btn-primary btn-block">
+                                {% if room.is_available %}Reserve Now{% else %}Join Waitlist{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="icon-bed"></i>
+                        <h3>No Rooms Available</h3>
+                        <p>We couldn't find any rooms matching your criteria.</p>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- Personalized Recommendations -->
+        <section class="explore-section" id="recommendationsSection">
+            <div class="section-header">
+                <h2><i class="icon-star"></i> Personalized for You</h2>
+                <p>Curated recommendations based on your preferences</p>
+            </div>
+            <div class="row g-4">
+                {% for package in recommended_packages %}
+                <div class="col-md-4">
+                    <div class="package-card recommended">
+                        <div class="package-image">
+                            {% if package.image %}
+                                <img src="{{ package.image.url }}" alt="{{ package.package_name }}">
+                            {% else %}
+                                <img src="{% static 'images/package-placeholder.jpg' %}" alt="{{ package.package_name }}">
+                            {% endif %}
+                            <div class="recommendation-badge">
+                                <i class="icon-thumbs-up"></i> Recommended
+                            </div>
+                        </div>
+                        <div class="package-content">
+                            <h3>{{ package.package_name }}</h3>
+                            <p class="package-description">{{ package.description|truncatechars:100 }}</p>
+                            <div class="package-details">
+                                <div class="detail-item">
+                                    <i class="icon-clock"></i>
+                                    <span>{{ package.get_duration_display }}</span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="icon-tag"></i>
+                                    <span>{{ package.package_type }}</span>
+                                </div>
+                            </div>
+                            <div class="package-price">
+                                <div class="final-price">₹{{ package.get_discounted_price }}</div>
+                                <div class="savings">Save ₹{{ package.get_savings }}</div>
+                            </div>
+                            <a href="{% url 'package_detail' package.id %}" class="btn btn-warning btn-block">Book Now</a>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="empty-state">
+                        <i class="icon-star"></i>
+                        <h3>No Recommendations Yet</h3>
+                        <p>Complete your profile to get personalized recommendations.</p>
+                        <a href="{% url 'guest_profile_view' %}" class="btn btn-outline-primary">Update Preferences</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Floating Filter Button (Mobile) -->
+<button class="btn btn-primary floating-filter-btn d-md-none" type="button" data-bs-toggle="modal" data-bs-target="#filterModal">
+    <i class="icon-filter"></i>
+</button>
+
+<!-- Filter Modal (Mobile) -->
+<div class="modal fade" id="filterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Filter Options</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="GET" id="mobileFilterForm">
+                    <div class="mb-3">
+                        <label class="form-label">Search</label>
+                        <input type="text" name="q" class="form-control" value="{{ query }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select name="category" class="form-control">
+                            <option value="">All Categories</option>
+                            <option value="Staycation" {% if category_filter == "Staycation" %}selected{% endif %}>Staycation</option>
+                            <option value="Daycation" {% if category_filter == "Daycation" %}selected{% endif %}>Daycation</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Apply Filters</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    /* Hero Section */
+    .explore-hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), url('{% static "images/hero-bg.jpg" %}') center/cover;
+        padding: 100px 0;
+        color: white;
+        margin-bottom: 2rem;
+    }
+
+    .hero-content {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    /* Search Container */
+    .search-container {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .search-input-group {
+        position: relative;
+    }
+
+    .search-input-group i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+
+    .search-input,
+    .category-select {
+        padding-left: 2.5rem;
+        height: 50px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.9);
+    }
+
+    .btn-search {
+        height: 50px;
+        border-radius: 8px;
+    }
+
+    /* Quick Stats */
+    .stat-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-card i {
+        font-size: 2rem;
+        color: #3498db;
+        margin-bottom: 1rem;
+    }
+
+    .stat-card h3 {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        color: #2c3e50;
+    }
+
+    .stat-card p {
+        color: #6c757d;
+        margin: 0;
+    }
+
+    /* Section Styles */
+    .explore-section {
+        margin-bottom: 4rem;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .section-header h2 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .section-header p {
+        color: #6c757d;
+    }
+
+    /* Card Styles */
+    .resort-card,
+    .package-card,
+    .room-card {
+        background: white;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .resort-card:hover,
+    .package-card:hover,
+    .room-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .resort-image,
+    .package-image,
+    .room-image {
+        position: relative;
+        height: 200px;
+        overflow: hidden;
+    }
+
+    .resort-image img,
+    .package-image img,
+    .room-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .resort-type,
+    .package-badge,
+    .room-status {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .resort-type {
+        background: rgba(52, 152, 219, 0.9);
+        color: white;
+    }
+
+    .package-badge {
+        background: rgba(46, 204, 113, 0.9);
+        color: white;
+    }
+
+    .room-status {
+        background: rgba(46, 204, 113, 0.9);
+        color: white;
+    }
+
+    .room-status.unavailable {
+        background: rgba(231, 76, 60, 0.9);
+    }
+
+    .resort-content,
+    .package-content,
+    .room-content {
+        padding: 1.5rem;
+    }
+
+    .resort-info,
+    .package-details,
+    .room-amenities {
+        margin: 1rem 0;
+    }
+
+    .resort-info p,
+    .package-details .detail-item,
+    .room-amenities span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+        color: #6c757d;
+    }
+
+    .resort-footer,
+    .package-price,
+    .room-price {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 1rem;
+    }
+
+    .resort-rating {
+        color: #f1c40f;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .package-price .original-price {
+        text-decoration: line-through;
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .package-price .final-price {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .room-price {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .price-label {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .price-amount {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .empty-state p {
+        color: #6c757d;
+        margin-bottom: 1rem;
+    }
+
+    /* Recommended Package Styles */
+    .package-card.recommended {
+        border: 2px solid #f1c40f;
+    }
+
+    .recommendation-badge {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        background: rgba(241, 196, 15, 0.9);
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .package-card.recommended .savings {
+        color: #27ae60;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    /* Floating Filter Button */
+    .floating-filter-btn {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 1000;
+    }
+
+    /* Responsive Styles */
+    @media (max-width: 768px) {
+        .explore-hero {
+            padding: 60px 0;
+        }
+
+        .search-container {
+            padding: 1rem;
+        }
+
+        .stat-card {
+            margin-bottom: 1rem;
+        }
+
+        .resort-card,
+        .package-card,
+        .room-card {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+
+<!-- Custom Scripts -->
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        $('[data-bs-toggle="tooltip"]').tooltip();
+
+        // Smooth scroll to sections
+        $('.nav-link').on('click', function(e) {
+            e.preventDefault();
+            const target = $($(this).attr('href'));
+            $('html, body').animate({
+                scrollTop: target.offset().top - 100
+            }, 500);
+        });
+
+        // Live search functionality
+        let searchTimeout;
+        $('#searchQuery').on('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                $('#exploreSearchForm').submit();
+            }, 500);
+        });
+
+        // Category filter change
+        $('#categoryFilter').on('change', function() {
+            $('#exploreSearchForm').submit();
+        });
+
+        // Mobile filter form submission
+        $('#mobileFilterForm').on('submit', function(e) {
+            e.preventDefault();
+            const formData = $(this).serialize();
+            window.location.href = `${window.location.pathname}?${formData}`;
+        });
+
+        // Lazy loading images
+        const images = document.querySelectorAll('img[data-src]');
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                    observer.unobserve(img);
+                }
+            });
+        });
+
+        images.forEach(img => imageObserver.observe(img));
+    });
+</script>
+{% endblock %}

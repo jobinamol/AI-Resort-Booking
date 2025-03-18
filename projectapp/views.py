@@ -20,6 +20,8 @@ from django.core.paginator import Paginator
 import json
 from django.contrib.auth.hashers import check_password, make_password
 from functools import wraps
+from django.db.models import Q, Count, F
+
 
 
 # Create your views here.
@@ -1471,65 +1473,77 @@ def delete_package(request, package_id):
 #guest login and Signup
 def guest_signup(request):
     if request.method == 'POST':
-        full_name = request.POST['full_name']
-        email = request.POST['email']
-        mobile_number = request.POST['mobile_number']
-        password = request.POST['password']
-        confirm_password = request.POST['confirm_password']
-
-        # Validation
-        if len(password) < 8:
-            messages.error(request, "Password must be at least 8 characters long")
-            return redirect('guest_signup')
-
-        if not any(char.isdigit() for char in password):
-            messages.error(request, "Password must contain at least one number")
-            return redirect('guest_signup')
-
-        if not any(char.isalpha() for char in password):
-            messages.error(request, "Password must contain at least one letter")
-            return redirect('guest_signup')
-
-        if password != confirm_password:
-            messages.error(request, "Passwords do not match")
-            return redirect('guest_signup')
-
-        # Check if email or mobile number already exists
-        if GuestUser.objects.filter(email=email).exists():
-            messages.error(request, "Email already registered")
-            return redirect('guest_signup')
-
-        if GuestUser.objects.filter(mobile_number=mobile_number).exists():
-            messages.error(request, "Mobile number already registered")
-            return redirect('guest_signup')
-
         try:
-            # Create new guest user
-            guest = GuestUser(
-                full_name=full_name,
-                email=email,
-                mobile_number=mobile_number,
-                password=make_password(password)
-            )
-            guest.save()
+            # Get form data with default values to prevent MultiValueDictKeyError
+            full_name = request.POST.get('full_name', '')
+            email = request.POST.get('email', '')
+            mobile_number = request.POST.get('mobile_number', '')
+            password = request.POST.get('password', '')
+            confirm_password = request.POST.get('confirm_password', '')
 
-            # Send welcome email
+            # Validation
+            if not all([full_name, email, mobile_number, password, confirm_password]):
+                messages.error(request, "All fields are required")
+                return redirect('guest_signup')
+
+            # Password validation
+            if len(password) < 8:
+                messages.error(request, "Password must be at least 8 characters long")
+                return redirect('guest_signup')
+
+            if not any(char.isdigit() for char in password):
+                messages.error(request, "Password must contain at least one number")
+                return redirect('guest_signup')
+
+            if not any(char.isalpha() for char in password):
+                messages.error(request, "Password must contain at least one letter")
+                return redirect('guest_signup')
+
+            if password != confirm_password:
+                messages.error(request, "Passwords do not match")
+                return redirect('guest_signup')
+
+            # Check if email or mobile number already exists
+            if GuestUser.objects.filter(email=email).exists():
+                messages.error(request, "Email already registered")
+                return redirect('guest_signup')
+
+            if GuestUser.objects.filter(mobile_number=mobile_number).exists():
+                messages.error(request, "Mobile number already registered")
+                return redirect('guest_signup')
+
             try:
-                send_mail(
-                    'Welcome to LuxAI Resorts',
-                    f'Dear {full_name},\n\nWelcome to LuxAI Resorts! Your account has been successfully created.',
-                    settings.DEFAULT_FROM_EMAIL,
-                    [email],
-                    fail_silently=True,
+                # Create new guest user with proper password hashing
+                guest = GuestUser(
+                    full_name=full_name,
+                    email=email,
+                    mobile_number=mobile_number
                 )
-            except Exception as e:
-                # Log the error but don't stop the signup process
-                print(f"Error sending welcome email: {str(e)}")
+                guest.set_password(password)  # Use the model method for password hashing
+                guest.save()
 
-            messages.success(request, "Account created successfully! Please log in.")
-            return redirect('guest_login')
+                # Send welcome email
+                try:
+                    send_mail(
+                        'Welcome to LuxAI Resorts',
+                        f'Dear {full_name},\n\nWelcome to LuxAI Resorts! Your account has been successfully created.',
+                        settings.DEFAULT_FROM_EMAIL,
+                        [email],
+                        fail_silently=True,
+                    )
+                except Exception as e:
+                    # Log the error but don't stop the signup process
+                    print(f"Error sending welcome email: {str(e)}")
+
+                messages.success(request, "Account created successfully! Please log in.")
+                return redirect('guest_login')
+
+            except Exception as e:
+                messages.error(request, f"Error creating account: {str(e)}")
+                return redirect('guest_signup')
+
         except Exception as e:
-            messages.error(request, f"Error creating account: {str(e)}")
+            messages.error(request, f"An error occurred: {str(e)}")
             return redirect('guest_signup')
 
     return render(request, 'guest_signup.html')
@@ -1574,3 +1588,394 @@ def guest_login_required(view_func):
 
 def is_guest_authenticated(request):
     return 'guest_id' in request.session
+
+@login_required
+def guest_profile_view(request):
+    """ Fetch and display guest user profile details """
+    guest = get_object_or_404(GuestUser, id=request.session.get('guest_id'))
+    return render(request, 'guest_profile.html', {'guest': guest})
+
+@login_required
+def guest_update_profile(request):
+    """ Update guest user profile details """
+    if request.method == 'POST':
+        guest = get_object_or_404(GuestUser, id=request.session.get('guest_id'))
+        
+        try:
+            guest.full_name = request.POST.get('full_name', guest.full_name)
+            guest.mobile_number = request.POST.get('mobile_number', guest.mobile_number)
+
+            if 'profile_image' in request.FILES:
+                if guest.profile_image:
+                    guest.delete_profile_image()  # Use the model method to delete old image
+                guest.profile_image = request.FILES['profile_image']
+            
+            guest.save()
+            messages.success(request, "Profile updated successfully!")
+            
+        except ValidationError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            messages.error(request, "An error occurred while updating your profile.")
+            
+        return redirect('guest_profile_view')
+
+    return redirect('guest_profile_view')
+
+@login_required
+def guest_change_password(request):
+    """ Allow guest users to change their password """
+    if request.method == 'POST':
+        guest = get_object_or_404(GuestUser, id=request.session.get('guest_id'))
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if not guest.check_password(current_password):
+            messages.error(request, "Current password is incorrect.")
+            return redirect('guest_profile_view')
+
+        if new_password != confirm_password:
+            messages.error(request, "New passwords do not match.")
+            return redirect('guest_profile_view')
+
+        if len(new_password) < 8:
+            messages.error(request, "Password must be at least 8 characters long.")
+            return redirect('guest_profile_view')
+
+        guest.set_password(new_password)
+        guest.save()
+        messages.success(request, "Password changed successfully!")
+        return redirect('guest_profile_view')
+
+    return redirect('guest_profile_view')
+
+@login_required
+def guest_update_preferences(request):
+    """ Update guest user preferences """
+    if request.method == 'POST':
+        guest = get_object_or_404(GuestUser, id=request.session.get('guest_id'))
+        preferences = request.POST.getlist('preferences[]', [])
+        
+        try:
+            guest.update_preferences({
+                'interests': preferences,
+                'updated_at': timezone.now().isoformat()
+            })
+            messages.success(request, "Preferences updated successfully!")
+        except Exception as e:
+            messages.error(request, "An error occurred while updating your preferences.")
+        
+        return redirect('guest_profile_view')
+
+    return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    
+def explore_page(request):
+    """Explore available resorts, packages, and rooms with filtering and recommendations."""
+    
+    query = request.GET.get('q', '').strip()
+    category_filter = request.GET.get('category', '')
+
+    # Base Querysets with related data for better performance
+    resorts = Resort.objects.filter(is_active=True).prefetch_related('gallery')
+    packages = Package.objects.filter(is_active=True).select_related('resort').prefetch_related('gallery')
+    rooms = Room.objects.filter(is_available=True).select_related('resort')
+
+    # Apply search filters if query exists
+    if query:
+        resorts = resorts.filter(
+            Q(resort_name__icontains=query) |
+            Q(resort_address__icontains=query) |
+            Q(resort_type__icontains=query) |
+            Q(resort_description__icontains=query)
+        )
+        
+        packages = packages.filter(
+            Q(package_name__icontains=query) |
+            Q(description__icontains=query)
+        )
+        
+        rooms = rooms.filter(
+            Q(room_type__icontains=query) |
+            Q(description__icontains=query)
+        )
+
+    # Apply category filter if selected
+    if category_filter:
+        packages = packages.filter(package_type=category_filter)
+
+    # Get personalized recommendations if user is logged in
+    recommended_packages = []
+    guest = None  # Default guest to None
+
+    if 'guest_id' in request.session:
+        try:
+            guest = Guest.objects.get(id=request.session['guest_id'])
+
+            # Score packages based on user preferences
+            scored_packages = []
+            for package in Package.objects.filter(is_active=True):
+                score = 0
+                # Match user preferences
+                if guest.preferred_resort_type and package.resort.resort_type == guest.preferred_resort_type:
+                    score += 2
+                if guest.preferred_package_type and package.package_type == guest.preferred_package_type:
+                    score += 2
+                # Consider price range
+                if guest.budget_range and package.price <= guest.budget_range:
+                    score += 1
+                # Consider popularity
+                score += package.bookings.count() * 0.1
+
+                scored_packages.append((package, score))
+
+            # Sort by score and get top 3 recommendations
+            scored_packages.sort(key=lambda x: x[1], reverse=True)
+            recommended_packages = [package for package, _ in scored_packages[:3]]
+
+        except Guest.DoesNotExist:
+            print("Guest ID not found in session")
+
+    else:
+        # For non-logged in users, show popular packages
+        recommended_packages = Package.objects.filter(
+            is_active=True
+        ).annotate(
+            booking_count=Count('bookings')
+        ).order_by('-booking_count')[:3]
+
+    context = {
+        'resorts': resorts,
+        'packages': packages,
+        'rooms': rooms,
+        'recommended_packages': recommended_packages,
+        'query': query,
+        'category_filter': category_filter,
+        'guest': guest  # Pass guest object for personalization (optional)
+    }
+
+    return render(request, 'explore.html', context)
+
+def explore_filter(request):
+    """Filter resorts, packages, and rooms based on user query."""
+    query = request.GET.get('q', '')
+    category_filter = request.GET.get('category', '')
+
+    resorts = Resort.objects.filter(is_active=True)
+    packages = Package.objects.filter(is_active=True)
+    rooms = Room.objects.filter(is_available=True)
+
+    if query:
+        resorts = resorts.filter(
+            Q(resort_name__icontains=query) | Q(resort_address__icontains=query)
+        )
+        packages = packages.filter(Q(package_name__icontains=query))
+        rooms = rooms.filter(Q(room_type__icontains=query))
+
+    if category_filter:
+        packages = packages.filter(package_type=category_filter)
+
+    context = {
+        'resorts': resorts,
+        'packages': packages,
+        'rooms': rooms,
+    }
+    
+    return render(request, 'explore.html', context)
+
+
+def explore_sort(request, sort_by):
+    """Sort resorts, packages, and rooms based on the specified sorting criteria."""
+    query = request.GET.get('q', '')
+    category_filter = request.GET.get('category', '')
+    
+    resorts = Resort.objects.filter(is_active=True)
+    packages = Package.objects.filter(is_active=True)
+    rooms = Room.objects.filter(is_available=True)
+    
+    # Apply search filters if query exists
+    if query:
+        resorts = resorts.filter(
+            Q(resort_name__icontains=query) |
+            Q(resort_address__icontains=query) |
+            Q(resort_type__icontains=query) |
+            Q(description__icontains=query)
+        )
+        
+        packages = packages.filter(
+            Q(package_name__icontains=query) |
+            Q(description__icontains=query)
+        )
+        
+        rooms = rooms.filter(
+            Q(room_type__icontains=query) |
+            Q(description__icontains=query)
+        )
+
+    # Apply category filter if selected
+    if category_filter:
+        packages = packages.filter(package_type=category_filter)
+
+    # Sort the results based on the `sort_by` parameter
+    if sort_by == 'price':
+        packages = packages.order_by('price')
+        rooms = rooms.order_by('price')
+    elif sort_by == 'rating':
+        packages = packages.order_by('-rating')
+        rooms = rooms.order_by('-rating')
+    elif sort_by == 'date':
+        packages = packages.order_by('-created_at')
+        rooms = rooms.order_by('-created_at')
+
+    context = {
+        'resorts': resorts,
+        'packages': packages,
+        'rooms': rooms,
+        'query': query,
+        'category_filter': category_filter,
+    }
+    
+    return render(request, 'explore.html', context)
+def resort_detail(request, resort_id):
+    """Display detailed information about a specific resort"""
+    resort = get_object_or_404(Resort.objects.prefetch_related('gallery'), id=resort_id)
+    packages = Package.objects.filter(resort=resort, is_active=True)
+    rooms = Room.objects.filter(resort=resort, is_available=True)
+    reviews = Review.objects.filter(resort=resort)
+
+    context = {
+        'resort': resort,
+        'packages': packages,
+        'rooms': rooms,
+        'reviews': reviews,
+    }
+    return render(request, 'resort_detail.html', context)
+
+def resort_reviews(request, resort_id):
+    """Fetch reviews for a specific resort"""
+    resort = get_object_or_404(Resort, id=resort_id)
+    reviews = Review.objects.filter(resort=resort).order_by('-created_at')
+
+    context = {
+        'resort': resort,
+        'reviews': reviews,
+    }
+    return render(request, 'resort_reviews.html', context)
+
+# Package Detail, Reviews & Booking
+def package_detail(request, package_id):
+    """Display detailed information about a specific package"""
+    package = get_object_or_404(Package.objects.select_related('resort', 'gallery'), id=package_id)
+    related_packages = Package.objects.filter(resort=package.resort, is_active=True).exclude(id=package_id)[:3]
+    reviews = Review.objects.filter(package=package)
+
+    context = {
+        'package': package,
+        'related_packages': related_packages,
+        'reviews': reviews,
+    }
+    return render(request, 'package_detail.html', context)
+
+def package_reviews(request, package_id):
+    """Fetch reviews for a specific package"""
+    package = get_object_or_404(Package, id=package_id)
+    reviews = Review.objects.filter(package=package).order_by('-created_at')
+
+    context = {
+        'package': package,
+        'reviews': reviews,
+    }
+    return render(request, 'package_reviews.html', context)
+
+def package_booking(request, package_id):
+    """Handle package booking"""
+    package = get_object_or_404(Package, id=package_id)
+
+    if request.method == "POST":
+        guest_name = request.POST.get('guest_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        payment_method = request.POST.get('payment_method')
+
+        if not all([guest_name, email, phone, payment_method]):
+            messages.error(request, "All fields are required.")
+            return redirect('package_detail', package_id=package.id)
+
+        Booking.objects.create(
+            package=package,
+            guest_name=guest_name,
+            email=email,
+            phone=phone,
+            payment_method=payment_method,
+            status="Pending"
+        )
+
+        messages.success(request, "Your booking request has been submitted successfully!")
+        return redirect('package_detail', package_id=package.id)
+
+    return redirect('package_detail', package_id=package.id)
+
+# Room Detail, Reviews, Booking & Availability
+def room_detail(request, room_id):
+    """Display detailed information about a specific room"""
+    room = get_object_or_404(Room.objects.select_related('resort'), id=room_id)
+    similar_rooms = Room.objects.filter(resort=room.resort, is_available=True).exclude(id=room_id)[:3]
+    reviews = Review.objects.filter(room=room)
+
+    context = {
+        'room': room,
+        'similar_rooms': similar_rooms,
+        'reviews': reviews,
+    }
+    return render(request, 'room_detail.html', context)
+
+def room_reviews(request, room_id):
+    """Fetch reviews for a specific room"""
+    room = get_object_or_404(Room, id=room_id)
+    reviews = Review.objects.filter(room=room).order_by('-created_at')
+
+    context = {
+        'room': room,
+        'reviews': reviews,
+    }
+    return render(request, 'room_reviews.html', context)
+
+def room_booking(request, room_id):
+    """Handle room booking"""
+    room = get_object_or_404(Room, id=room_id)
+
+    if request.method == "POST":
+        guest_name = request.POST.get('guest_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        check_in = request.POST.get('check_in')
+        check_out = request.POST.get('check_out')
+        payment_method = request.POST.get('payment_method')
+
+        if not all([guest_name, email, phone, check_in, check_out, payment_method]):
+            messages.error(request, "All fields are required.")
+            return redirect('room_detail', room_id=room.id)
+
+        Booking.objects.create(
+            room=room,
+            guest_name=guest_name,
+            email=email,
+            phone=phone,
+            check_in=check_in,
+            check_out=check_out,
+            payment_method=payment_method,
+            status="Pending"
+        )
+
+        messages.success(request, "Your room booking request has been submitted successfully!")
+        return redirect('room_detail', room_id=room.id)
+
+    return redirect('room_detail', room_id=room.id)
+
+def room_availability(request, room_id):
+    """Check room availability"""
+    room = get_object_or_404(Room, id=room_id)
+    is_available = room.is_available
+
+    return JsonResponse({'room_id': room.id, 'is_available': is_available})

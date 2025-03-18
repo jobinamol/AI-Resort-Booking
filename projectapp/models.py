@@ -6,6 +6,8 @@ import random
 import json
 from decimal import Decimal
 from django.db.models import Q
+from django.contrib.auth.hashers import make_password, check_password
+import os
 
 
 class UserDB(AbstractUser):
@@ -708,32 +710,105 @@ class GuestUser(models.Model):
     def get_short_name(self):
         return self.full_name.split()[0]
 
+    def set_password(self, raw_password):
+        """Set the user's password using Django's password hashing."""
+        self.password = make_password(raw_password)
+
+    def check_password(self, raw_password):
+        """Check if the provided password matches the stored hash."""
+        return check_password(raw_password, self.password)
+
     def update_last_login(self):
+        """Update the last login timestamp."""
         self.last_login = timezone.now()
-        self.save()
+        self.save(update_fields=['last_login'])
 
     def deactivate(self):
+        """Deactivate the user account."""
         self.is_active = False
-        self.save()
+        self.save(update_fields=['is_active'])
 
     def activate(self):
+        """Activate the user account."""
         self.is_active = True
-        self.save()
+        self.save(update_fields=['is_active'])
 
     def update_preferences(self, new_preferences):
-        self.preferences.update(new_preferences)
-        self.save()
+        """Update user preferences with timestamp."""
+        if not isinstance(new_preferences, dict):
+            raise ValueError("Preferences must be a dictionary")
+        
+        current_preferences = self.preferences or {}
+        current_preferences.update(new_preferences)
+        current_preferences['last_updated'] = timezone.now().isoformat()
+        
+        self.preferences = current_preferences
+        self.save(update_fields=['preferences'])
+
+    def get_profile_image_url(self):
+        """Get the profile image URL or return default image URL."""
+        if self.profile_image and hasattr(self.profile_image, 'url'):
+            return self.profile_image.url
+        return '/static/images/default-profile.png'
+
+    def delete_profile_image(self):
+        """Delete the user's profile image if it exists."""
+        if self.profile_image:
+            if os.path.isfile(self.profile_image.path):
+                os.remove(self.profile_image.path)
+            self.profile_image = None
+            self.save(update_fields=['profile_image'])
 
     def clean(self):
+        """Validate model fields."""
         # Validate mobile number format
         if self.mobile_number:
             if not self.mobile_number.isdigit():
                 raise ValidationError({'mobile_number': 'Mobile number must contain only digits'})
             if len(self.mobile_number) < 10:
                 raise ValidationError({'mobile_number': 'Mobile number must be at least 10 digits'})
+        
+        # Validate email format
+        if self.email:
+            self.email = self.email.lower().strip()
+
+        # Validate preferences format
+        if self.preferences and not isinstance(self.preferences, dict):
+            raise ValidationError({'preferences': 'Preferences must be a valid JSON object'})
 
     def save(self, *args, **kwargs):
-        self.full_name = self.full_name.title()  # Capitalize each word in full name
+        """Override save method to perform additional operations."""
+        # Capitalize each word in full name
+        if self.full_name:
+            self.full_name = self.full_name.title().strip()
+        
+        # Clean and validate fields
         self.clean()
+        
+        # If this is a new user, set date_joined
+        if not self.pk:
+            self.date_joined = timezone.now()
+        
         super().save(*args, **kwargs)
 
+    @property
+    def is_authenticated(self):
+        """Check if the user is authenticated."""
+        return True if self.is_active else False
+
+    @property
+    def get_preferences_list(self):
+        """Get user preferences as a list."""
+        return self.preferences.get('interests', []) if self.preferences else []
+
+    @property
+    def last_login_formatted(self):
+        """Get formatted last login time."""
+        if self.last_login:
+            return self.last_login.strftime("%B %d, %Y at %I:%M %p")
+        return "Never"
+
+    @property
+    def member_since(self):
+        """Get formatted member since date."""
+        return self.date_joined.strftime("%B %Y")

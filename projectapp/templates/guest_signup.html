@@ -1,371 +1,112 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guest Signup - LuxAI Resorts</title>
-    {% load static %}
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/open-iconic-bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'css/animate.css' %}">
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-        }
-        .video-background {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-        .video-background video {
-            min-width: 100%;
-            min-height: 100%;
-            width: auto;
-            height: auto;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            object-fit: cover;
-        }
-        .video-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%);
-        }
-        .signup-container {
-            min-height: 100vh;
-            position: relative;
-            z-index: 1;
-            padding: 40px 0;
-            display: flex;
-            align-items: center;
-        }
-        .signup-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            padding: 50px;
-            max-width: 600px;
-            margin: auto;
-            transform: translateY(0);
-            transition: all 0.4s ease;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .signup-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.35);
-        }
-        .signup-header {
-            text-align: center;
-            margin-bottom: 40px;
-            position: relative;
-        }
-        .signup-header:after {
-            content: '';
-            position: absolute;
-            bottom: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 3px;
-            background: linear-gradient(45deg, #00c6ff, #0072ff);
-            border-radius: 3px;
-        }
-        .signup-header h2 {
-            color: #2c3e50;
-            font-weight: 600;
-            margin-bottom: 10px;
-            font-size: 2.2em;
-        }
-        .signup-header p {
-            color: #666;
-            font-size: 1.1em;
-        }
-        .form-group {
-            margin-bottom: 25px;
-            position: relative;
-        }
-        .form-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #00c6ff;
-            font-size: 1.2em;
-            transition: all 0.3s ease;
-        }
-        .form-control {
-            border-radius: 12px;
-            padding: 15px 20px 15px 45px;
-            border: 2px solid #e0e0e0;
-            transition: all 0.3s ease;
-            font-size: 1em;
-            background: rgba(255, 255, 255, 0.9);
-        }
-        .form-control:focus {
-            border-color: #00c6ff;
-            box-shadow: 0 0 0 3px rgba(0,198,255,0.2);
-            background: #fff;
-        }
-        .form-control:focus + i {
-            color: #0072ff;
-        }
-        .signup-btn {
-            background: linear-gradient(45deg, #00c6ff, #0072ff);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            padding: 16px 30px;
-            font-weight: 600;
-            font-size: 1.1em;
-            letter-spacing: 1px;
-            width: 100%;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            position: relative;
-            overflow: hidden;
-        }
-        .signup-btn:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: all 0.5s ease;
-        }
-        .signup-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 7px 20px rgba(0,198,255,0.3);
-        }
-        .signup-btn:hover:before {
-            left: 100%;
-        }
-        .login-link {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0,0,0,0.1);
-        }
-        .login-link p {
-            color: #fff;
-            margin-bottom: 0;
-            font-size: 1.1em;
-        }
-        .login-link a {
-            color: #00c6ff;
-            font-weight: 600;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-        .login-link a:hover {
-            color: #0072ff;
-            text-decoration: none;
-        }
-        .alert {
-            border-radius: 12px;
-            margin-bottom: 25px;
-            border: none;
-            background: rgba(255,255,255,0.95);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-        .form-row {
-            display: flex;
-            margin: -10px;
-        }
-        .form-col {
-            flex: 1;
-            padding: 10px;
-        }
-        .password-requirements {
-            background: rgba(255,255,255,0.8);
-            border-radius: 8px;
-            padding: 10px;
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 8px;
-            border: 1px solid #e0e0e0;
-        }
-        .requirement-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 5px;
-            transition: all 0.3s ease;
-        }
-        .requirement-item i {
-            margin-right: 8px;
-            font-size: 14px;
-            color: #00c6ff;
-        }
-        .custom-control-label {
-            color: #495057;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .custom-control-input:checked ~ .custom-control-label::before {
-            background: linear-gradient(45deg, #00c6ff, #0072ff);
-            border-color: #0072ff;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .signup-card {
-            animation: fadeIn 0.6s ease-out;
-        }
-    </style>
-</head>
-<body>
-    <!-- Video Background -->
-    <div class="video-background">
-        <video autoplay muted loop playsinline>
-            <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
-        </video>
-        <div class="video-overlay"></div>
-    </div>
+{% extends 'index.html' %}
+{% load static %}
 
-    <div class="signup-container">
-        <div class="container">
-            <div class="signup-card">
-                <div class="signup-header">
-                    <h2>Create Your Account</h2>
-                    <p>Join LuxAI Resorts for an exceptional experience</p>
-                </div>
-
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+{% block content %}
+<div class="container mt-5 pt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">Sign Up</h2>
+                    
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
                             {{ message }}
                             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
-                    {% endfor %}
-                {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
 
-                <form method="POST" class="signup-form">
-                    {% csrf_token %}
-                    <div class="form-row">
-                        <div class="form-col">
-                            <div class="form-group">
-                                <input type="text" id="full_name" name="full_name" class="form-control" placeholder="Full Name" required>
-                                <i class="fas fa-user"></i>
+                    <form method="POST" action="{% url 'guest_signup' %}" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="full_name">Full Name</label>
+                            <input type="text" class="form-control" id="full_name" name="full_name" required 
+                                   pattern="[A-Za-z ]{2,50}" title="Name should only contain letters and spaces">
+                            <div class="invalid-feedback">
+                                Please enter your full name (letters and spaces only).
                             </div>
                         </div>
-                        <div class="form-col">
-                            <div class="form-group">
-                                <input type="tel" id="mobile_number" name="mobile_number" class="form-control" placeholder="Mobile Number" required>
-                                <i class="fas fa-phone-alt"></i>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                            <div class="invalid-feedback">
+                                Please enter a valid email address.
                             </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <input type="email" id="email" name="email" class="form-control" placeholder="Email Address" required>
-                        <i class="fas fa-envelope"></i>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-col">
-                            <div class="form-group">
-                                <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
-                                <i class="fas fa-lock"></i>
-                                <div class="password-requirements">
-                                    <div class="requirement-item">
-                                        <i class="fas fa-check-circle"></i> At least 8 characters
-                                    </div>
-                                    <div class="requirement-item">
-                                        <i class="fas fa-check-circle"></i> Contains numbers and letters
-                                    </div>
-                                </div>
+                        <div class="form-group">
+                            <label for="mobile_number">Mobile Number</label>
+                            <input type="tel" class="form-control" id="mobile_number" name="mobile_number" required 
+                                   pattern="[0-9]{10}" title="Please enter a valid 10-digit mobile number">
+                            <div class="invalid-feedback">
+                                Please enter a valid 10-digit mobile number.
                             </div>
                         </div>
-                        <div class="form-col">
-                            <div class="form-group">
-                                <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Confirm Password" required>
-                                <i class="fas fa-lock"></i>
+
+                        <div class="form-group">
+                            <label for="password">Password</label>
+                            <input type="password" class="form-control" id="password" name="password" required 
+                                   minlength="8" pattern="(?=.*\d)(?=.*[a-zA-Z]).{8,}"
+                                   title="Must contain at least one number and one letter, and at least 8 characters">
+                            <div class="invalid-feedback">
+                                Password must be at least 8 characters long and contain at least one letter and one number.
                             </div>
                         </div>
-                    </div>
 
-                    <div class="form-group">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="terms" required>
-                            <label class="custom-control-label" for="terms">
-                                I agree to the <a href="#" class="text-primary">Terms of Service</a> and <a href="#" class="text-primary">Privacy Policy</a>
-                            </label>
+                        <div class="form-group">
+                            <label for="confirm_password">Confirm Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                            <div class="invalid-feedback">
+                                Please confirm your password.
+                            </div>
                         </div>
+
+                        <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+                    </form>
+
+                    <div class="text-center mt-4">
+                        <p>Already have an account? <a href="{% url 'guest_login' %}">Login here</a></p>
                     </div>
-
-                    <button type="submit" class="signup-btn">
-                        <i class="fas fa-user-plus mr-2"></i> Create Account
-                    </button>
-                </form>
-
-                <div class="login-link">
-                    <p>Already have an account? <a href="{% url 'guest_login' %}">Sign in</a></p>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script src="{% static 'js/jquery.min.js' %}"></script>
-    <script src="{% static 'js/bootstrap.min.js' %}"></script>
-    <script>
-        // Password validation and visual feedback
-        const password = document.getElementById('password');
-        const confirmPassword = document.getElementById('confirm_password');
-        const form = document.querySelector('form');
-        const requirements = document.querySelectorAll('.requirement-item');
-
-        password.addEventListener('input', function() {
-            const hasEightChars = this.value.length >= 8;
-            const hasNumbersAndLetters = /[0-9]/.test(this.value) && /[a-zA-Z]/.test(this.value);
-            
-            requirements[0].style.color = hasEightChars ? '#00c6ff' : '#666';
-            requirements[1].style.color = hasNumbersAndLetters ? '#00c6ff' : '#666';
-        });
-
-        form.addEventListener('submit', function(e) {
-            if (password.value !== confirmPassword.value) {
-                e.preventDefault();
-                const alert = document.createElement('div');
-                alert.className = 'alert alert-danger alert-dismissible fade show';
-                alert.innerHTML = `
-                    Passwords do not match!
-                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                    </button>
-                `;
-                form.insertBefore(alert, form.firstChild);
-            }
-        });
-
-        // Add smooth transitions for form validation
-        const inputs = document.querySelectorAll('.form-control');
-        inputs.forEach(input => {
-            input.addEventListener('invalid', (e) => {
-                e.target.classList.add('is-invalid');
-            });
-            input.addEventListener('input', (e) => {
-                if (e.target.classList.contains('is-invalid')) {
-                    e.target.classList.remove('is-invalid');
+<script>
+// Client-side form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
                 }
-            });
+                form.classList.add('was-validated');
+
+                // Check if passwords match
+                var password = document.getElementById('password');
+                var confirm_password = document.getElementById('confirm_password');
+                if (password.value !== confirm_password.value) {
+                    confirm_password.setCustomValidity("Passwords don't match");
+                    event.preventDefault();
+                    event.stopPropagation();
+                } else {
+                    confirm_password.setCustomValidity('');
+                }
+            }, false);
         });
-    </script>
-</body>
-</html>
+    }, false);
+})();
+</script>
+{% endblock %}

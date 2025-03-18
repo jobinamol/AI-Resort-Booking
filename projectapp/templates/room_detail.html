@@ -1,0 +1,533 @@
+{% extends 'guestindex.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section position-relative">
+    <div class="room-image">
+        <img src="{{ room.image.url }}" alt="{{ room.room_name }}" class="w-100">
+        {% if room.discount_percentage > 0 %}
+        <div class="discount-badge">
+            Save {{ room.discount_percentage }}% Today
+        </div>
+        {% endif %}
+    </div>
+    <div class="hero-content">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="text-white mb-2">{{ room.room_name }}</h1>
+                    <p class="text-white mb-3">
+                        <i class="fas fa-hotel"></i> {{ room.resort.resort_name }}
+                    </p>
+                    <div class="room-meta text-white">
+                        <span class="me-4">
+                            <i class="fas fa-bed"></i> {{ room.room_type }}
+                        </span>
+                        <span class="me-4">
+                            <i class="fas fa-user"></i> Up to {{ room.max_guests }} guests
+                        </span>
+                        <span>
+                            <i class="fas fa-star text-warning"></i> {{ room.avg_rating|floatformat:1 }}
+                            ({{ room.total_reviews }} reviews)
+                        </span>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <div class="price-badge">
+                        {% if room.discount_percentage > 0 %}
+                        <span class="original-price">₹{{ room.price_per_night }}/night</span>
+                        {% endif %}
+                        <span class="final-price">₹{{ room.get_discounted_price }}/night</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Info Bar -->
+<div class="quick-info-bar">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="info-item">
+                    <i class="fas fa-bed"></i>
+                    <span>{{ room.room_type }}</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-item">
+                    <i class="fas fa-users"></i>
+                    <span>{{ room.max_guests }} Guests</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-item">
+                    <i class="fas fa-ruler-combined"></i>
+                    <span>{{ room.room_size }} sq.ft</span>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-item">
+                    <i class="fas fa-star"></i>
+                    <span>{{ room.avg_rating|floatformat:1 }} Rating</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content py-5">
+    <div class="container">
+        <div class="row">
+            <!-- Left Column - Room Details -->
+            <div class="col-lg-8">
+                <!-- About Section -->
+                <section class="content-section">
+                    <h2>About This Room</h2>
+                    <div class="description">
+                        {{ room.description|linebreaks }}
+                    </div>
+                </section>
+
+                <!-- Amenities Section -->
+                <section class="content-section">
+                    <h2>Room Amenities</h2>
+                    <div class="amenities-grid">
+                        {% for amenity in room.amenities.all %}
+                        <div class="amenity-item">
+                            <i class="{{ amenity.icon }}"></i>
+                            <div class="amenity-details">
+                                <h4>{{ amenity.name }}</h4>
+                                <p>{{ amenity.description }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+
+                <!-- Room Features -->
+                <section class="content-section">
+                    <h2>Room Features</h2>
+                    <div class="features-grid">
+                        <div class="feature-item">
+                            <i class="fas fa-bed"></i>
+                            <div class="feature-details">
+                                <h4>Bed Type</h4>
+                                <p>{{ room.bed_type }}</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-ruler-combined"></i>
+                            <div class="feature-details">
+                                <h4>Room Size</h4>
+                                <p>{{ room.room_size }} sq.ft</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-mountain"></i>
+                            <div class="feature-details">
+                                <h4>View</h4>
+                                <p>{{ room.view_type }}</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <i class="fas fa-smoking-ban"></i>
+                            <div class="feature-details">
+                                <h4>Smoking</h4>
+                                <p>{{ room.get_smoking_status_display }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Reviews Section -->
+                <section class="content-section" id="reviews">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2>Guest Reviews</h2>
+                        <a href="{% url 'room_reviews' room.id %}" class="btn btn-link">View All Reviews</a>
+                    </div>
+                    <div class="reviews-list">
+                        {% for review in reviews %}
+                        <div class="review-card">
+                            <div class="review-header">
+                                <div class="reviewer-info">
+                                    {% if review.guest.profile_image %}
+                                    <img src="{{ review.guest.profile_image.url }}" alt="{{ review.guest.name }}" class="reviewer-image">
+                                    {% else %}
+                                    <div class="reviewer-initial">{{ review.guest.name|first }}</div>
+                                    {% endif %}
+                                    <div class="reviewer-details">
+                                        <h4>{{ review.guest.name }}</h4>
+                                        <span class="review-date">{{ review.created_at|date:"F d, Y" }}</span>
+                                    </div>
+                                </div>
+                                <div class="review-rating">
+                                    {% for i in "12345"|make_list %}
+                                    <i class="fas fa-star {% if forloop.counter <= review.rating %}text-warning{% else %}text-muted{% endif %}"></i>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            <div class="review-content">
+                                {{ review.comment|linebreaks }}
+                            </div>
+                            {% if review.images.exists %}
+                            <div class="review-images">
+                                {% for image in review.images.all %}
+                                <img src="{{ image.image.url }}" alt="Review image" class="review-image">
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% empty %}
+                        <p>No reviews yet. Be the first to review this room!</p>
+                        {% endfor %}
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column - Sidebar -->
+            <div class="col-lg-4">
+                <!-- Booking Widget -->
+                <div class="booking-widget">
+                    <h3>Book This Room</h3>
+                    <form action="{% url 'room_booking' room.id %}" method="POST" class="booking-form">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Check-in Date</label>
+                            <input type="date" name="check_in" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Check-out Date</label>
+                            <input type="date" name="check_out" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Number of Guests</label>
+                            <input type="number" name="guests" class="form-control" min="1" max="{{ room.max_guests }}" required>
+                        </div>
+                        <div class="price-summary">
+                            <div class="price-row">
+                                <span>Price per Night</span>
+                                <span>₹{{ room.price_per_night }}</span>
+                            </div>
+                            {% if room.discount_percentage > 0 %}
+                            <div class="price-row discount">
+                                <span>Discount ({{ room.discount_percentage }}%)</span>
+                                <span>-₹{{ room.get_discount_amount }}</span>
+                            </div>
+                            {% endif %}
+                            <div class="price-row">
+                                <span>Number of Nights</span>
+                                <span id="num_nights">0</span>
+                            </div>
+                            <div class="price-row total">
+                                <span>Total</span>
+                                <span id="total_price">₹0</span>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Book Now</button>
+                    </form>
+                </div>
+
+                <!-- Availability Calendar -->
+                <div class="dates-widget">
+                    <h3>Room Availability</h3>
+                    <div class="calendar">
+                        {% for date in available_dates %}
+                        <div class="date-item {% if date.available %}available{% else %}unavailable{% endif %}">
+                            {{ date.date|date:"M d" }}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Resort Info Widget -->
+                <div class="resort-widget">
+                    <h3>About the Resort</h3>
+                    <div class="resort-card">
+                        <img src="{{ room.resort.gallery.image.url }}" alt="{{ room.resort.resort_name }}" class="resort-image">
+                        <div class="resort-content">
+                            <h4>{{ room.resort.resort_name }}</h4>
+                            <p>{{ room.resort.description|truncatewords:30 }}</p>
+                            <div class="resort-meta">
+                                <span>
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    {{ room.resort.resort_address }}
+                                </span>
+                                <span>
+                                    <i class="fas fa-star text-warning"></i>
+                                    {{ room.resort.avg_rating|floatformat:1 }}
+                                </span>
+                            </div>
+                            <a href="{% url 'resort_detail' room.resort.id %}" class="btn btn-outline-primary btn-sm">View Resort</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles -->
+<style>
+    /* Hero Section */
+    .hero-section {
+        height: 70vh;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .room-image {
+        height: 100%;
+    }
+
+    .room-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .hero-content {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 2rem 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+    }
+
+    .discount-badge {
+        position: absolute;
+        top: 2rem;
+        right: 2rem;
+        background: #e74c3c;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        font-weight: 500;
+    }
+
+    /* Quick Info Bar */
+    .quick-info-bar {
+        background: white;
+        padding: 1rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #2c3e50;
+    }
+
+    .info-item i {
+        font-size: 1.5rem;
+        color: #3498db;
+    }
+
+    /* Content Sections */
+    .content-section {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Amenities Grid */
+    .amenities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 2rem;
+    }
+
+    .amenity-item {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+
+    .amenity-item i {
+        font-size: 2rem;
+        color: #3498db;
+    }
+
+    /* Features Grid */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 2rem;
+    }
+
+    .feature-item {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .feature-item i {
+        font-size: 2rem;
+        color: #3498db;
+    }
+
+    /* Reviews Section */
+    .review-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .reviewer-image {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .reviewer-initial {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: #3498db;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    /* Booking Widget */
+    .booking-widget {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .price-summary {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .price-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .price-row.discount {
+        color: #e74c3c;
+    }
+
+    .price-row.total {
+        font-weight: 600;
+        border-top: 1px solid #dee2e6;
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+    }
+
+    /* Calendar Widget */
+    .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 0.5rem;
+    }
+
+    .date-item {
+        padding: 0.5rem;
+        text-align: center;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+
+    .date-item.available {
+        background: #2ecc71;
+        color: white;
+    }
+
+    .date-item.unavailable {
+        background: #f8f9fa;
+        color: #6c757d;
+    }
+
+    /* Resort Widget */
+    .resort-widget {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .resort-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        border-radius: 4px;
+        margin-bottom: 1rem;
+    }
+
+    .resort-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        margin: 1rem 0;
+        color: #6c757d;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .hero-section {
+            height: 50vh;
+        }
+
+        .amenities-grid,
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<!-- Price Calculator Script -->
+<script>
+(function() {
+    const checkInInput = document.querySelector('input[name="check_in"]');
+    const checkOutInput = document.querySelector('input[name="check_out"]');
+    const numNightsElement = document.getElementById('num_nights');
+    const totalPriceElement = document.getElementById('total_price');
+    const pricePerNight = parseFloat('{{ room.get_discounted_price }}');
+
+    function updatePrice() {
+        if (checkInInput.value && checkOutInput.value) {
+            const checkIn = new Date(checkInInput.value);
+            const checkOut = new Date(checkOutInput.value);
+            const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+            
+            if (nights > 0) {
+                numNightsElement.textContent = nights;
+                totalPriceElement.textContent = '₹' + (nights * pricePerNight).toFixed(2);
+            } else {
+                numNightsElement.textContent = '0';
+                totalPriceElement.textContent = '₹0';
+            }
+        }
+    }
+
+    checkInInput.addEventListener('change', updatePrice);
+    checkOutInput.addEventListener('change', updatePrice);
+})();
+</script>
+{% endblock %}

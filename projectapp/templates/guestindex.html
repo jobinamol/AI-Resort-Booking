@@ -27,265 +27,654 @@
     <link rel="stylesheet" href="{% static 'css/icomoon.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-      .ftco-navbar-light {
-        background: rgba(0, 0, 0, 0.8) !important;
-        backdrop-filter: blur(10px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .navbar-brand {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 700;
-        letter-spacing: 1px;
-      }
-
-      .nav-link {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 500;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        font-size: 0.9em;
-        transition: all 0.3s ease;
-      }
-
-      .nav-link:hover {
-        color: #00c6ff !important;
-      }
-
-      .hero-wrap {
-        height: 100vh;
-        position: relative;
-        background: transparent;
-      }
-
-      .slider-text {
-        height: 100vh;
-      }
-
-      .text h1 {
-        font-family: 'Poppins', sans-serif;
-        font-size: 4em;
-        font-weight: 700;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        letter-spacing: 2px;
-      }
-
-      .sub-text {
-        font-family: 'Poppins', sans-serif;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-      }
-
-      .booking-form {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        border: 1px solid rgba(255,255,255,0.2);
-        padding: 30px;
-        transform: translateY(-50px);
-      }
-
-      .form-control {
-        border-radius: 10px;
-        border: 2px solid #e0e0e0;
-        padding: 12px 15px;
-        font-family: 'Poppins', sans-serif;
-        transition: all 0.3s ease;
-      }
-
-      .form-control:focus {
-        border-color: #00c6ff;
-        box-shadow: 0 0 0 3px rgba(0,198,255,0.2);
-      }
-
-      .select-wrap .icon {
-        color: #00c6ff;
-      }
-
-      .btn-primary {
-        background: linear-gradient(45deg, #00c6ff, #0072ff) !important;
-        border: none !important;
-        border-radius: 10px !important;
-        padding: 12px 25px !important;
-        font-family: 'Poppins', sans-serif !important;
-        font-weight: 600 !important;
-        letter-spacing: 1px !important;
-        text-transform: uppercase !important;
+      .card-hover {
+        transform: translateY(0);
         transition: all 0.3s ease !important;
       }
-
-      .btn-primary:hover {
-        transform: translateY(-2px) !important;
-        box-shadow: 0 7px 20px rgba(0,198,255,0.3) !important;
+      .card-hover:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15) !important;
       }
-
+      .card-hover:hover .icon {
+        transform: scale(1.1);
+        background: linear-gradient(45deg, #0072ff, #00c6ff) !important;
+      }
       .services-section {
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
         padding: 7em 0;
       }
-
-      .card-hover {
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        padding: 40px;
-        transition: all 0.3s ease;
+      .services .heading {
+        font-weight: 600;
+        color: #2c3e50;
       }
-
-      .card-hover:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+      .services p {
+        color: #666;
+        line-height: 1.8;
       }
-
-      .icon {
-        width: 90px;
-        height: 90px;
+      .ftco-animate {
+        opacity: 0;
+        visibility: hidden;
+      }
+      .ftco-animated {
+        opacity: 1;
+        visibility: visible;
+      }
+      .feature-icon {
+        width: 60px;
+        height: 60px;
         background: linear-gradient(45deg, #00c6ff, #0072ff);
-        border-radius: 50%;
+        border-radius: 15px;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 20px;
         transition: all 0.3s ease;
-      }
-
-      .icon span {
-        color: white;
-        font-size: 35px;
-      }
-
-      .heading-section h2 {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 700;
-        color: #2c3e50;
-      }
-
-      .subheading {
-        font-family: 'Poppins', sans-serif;
-        color: #00c6ff;
-        letter-spacing: 2px;
-        font-weight: 600;
-      }
-
-      .room-wrap {
-        border-radius: 20px;
+        box-shadow: 0 5px 15px rgba(0, 198, 255, 0.2);
+        position: relative;
         overflow: hidden;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      }
+      .feature-icon:before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(45deg, #0072ff, #00c6ff);
+        opacity: 0;
         transition: all 0.3s ease;
       }
-
-      .room-wrap:hover {
-        transform: translateY(-10px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-      }
-
-      .room-wrap .half {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-      }
-
-      .room-wrap .text h3 {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
-      }
-
-      .btn-custom {
-        background: linear-gradient(45deg, #00c6ff, #0072ff);
-        border: none;
-        color: white !important;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-family: 'Poppins', sans-serif;
-        font-weight: 500;
-        transition: all 0.3s ease;
-      }
-
-      .btn-custom:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,198,255,0.3);
-      }
-
-      .testimony-section {
-        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-      }
-
-      .testimony-wrap {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-      }
-
-      .testimony-wrap:hover {
+      .feature-icon:hover {
         transform: translateY(-5px);
-        box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+        box-shadow: 0 8px 20px rgba(0, 198, 255, 0.3);
       }
-
-      .user-img {
-        width: 80px;
-        height: 80px;
-        border-radius: 50%;
-        border: 3px solid #00c6ff;
+      .feature-icon:hover:before {
+        opacity: 1;
       }
-
-      .ftco-footer {
-        background: linear-gradient(rgba(0,0,0,0.9), rgba(0,0,0,0.9)), url('{% static "images/bg_4.jpg" %}') !important;
-        background-size: cover !important;
-        background-position: center !important;
-      }
-
-      .ftco-footer-widget h2 {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
+      .feature-icon span {
         color: white;
-      }
-
-      .ftco-footer-social li a {
-        background: linear-gradient(45deg, #00c6ff, #0072ff);
-        border-radius: 50%;
+        font-size: 28px;
+        position: relative;
+        z-index: 1;
         transition: all 0.3s ease;
       }
-
-      .ftco-footer-social li a:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0,198,255,0.3);
+      .feature-icon:hover span {
+        transform: scale(1.1);
       }
-
-      @keyframes float {
-        0% { transform: translateY(0px); }
-        50% { transform: translateY(-10px); }
-        100% { transform: translateY(0px); }
+      .feature-item {
+        transition: all 0.3s ease;
       }
-
-      .floating {
-        animation: float 3s ease-in-out infinite;
+      .feature-item:hover h3 {
+        color: #00c6ff;
+      }
+      .user-avatar {
+        display: flex;
+        align-items: center;
+      }
+      .user-avatar img {
+        object-fit: cover;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      }
+      .dropdown-item.btn-link {
+        width: 100%;
+        text-align: left;
+        padding: .5rem 1.5rem;
+        border: none;
+        background: none;
+      }
+      .dropdown-item.btn-link:hover {
+        text-decoration: none;
+        background-color: #f8f9fa;
+      }
+      .dropdown-menu .dropdown-item {
+        padding: .5rem 1.5rem;
+        font-size: .875rem;
+      }
+      .dropdown-menu .dropdown-item i {
+        width: 20px;
+        text-align: center;
+      }
+      .animate {
+        animation-duration: 0.3s;
+        -webkit-animation-duration: 0.3s;
+        animation-fill-mode: both;
+        -webkit-animation-fill-mode: both;
+      }
+      @keyframes slideIn {
+        0% {
+          transform: translateY(1rem);
+          opacity: 0;
+        }
+        100% {
+          transform: translateY(0rem);
+          opacity: 1;
+        }
+      }
+      .slideIn {
+        -webkit-animation-name: slideIn;
+        animation-name: slideIn;
       }
     </style>
   </head>
   <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
-	    <div class="container">
-	      <a class="navbar-brand" href="{% url 'index' %}">Lux<span style="color: #00c6ff;">AI</span> <small style="font-size: 0.5em; letter-spacing: 2px;">RESORTS</small></a>
-	      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-	        <span class="oi oi-menu"></span> Menu
-	      </button>
+    <!-- Updated Navbar with Modern Transparent Design -->
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-transparent ftco-navbar-light fixed-top" id="ftco-navbar">
+        <div class="container-fluid px-md-5">
+            <!-- Brand Logo -->
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'index' %}">
+                <span class="brand-text">Lux<span class="text-gradient">AI</span></span>
+                <small class="ml-2 text-gradient" style="font-size: 0.5em; letter-spacing: 3px;">RESORTS</small>
+            </a>
 
-	      <div class="collapse navbar-collapse" id="ftco-nav">
-	        <ul class="navbar-nav ml-auto">
-	          <li class="nav-item active"><a href="{% url 'index' %}" class="nav-link">Home</a></li>
-	          <li class="nav-item"><a href="{% url 'rooms' %}" class="nav-link">Our Rooms</a></li>
-	          <li class="nav-item"><a href="{% url 'restaurants' %}" class="nav-link">Restaurant</a></li>
-	          <li class="nav-item"><a href="{% url 'about' %}" class="nav-link">About Us</a></li>
-	          <li class="nav-item"><a href="{% url 'blog' %}" class="nav-link">Blog</a></li>
-	          <li class="nav-item"><a href="{% url 'contact' %}" class="nav-link">Contact</a></li>
-	        </ul>
-	      </div>
-	    </div>
-	  </nav>
-    <!-- END nav -->
-		<div class="hero-wrap position-relative">
+            <!-- Search Bar -->
+            <div class="navbar-search d-none d-lg-flex mx-lg-5">
+                <div class="search-wrapper">
+                    <div class="input-group">
+                        <input type="text" class="form-control search-input" placeholder="Search resorts, locations, packages...">
+                        <div class="input-group-append">
+                            <button class="btn search-btn" type="button"><i class="icon-search"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Toggle Button -->
+            <button class="navbar-toggler border-0" type="button" data-toggle="collapse" data-target="#ftco-nav">
+                <span class="icon-menu h4 m-0 text-white"></span>
+            </button>
+
+            <!-- Main Navigation -->
+            <div class="collapse navbar-collapse" id="ftco-nav">
+                <ul class="navbar-nav align-items-center ml-auto">
+                    <!-- Home -->
+                    <li class="nav-item">
+                        <a href="{% url 'guestindex' %}" class="nav-link px-3">
+                            <i class="icon-home"></i>
+                            <span class="d-none d-lg-inline ml-2">Home</span>
+                        </a>
+                    </li>
+
+                    <!-- Explore Dropdown -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link px-3 dropdown-toggle" href="#" id="exploreDropdown" data-toggle="dropdown">
+                            <i class="icon-map-marker"></i>
+                            <span class="d-none d-lg-inline ml-2">Explore</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right animate slideIn">
+                            <a class="dropdown-item" href="{% url 'rooms' %}">
+                                <i class="icon-hotel mr-2"></i>Staycation Resorts
+                            </a>
+                            <a class="dropdown-item" href="{% url 'restaurants' %}">
+                                <i class="icon-sun mr-2"></i>Daycation Experiences
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#">
+                                <i class="icon-tag mr-2"></i>Special Offers
+                            </a>
+                        </div>
+                    </li>
+
+                    <!-- Bookings -->
+                    <li class="nav-item">
+                        <a href="#" class="nav-link px-3">
+                            <i class="icon-calendar"></i>
+                            <span class="d-none d-lg-inline ml-2">Bookings</span>
+                        </a>
+                    </li>
+
+                    <!-- Membership -->
+                    <li class="nav-item">
+                        <a href="#" class="nav-link px-3">
+                            <i class="icon-star"></i>
+                            <span class="d-none d-lg-inline ml-2">Membership</span>
+                        </a>
+                    </li>
+
+                    <!-- Notifications -->
+                    <li class="nav-item ml-lg-3">
+                        <a href="#" class="nav-link position-relative icon-btn">
+                            <i class="icon-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </a>
+                    </li>
+
+                    <!-- Cart -->
+                    <li class="nav-item ml-lg-3">
+                        <a href="#" class="nav-link position-relative icon-btn">
+                            <i class="icon-shopping-cart"></i>
+                            <span class="cart-badge">2</span>
+                        </a>
+                    </li>
+
+                    <!-- User Profile -->
+                    <li class="nav-item dropdown ml-lg-3">
+                        {% if request.session.guest_id %}
+                            <a class="nav-link dropdown-toggle d-flex align-items-center user-profile-link" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <div class="user-avatar-wrapper">
+                                    {% if guest.profile_image %}
+                                        <img src="{{ guest.profile_image.url }}" alt="{{ request.session.guest_name }}" class="user-avatar-img">
+                                    {% else %}
+                                        <div class="user-avatar-placeholder">
+                                            <span>{{ request.session.guest_name|make_list|first|upper }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <span class="d-none d-lg-inline ml-2 user-name">{{ request.session.guest_name }}</span>
+                                    <i class="icon-chevron-down ml-1 dropdown-icon"></i>
+                                </div>
+                            </a>
+                            <div class="dropdown-menu user-dropdown animate slideIn" aria-labelledby="userDropdown">
+                                <div class="dropdown-header">
+                                    <div class="d-flex align-items-center">
+                                        <div class="user-avatar-large">
+                                            {% if guest.profile_image %}
+                                                <img src="{{ guest.profile_image.url }}" alt="{{ request.session.guest_name }}" class="user-avatar-img-large">
+                                            {% else %}
+                                                <div class="user-avatar-placeholder-large">
+                                                    <span>{{ request.session.guest_name|make_list|first|upper }}</span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="ml-3">
+                                            <h6 class="mb-0">{{ request.session.guest_name }}</h6>
+                                            <small class="text-muted">Guest Member</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item hover-effect" href="{% url 'guest_profile_view' %}">
+                                    <i class="icon-user-o mr-2 menu-icon"></i>My Profile
+                                </a>
+                                <a class="dropdown-item hover-effect" href="{% url 'guest_profile_view' %}#preferences">
+                                    <i class="icon-heart mr-2 menu-icon"></i>My Preferences
+                                </a>
+                                <a class="dropdown-item hover-effect" href="{% url 'guest_profile_view' %}#security">
+                                    <i class="icon-lock mr-2 menu-icon"></i>Security
+                                </a>
+                                <div class="dropdown-divider"></div>
+                                <form action="{% url 'guest_logout' %}" method="POST" class="dropdown-item p-0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-link dropdown-item text-danger hover-effect w-100 text-left">
+                                        <i class="icon-power mr-2 menu-icon"></i>Logout
+                                    </button>
+                                </form>
+                            </div>
+                        {% else %}
+                            <a class="nav-link dropdown-toggle d-flex align-items-center user-profile-link" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <div class="user-avatar-wrapper">
+                                    <div class="user-avatar-placeholder">
+                                        <i class="icon-user"></i>
+                                    </div>
+                                    <span class="d-none d-lg-inline ml-2">Account</span>
+                                    <i class="icon-chevron-down ml-1 dropdown-icon"></i>
+                                </div>
+                            </a>
+                            <div class="dropdown-menu user-dropdown animate slideIn" aria-labelledby="userDropdown">
+                                <a class="dropdown-item hover-effect" href="{% url 'guest_login' %}">
+                                    <i class="icon-login mr-2 menu-icon"></i>Login
+                                </a>
+                                <a class="dropdown-item hover-effect" href="{% url 'guest_signup' %}">
+                                    <i class="icon-user-plus mr-2 menu-icon"></i>Sign Up
+                                </a>
+                            </div>
+                        {% endif %}
+                    </li>
+
+                    <!-- Language -->
+                    <li class="nav-item dropdown ml-lg-3">
+                        <a class="nav-link dropdown-toggle" href="#" id="languageDropdown" data-toggle="dropdown">
+                            <i class="icon-globe"></i>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right animate slideIn">
+                            <a class="dropdown-item active" href="#"><span class="flag-icon flag-icon-us mr-2"></span>English</a>
+                            <a class="dropdown-item" href="#"><span class="flag-icon flag-icon-fr mr-2"></span>Français</a>
+                            <a class="dropdown-item" href="#"><span class="flag-icon flag-icon-es mr-2"></span>Español</a>
+                            <a class="dropdown-item" href="#"><span class="flag-icon flag-icon-de mr-2"></span>Deutsch</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Updated Navbar Styles -->
+    <style>
+        /* Navbar Base Styles */
+        .navbar {
+            transition: all 0.4s ease;
+            padding: 20px 0;
+            background: transparent !important;
+        }
+
+        .navbar.scrolled {
+            background: rgba(0, 0, 0, 0.85) !important;
+            backdrop-filter: blur(10px);
+            padding: 15px 0;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Brand Styles */
+        .navbar-brand {
+            font-size: 2em;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .text-gradient {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Search Bar Styles */
+        .search-wrapper {
+            position: relative;
+            width: 400px;
+        }
+
+        .search-input {
+            background: rgba(255,255,255,0.1) !important;
+            border: none !important;
+            border-radius: 30px !important;
+            padding: 12px 20px;
+            color: white !important;
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            background: rgba(255,255,255,0.15) !important;
+            box-shadow: 0 0 0 2px rgba(0,198,255,0.3) !important;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .search-btn {
+            color: white;
+            background: transparent;
+            border: none;
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .search-btn:hover {
+            color: #00c6ff;
+        }
+
+        /* Navigation Links */
+        .nav-link {
+            font-size: 0.95em;
+            font-weight: 500;
+            padding: 0.5rem 1rem !important;
+            color: rgba(255,255,255,0.9) !important;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #00c6ff !important;
+            transform: translateY(-1px);
+        }
+
+        /* Dropdown Styles */
+        .dropdown-menu {
+            border: none;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 5px 30px rgba(0,0,0,0.15);
+            padding: 1rem 0;
+            margin-top: 15px;
+        }
+
+        .dropdown-item {
+            font-size: 0.9em;
+            padding: 0.7rem 1.5rem;
+            color: #2c3e50;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(0,198,255,0.1);
+            color: #00c6ff;
+            transform: translateX(5px);
+        }
+
+        .dropdown-item.active {
+            background: rgba(0,198,255,0.1);
+            color: #00c6ff;
+        }
+
+        /* Icon Buttons */
+        .icon-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .icon-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        /* Notification & Cart Badges */
+        .notification-badge,
+        .cart-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: linear-gradient(45deg, #ff6b6b, #ff4757);
+            color: white;
+            border-radius: 10px;
+            padding: 0.15rem 0.35rem;
+            font-size: 0.7em;
+            font-weight: 600;
+        }
+
+        .cart-badge {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+        }
+
+        /* User Avatar Styles */
+        .user-avatar-wrapper {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            border-radius: 30px;
+            transition: all 0.3s ease;
+            background: rgba(255,255,255,0.1);
+        }
+
+        .user-avatar-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar-placeholder {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .user-avatar-large {
+            margin-right: 15px;
+        }
+
+        .user-avatar-img-large {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #00c6ff;
+        }
+
+        .user-avatar-placeholder-large {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: 600;
+            border: 2px solid #00c6ff;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: white;
+        }
+
+        .dropdown-icon {
+            font-size: 12px;
+            margin-left: 8px;
+            transition: transform 0.3s ease;
+        }
+
+        /* Dropdown Styles */
+        .user-dropdown {
+            min-width: 280px;
+            padding: 0;
+            border: none;
+            border-radius: 15px;
+            background: rgba(255,255,255,0.98);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .dropdown-header {
+            background: linear-gradient(to right, rgba(0,198,255,0.1), rgba(0,114,255,0.1));
+            padding: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .hover-effect {
+            transition: all 0.3s ease;
+            padding: 12px 20px;
+            color: #2c3e50;
+        }
+
+        .hover-effect:hover {
+            background: linear-gradient(to right, rgba(0,198,255,0.1), rgba(0,114,255,0.1));
+            color: #00c6ff;
+            transform: translateX(5px);
+        }
+
+        .menu-icon {
+            width: 20px;
+            text-align: center;
+            color: #00c6ff;
+        }
+
+        /* Show dropdown on hover for desktop */
+        @media (min-width: 992px) {
+            .nav-item.dropdown:hover .dropdown-menu {
+                display: block;
+            }
+            
+            .nav-item.dropdown:hover .dropdown-icon {
+                transform: rotate(180deg);
+            }
+        }
+
+        /* Mobile Styles */
+        @media (max-width: 991.98px) {
+            .user-dropdown {
+                position: static;
+                float: none;
+                width: auto;
+                margin-top: 0;
+                background-color: transparent;
+                border: 0;
+                box-shadow: none;
+                color: white;
+            }
+
+            .dropdown-header {
+                background: rgba(255,255,255,0.1);
+            }
+
+            .hover-effect {
+                color: rgba(255,255,255,0.8);
+            }
+
+            .hover-effect:hover {
+                background: rgba(255,255,255,0.1);
+                color: white;
+            }
+
+            .menu-icon {
+                color: rgba(255,255,255,0.8);
+            }
+        }
+    </style>
+
+    <!-- Updated Navbar Behavior Script -->
+    <script>
+        $(window).scroll(function() {
+            if ($(this).scrollTop() > 50) {
+                $('.navbar').addClass('scrolled');
+            } else {
+                $('.navbar').removeClass('scrolled');
+            }
+        });
+
+        // Add hover effect for dropdowns on desktop
+        if (window.matchMedia("(min-width: 992px)").matches) {
+            $('.dropdown').hover(
+                function() { $(this).find('.dropdown-menu').addClass('show'); },
+                function() { $(this).find('.dropdown-menu').removeClass('show'); }
+            );
+        }
+
+        $(document).ready(function() {
+            // Toggle dropdown on click for mobile
+            $('.user-profile-link').on('click', function(e) {
+                if (window.innerWidth < 992) {
+                    e.preventDefault();
+                    $(this).next('.user-dropdown').slideToggle(300);
+                    $(this).find('.dropdown-icon').toggleClass('rotate-180');
+                }
+            });
+
+            // Handle dropdown animation
+            $('.nav-item.dropdown').on('show.bs.dropdown', function() {
+                $(this).find('.dropdown-icon').css('transform', 'rotate(180deg)');
+            }).on('hide.bs.dropdown', function() {
+                $(this).find('.dropdown-icon').css('transform', 'rotate(0deg)');
+            });
+        });
+    </script>
+
+    <div class="hero-wrap position-relative">
 			<div class="video-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
 				<video autoplay muted loop playsinline style="min-width: 100%; min-height: 100%; width: auto; height: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); object-fit: cover;">
 					<source src="{% static 'videos/bg.mp4' %}" type="video/mp4">

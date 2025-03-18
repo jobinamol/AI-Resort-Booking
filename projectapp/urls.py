@@ -67,5 +67,30 @@ urlpatterns = [
 
     path('guest/signup/', views.guest_signup, name='guest_signup'),
     path('guest/login/', views.guest_login, name='guest_login'),
-    path('guest/logout/', views.guest_logout, name='guest_logout')
+    path('guest/logout/', views.guest_logout, name='guest_logout'),
+
+    path('guest/profile/', views.guest_profile_view, name='guest_profile_view'),
+    path('guest/profile/update/', views.guest_update_profile, name='guest_update_profile'),
+    path('guest/profile/change-password/', views.guest_change_password, name='guest_change_password'),
+    path('guest/profile/preferences/', views.guest_update_preferences, name='guest_update_preferences'),
+
+    path('explore/', views.explore_page, name='explore_page'),
+    path('explore/filter/', views.explore_filter, name='explore_filter'),
+    path('explore/sort/<str:sort_by>/', views.explore_sort, name='explore_sort'),
+
+    # Resort Details
+    path('resort/<int:resort_id>/', views.resort_detail, name='resort_detail'),
+    path('resort/<int:resort_id>/reviews/', views.resort_reviews, name='resort_reviews'),
+
+    # Package Details & Booking
+    path('package/<int:package_id>/', views.package_detail, name='package_detail'),
+    path('package/<int:package_id>/reviews/', views.package_reviews, name='package_reviews'),
+    path('package/<int:package_id>/book/', views.package_booking, name='package_booking'),
+
+    # Room Details, Reviews & Booking
+    path('room/<int:room_id>/', views.room_detail, name='room_detail'),
+    path('room/<int:room_id>/reviews/', views.room_reviews, name='room_reviews'),
+    path('room/<int:room_id>/book/', views.room_booking, name='room_booking'),
+    path('room/<int:room_id>/availability/', views.room_availability, name='room_availability'),
+
 ]

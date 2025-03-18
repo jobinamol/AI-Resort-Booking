@@ -1,20 +1,26 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Guest Login - LuxAI Resorts</title>
-    {% load static %}
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="{% static 'css/open-iconic-bootstrap.min.css' %}">
     <link rel="stylesheet" href="{% static 'css/animate.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         body {
             font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
             overflow-x: hidden;
+            overflow-y: auto;
+            background: #000;
         }
+
         .video-background {
             position: fixed;
             top: 0;
@@ -24,263 +30,151 @@
             z-index: -1;
             overflow: hidden;
         }
+
         .video-background video {
             min-width: 100%;
             min-height: 100%;
-            width: auto;
-            height: auto;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             object-fit: cover;
+            opacity: 0.6;
         }
-        .video-overlay {
-            position: absolute;
+
+        .overlay {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%);
+            background: linear-gradient(45deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5));
+            z-index: -1;
         }
+
         .login-container {
-            min-height: 100vh;
-            position: relative;
-            z-index: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-        .login-card {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(20px);
-            border-radius: 20px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.3);
-            padding: 50px;
-            width: 100%;
             max-width: 450px;
-            position: relative;
-            overflow: hidden;
-            transform: translateY(0);
-            transition: all 0.4s ease;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .login-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 30px 60px rgba(0,0,0,0.35);
-        }
-        .login-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 5px;
-            background: linear-gradient(45deg, #00c6ff, #0072ff);
-        }
-        .login-header {
-            text-align: center;
-            margin-bottom: 40px;
-            position: relative;
-        }
-        .floating-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(45deg, #00c6ff, #0072ff);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            animation: float 3s ease-in-out infinite;
-            box-shadow: 0 10px 20px rgba(0,198,255,0.2);
-        }
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-        .floating-icon i {
-            font-size: 2.5em;
+            margin: 40px auto;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
             color: white;
         }
-        .login-header h2 {
-            color: #2c3e50;
-            font-weight: 700;
+
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo h2 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: white;
             margin-bottom: 10px;
-            font-size: 2.2em;
         }
-        .login-header p {
-            color: #666;
-            font-size: 1.1em;
+
+        .logo span {
+            color: #00c6ff;
         }
+
+        .logo p {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.1rem;
+            margin-bottom: 0;
+        }
+
         .form-group {
             margin-bottom: 25px;
             position: relative;
         }
-        .form-group i {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #00c6ff;
-            font-size: 1.2em;
-            transition: all 0.3s ease;
-        }
+
         .form-control {
-            border-radius: 12px;
-            padding: 15px 20px 15px 45px;
-            border: 2px solid #e0e0e0;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 10px;
+            padding: 15px 20px;
+            color: white;
             transition: all 0.3s ease;
-            font-size: 1em;
-            background: rgba(255, 255, 255, 0.9);
         }
+
         .form-control:focus {
-            border-color: #00c6ff;
-            box-shadow: 0 0 0 3px rgba(0,198,255,0.2);
-            background: #fff;
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: none;
+            outline: none;
         }
-        .form-control:focus + i {
-            color: #0072ff;
+
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.7);
         }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border: none;
+            box-shadow: 0 4px 15px rgba(0,114,255,0.3);
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 20px;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,114,255,0.4);
+        }
+
         .remember-forgot {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 20px 0;
+            margin: 15px 0;
         }
-        .custom-control-label {
-            color: #495057;
-            font-weight: 500;
-            cursor: pointer;
-        }
-        .custom-control-input:checked ~ .custom-control-label::before {
-            background: linear-gradient(45deg, #00c6ff, #0072ff);
-            border-color: #0072ff;
-        }
-        .forgot-link {
-            color: #00c6ff;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-        .forgot-link:hover {
-            color: #0072ff;
-            text-decoration: none;
-        }
-        .login-btn {
-            background: linear-gradient(45deg, #00c6ff, #0072ff);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            padding: 16px 30px;
-            font-weight: 600;
-            font-size: 1.1em;
-            letter-spacing: 1px;
-            width: 100%;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            position: relative;
-            overflow: hidden;
-        }
-        .login-btn:before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: all 0.5s ease;
-        }
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 7px 20px rgba(0,198,255,0.3);
-        }
-        .login-btn:hover:before {
-            left: 100%;
-        }
-        .social-divider {
-            text-align: center;
-            position: relative;
-            margin: 30px 0;
-        }
-        .social-divider::before,
-        .social-divider::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 45%;
-            height: 1px;
-            background: #e0e0e0;
-        }
-        .social-divider::before { left: 0; }
-        .social-divider::after { right: 0; }
-        .social-divider span {
-            background: #fff;
-            padding: 0 15px;
-            color: #666;
-            font-weight: 500;
-        }
-        .social-btn {
+
+        .remember-me {
             display: flex;
             align-items: center;
-            justify-content: center;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            transition: all 0.3s ease;
-            background: white;
-            margin-bottom: 15px;
-            font-weight: 500;
-            color: #333;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.8);
         }
-        .social-btn:hover {
-            border-color: #00c6ff;
-            background: #f8f9fa;
-            transform: translateY(-2px);
-            text-decoration: none;
-            color: #333;
+
+        .remember-me input[type="checkbox"] {
+            accent-color: #00c6ff;
         }
-        .social-btn img {
-            width: 24px;
-            margin-right: 10px;
-        }
-        .signup-link {
-            text-align: center;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid rgba(0,0,0,0.1);
-        }
-        .signup-link p {
-            color: #495057;
-            margin-bottom: 0;
-            font-size: 1.1em;
-        }
-        .signup-link a {
+
+        .forgot-password {
             color: #00c6ff;
-            font-weight: 600;
             text-decoration: none;
-            transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
-        .signup-link a:hover {
-            color: #0072ff;
+
+        .forgot-password:hover {
+            text-decoration: underline;
         }
+
+        .footer-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+        }
+
+        .footer-links a:hover {
+            color: #00c6ff;
+        }
+
         .alert {
-            border-radius: 12px;
-            margin-bottom: 25px;
+            background: rgba(220, 53, 69, 0.2);
             border: none;
-            background: rgba(255,255,255,0.95);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .login-card {
-            animation: fadeIn 0.6s ease-out;
+            color: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            padding: 12px 20px;
         }
     </style>
 </head>
@@ -290,84 +184,53 @@
         <video autoplay muted loop playsinline>
             <source src="{% static 'videos/bg.mp4' %}" type="video/mp4">
         </video>
-        <div class="video-overlay"></div>
     </div>
+    <div class="overlay"></div>
 
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="floating-icon">
-                    <i class="fas fa-hotel"></i>
-                </div>
-                <h2>Welcome Back</h2>
-                <p>Sign in to continue to LuxAI Resorts</p>
+    <div class="container">
+        <div class="login-container">
+            <div class="logo">
+                <h2>Lux<span>AI</span></h2>
+                <p>Guest Portal</p>
             </div>
 
             {% if messages %}
                 {% for message in messages %}
-                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    <div class="alert alert-{{ message.tags }}">
                         {{ message }}
-                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
                     </div>
                 {% endfor %}
             {% endif %}
 
-            <form method="POST" class="login-form">
+            <form method="POST">
                 {% csrf_token %}
                 <div class="form-group">
                     <input type="email" name="email" class="form-control" placeholder="Email Address" required>
-                    <i class="fas fa-envelope"></i>
                 </div>
+
                 <div class="form-group">
                     <input type="password" name="password" class="form-control" placeholder="Password" required>
-                    <i class="fas fa-lock"></i>
                 </div>
 
                 <div class="remember-forgot">
-                    <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input" id="remember-me">
-                        <label class="custom-control-label" for="remember-me">Remember me</label>
-                    </div>
-                    <a href="{% url 'forgot_password' %}" class="forgot-link">Forgot Password?</a>
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember_me">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="{% url 'forgot_password' %}" class="forgot-password">Forgot Password?</a>
                 </div>
 
-                <button type="submit" class="login-btn">
-                    <i class="fas fa-sign-in-alt mr-2"></i> Sign In
-                </button>
+                <button type="submit" class="btn btn-primary">Sign In</button>
             </form>
 
-            <div class="social-divider">
-                <span>or continue with</span>
-            </div>
-
-            <a href="#" class="social-btn">
-                <img src="{% static 'images/google-icon.png' %}" alt="Google">
-                Continue with Google
-            </a>
-
-            <div class="signup-link">
-                <p>Don't have an account? <a href="{% url 'guest_signup' %}">Sign up now</a></p>
+            <div class="footer-links">
+                <a href="{% url 'guest_signup' %}">Create Guest Account</a>
+                <a href="{% url 'index' %}">Back to Home</a>
             </div>
         </div>
     </div>
 
     <script src="{% static 'js/jquery.min.js' %}"></script>
     <script src="{% static 'js/bootstrap.min.js' %}"></script>
-    <script>
-        // Add smooth transitions for form validation
-        const inputs = document.querySelectorAll('.form-control');
-        inputs.forEach(input => {
-            input.addEventListener('invalid', (e) => {
-                e.target.classList.add('is-invalid');
-            });
-            input.addEventListener('input', (e) => {
-                if (e.target.classList.contains('is-invalid')) {
-                    e.target.classList.remove('is-invalid');
-                }
-            });
-        });
-    </script>
 </body>
 </html>
