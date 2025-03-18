@@ -409,24 +409,40 @@
 
             <!-- Right Column - Sidebar -->
             <div class="col-lg-4">
-                <!-- Quick Booking Widget -->
-                <div class="booking-widget">
+                <!-- Quick Booking Section -->
+                <div class="quick-booking-section">
                     <h3>Quick Booking</h3>
-                    <form action="{% url 'resort_booking' resort.id %}" method="POST" class="booking-form">
+                    <form id="quickBookingForm" method="POST" action="{% url 'check_availability' %}">
                         {% csrf_token %}
+                        <input type="hidden" name="resort_id" value="{{ resort.id }}">
+                        
                         <div class="form-group">
-                            <label>Check In</label>
-                            <input type="date" name="check_in" class="form-control" required>
+                            <label for="checkInDate">CHECK IN</label>
+                            <input type="date" id="checkInDate" name="check_in" class="form-control" 
+                                   min="{{ today|date:'Y-m-d' }}" 
+                                   max="{{ max_date|date:'Y-m-d' }}" required>
                         </div>
+
                         <div class="form-group">
-                            <label>Check Out</label>
-                            <input type="date" name="check_out" class="form-control" required>
+                            <label for="checkOutDate">CHECK OUT</label>
+                            <input type="date" id="checkOutDate" name="check_out" class="form-control" 
+                                   min="{{ today|date:'Y-m-d' }}" 
+                                   max="{{ max_date|date:'Y-m-d' }}" required>
                         </div>
+
                         <div class="form-group">
-                            <label>Guests</label>
-                            <input type="number" name="guests" class="form-control" min="1" required>
+                            <label for="guestCount">NUMBER OF GUESTS</label>
+                            <input type="number" id="guestCount" name="guests" class="form-control" 
+                                   min="1" max="{{ max_guests }}" value="1" required>
+                            <small class="text-muted">Maximum {{ max_guests }} guests allowed</small>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block">Check Availability</button>
+
+                        <div id="availabilityMessage" class="alert" style="display: none;"></div>
+
+                        <button type="button" id="checkAvailabilityBtn" class="btn btn-primary">Check Availability</button>
+                        <button type="button" id="proceedBookingBtn" class="btn btn-success" style="display: none;">
+                            Proceed with Booking
+                        </button>
                     </form>
                 </div>
 
@@ -1289,6 +1305,69 @@
         0% { background-position: -1000px 0; }
         100% { background-position: 1000px 0; }
     }
+
+    /* Quick Booking Section */
+    .quick-booking-section {
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .btn-primary {
+        background-color: #007bff;
+        color: white;
+        border: none;
+    }
+
+    .btn-success {
+        background-color: #28a745;
+        color: white;
+        border: none;
+    }
+
+    .alert {
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 4px;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
 </style>
 
 <!-- Initialize Map -->
@@ -1386,6 +1465,81 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('loading');
             window.location.href = `/package/${packageId}/book/`;
         });
+    });
+
+    const checkInDate = document.getElementById('checkInDate');
+    const checkOutDate = document.getElementById('checkOutDate');
+    const guestCount = document.getElementById('guestCount');
+    const checkAvailabilityBtn = document.getElementById('checkAvailabilityBtn');
+    const proceedBookingBtn = document.getElementById('proceedBookingBtn');
+    const availabilityMessage = document.getElementById('availabilityMessage');
+    const form = document.getElementById('quickBookingForm');
+
+    // Set minimum dates
+    const today = new Date();
+    const maxDate = new Date();
+    maxDate.setFullYear(maxDate.getFullYear() + 1);
+    
+    checkInDate.min = today.toISOString().split('T')[0];
+    checkInDate.max = maxDate.toISOString().split('T')[0];
+    
+    // Update check-out date min value when check-in date changes
+    checkInDate.addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        selectedDate.setDate(selectedDate.getDate() + 1);
+        checkOutDate.min = selectedDate.toISOString().split('T')[0];
+        
+        if (checkOutDate.value && new Date(checkOutDate.value) <= new Date(this.value)) {
+            checkOutDate.value = selectedDate.toISOString().split('T')[0];
+        }
+    });
+
+    // Check Availability
+    checkAvailabilityBtn.addEventListener('click', function() {
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        const formData = new FormData(form);
+        
+        fetch('{% url "check_availability" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            availabilityMessage.style.display = 'block';
+            if (data.available) {
+                availabilityMessage.className = 'alert alert-success';
+                availabilityMessage.textContent = data.message;
+                proceedBookingBtn.style.display = 'block';
+            } else {
+                availabilityMessage.className = 'alert alert-danger';
+                availabilityMessage.textContent = data.message;
+                proceedBookingBtn.style.display = 'none';
+            }
+        })
+        .catch(error => {
+            availabilityMessage.style.display = 'block';
+            availabilityMessage.className = 'alert alert-danger';
+            availabilityMessage.textContent = 'An error occurred while checking availability';
+            proceedBookingBtn.style.display = 'none';
+        });
+    });
+
+    // Proceed with Booking
+    proceedBookingBtn.addEventListener('click', function() {
+        const formData = new FormData(form);
+        const bookingUrl = `{% url 'start_booking' resort.id %}?` + new URLSearchParams({
+            check_in: formData.get('check_in'),
+            check_out: formData.get('check_out'),
+            guests: formData.get('guests')
+        });
+        window.location.href = bookingUrl;
     });
 });
 </script>

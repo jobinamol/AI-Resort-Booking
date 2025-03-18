@@ -193,41 +193,31 @@
                 <!-- Booking Widget -->
                 <div class="booking-widget">
                     <h3>Book This Room</h3>
-                    <form action="{% url 'room_booking' room.id %}" method="POST" class="booking-form">
+                    <form action="{% url 'start_booking' room.resort.id %}" method="POST" class="booking-form" id="roomBookingForm">
                         {% csrf_token %}
-                        <div class="form-group">
+                        <input type="hidden" name="room_id" value="{{ room.id }}">
+                        <div class="form-group mb-3">
                             <label>Check-in Date</label>
-                            <input type="date" name="check_in" class="form-control" required>
+                            <input type="date" name="check_in" class="form-control" required 
+                                   min="{{ today|date:'Y-m-d' }}" id="roomCheckInDate">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label>Check-out Date</label>
-                            <input type="date" name="check_out" class="form-control" required>
+                            <input type="date" name="check_out" class="form-control" required id="roomCheckOutDate">
                         </div>
-                        <div class="form-group">
+                        <div class="form-group mb-3">
                             <label>Number of Guests</label>
-                            <input type="number" name="guests" class="form-control" min="1" max="{{ room.max_guests }}" required>
+                            <input type="number" name="guests" class="form-control" min="1" 
+                                   max="{{ room.max_guests }}" required id="roomGuestCount">
+                            <small class="text-muted">Maximum {{ room.max_guests }} guests allowed</small>
                         </div>
-                        <div class="price-summary">
-                            <div class="price-row">
-                                <span>Price per Night</span>
-                                <span>₹{{ room.price_per_night }}</span>
-                            </div>
-                            {% if room.discount_percentage > 0 %}
-                            <div class="price-row discount">
-                                <span>Discount ({{ room.discount_percentage }}%)</span>
-                                <span>-₹{{ room.get_discount_amount }}</span>
-                            </div>
-                            {% endif %}
-                            <div class="price-row">
-                                <span>Number of Nights</span>
-                                <span id="num_nights">0</span>
-                            </div>
-                            <div class="price-row total">
-                                <span>Total</span>
-                                <span id="total_price">₹0</span>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary btn-block">Book Now</button>
+                        <div class="availability-info alert d-none" id="roomAvailabilityInfo"></div>
+                        <button type="button" class="btn btn-outline-primary btn-block mb-2" id="checkRoomAvailabilityBtn">
+                            Check Availability
+                        </button>
+                        <button type="submit" class="btn btn-primary btn-block" id="proceedRoomBookingBtn" disabled>
+                            Book Now
+                        </button>
                     </form>
                 </div>
 
@@ -503,31 +493,83 @@
 
 <!-- Price Calculator Script -->
 <script>
-(function() {
-    const checkInInput = document.querySelector('input[name="check_in"]');
-    const checkOutInput = document.querySelector('input[name="check_out"]');
-    const numNightsElement = document.getElementById('num_nights');
-    const totalPriceElement = document.getElementById('total_price');
-    const pricePerNight = parseFloat('{{ room.get_discounted_price }}');
+document.addEventListener('DOMContentLoaded', function() {
+    const roomCheckInDate = document.getElementById('roomCheckInDate');
+    const roomCheckOutDate = document.getElementById('roomCheckOutDate');
+    const roomGuestCount = document.getElementById('roomGuestCount');
+    const checkRoomAvailabilityBtn = document.getElementById('checkRoomAvailabilityBtn');
+    const proceedRoomBookingBtn = document.getElementById('proceedRoomBookingBtn');
+    const roomAvailabilityInfo = document.getElementById('roomAvailabilityInfo');
+    const roomBookingForm = document.getElementById('roomBookingForm');
 
-    function updatePrice() {
-        if (checkInInput.value && checkOutInput.value) {
-            const checkIn = new Date(checkInInput.value);
-            const checkOut = new Date(checkOutInput.value);
-            const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-            
-            if (nights > 0) {
-                numNightsElement.textContent = nights;
-                totalPriceElement.textContent = '₹' + (nights * pricePerNight).toFixed(2);
-            } else {
-                numNightsElement.textContent = '0';
-                totalPriceElement.textContent = '₹0';
-            }
+    // Set minimum dates
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    roomCheckInDate.min = today.toISOString().split('T')[0];
+    
+    // Update checkout min date when checkin changes
+    roomCheckInDate.addEventListener('change', function() {
+        const selectedDate = new Date(this.value);
+        const nextDay = new Date(selectedDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        roomCheckOutDate.min = nextDay.toISOString().split('T')[0];
+        
+        if (roomCheckOutDate.value && new Date(roomCheckOutDate.value) <= selectedDate) {
+            roomCheckOutDate.value = nextDay.toISOString().split('T')[0];
         }
-    }
+    });
 
-    checkInInput.addEventListener('change', updatePrice);
-    checkOutInput.addEventListener('change', updatePrice);
-})();
+    // Check room availability
+    checkRoomAvailabilityBtn.addEventListener('click', function() {
+        if (!roomCheckInDate.value || !roomCheckOutDate.value || !roomGuestCount.value) {
+            roomAvailabilityInfo.textContent = 'Please fill in all fields';
+            roomAvailabilityInfo.className = 'alert alert-warning';
+            roomAvailabilityInfo.classList.remove('d-none');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('check_in', roomCheckInDate.value);
+        formData.append('check_out', roomCheckOutDate.value);
+        formData.append('guests', roomGuestCount.value);
+        formData.append('room_id', '{{ room.id }}');
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+        fetch('{% url "check_availability" %}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            roomAvailabilityInfo.classList.remove('d-none');
+            if (data.available) {
+                roomAvailabilityInfo.className = 'alert alert-success';
+                roomAvailabilityInfo.textContent = 'Room is available for your selected dates!';
+                proceedRoomBookingBtn.disabled = false;
+            } else {
+                roomAvailabilityInfo.className = 'alert alert-danger';
+                roomAvailabilityInfo.textContent = data.message || 'Room not available for selected dates';
+                proceedRoomBookingBtn.disabled = true;
+            }
+        })
+        .catch(error => {
+            roomAvailabilityInfo.className = 'alert alert-danger';
+            roomAvailabilityInfo.textContent = 'Error checking availability. Please try again.';
+            roomAvailabilityInfo.classList.remove('d-none');
+        });
+    });
+
+    // Form submission
+    roomBookingForm.addEventListener('submit', function(e) {
+        if (proceedRoomBookingBtn.disabled) {
+            e.preventDefault();
+            roomAvailabilityInfo.textContent = 'Please check availability first';
+            roomAvailabilityInfo.className = 'alert alert-warning';
+            roomAvailabilityInfo.classList.remove('d-none');
+        }
+    });
+});
 </script>
 {% endblock %}

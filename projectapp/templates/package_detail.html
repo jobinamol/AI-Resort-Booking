@@ -174,33 +174,60 @@
                 <!-- Booking Widget -->
                 <div class="booking-widget">
                     <h3>Book This Package</h3>
-                    <form action="{% url 'package_booking' package.id %}" method="POST" class="booking-form">
+                    <form action="{% url 'package_booking' package.id %}" method="POST" class="booking-form" id="packageBookingForm">
                         {% csrf_token %}
-                        <div class="form-group">
-                            <label>Start Date</label>
-                            <input type="date" name="start_date" class="form-control" required>
+                        <input type="hidden" name="package_id" value="{{ package.id }}">
+                        <input type="hidden" name="package_type" value="{{ package.package_type }}">
+                        
+                        <div class="form-group mb-3">
+                            <label>Select Date</label>
+                            <input type="date" name="check_in" class="form-control" required 
+                                   min="{{ today|date:'Y-m-d' }}" max="{{ max_date|date:'Y-m-d' }}" id="startDate">
+                            <small class="text-muted">
+                                {% if package.package_type == 'Daycation' %}
+                                Select date for your day package
+                                {% else %}
+                                Select your check-in date
+                                {% endif %}
+                            </small>
                         </div>
-                        <div class="form-group">
+                        {% if package.package_type != 'Daycation' %}
+                        <div class="form-group mb-3">
+                            <label>Check-out Date</label>
+                            <input type="date" name="check_out" class="form-control" required id="endDate">
+                            <small class="text-muted">Select your check-out date</small>
+                        </div>
+                        {% endif %}
+                        <div class="form-group mb-3">
                             <label>Number of Guests</label>
-                            <input type="number" name="guests" class="form-control" min="1" max="{{ package.max_guests }}" required>
+                            <input type="number" name="guests" class="form-control" min="1" 
+                                   max="{{ package.max_guests }}" value="1" required id="packageGuestCount">
+                            <small class="text-muted">Maximum {{ package.max_guests }} guests allowed</small>
                         </div>
-                        <div class="price-summary">
-                            <div class="price-row">
-                                <span>Package Price</span>
-                                <span>₹{{ package.price }}</span>
-                            </div>
-                            {% if package.discount_percentage > 0 %}
-                            <div class="price-row discount">
-                                <span>Discount ({{ package.discount_percentage }}%)</span>
-                                <span>-₹{{ savings.amount }}</span>
-                            </div>
-                            {% endif %}
-                            <div class="price-row total">
-                                <span>Total</span>
-                                <span>₹{{ package.get_discounted_price }}</span>
-                            </div>
+                        <div class="form-group mb-3">
+                            <label>Guest Name</label>
+                            <input type="text" name="guest_name" class="form-control" required 
+                                   value="{{ guest_info.name|default:'' }}" {% if guest_info.name %}readonly{% endif %}>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block">Book Now</button>
+                        <div class="form-group mb-3">
+                            <label>Email</label>
+                            <input type="email" name="email" class="form-control" required 
+                                   value="{{ guest_info.email|default:'' }}" {% if guest_info.email %}readonly{% endif %}>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Phone</label>
+                            <input type="tel" name="phone" class="form-control" required 
+                                   value="{{ guest_info.phone|default:'' }}" {% if guest_info.phone %}readonly{% endif %}>
+                        </div>
+                        {% if not guest_info %}
+                        <div class="alert alert-info" role="alert">
+                            <i class="fas fa-info-circle"></i> 
+                            <a href="{% url 'user_login' %}?next={{ request.path }}" class="alert-link">Login</a> to auto-fill your details.
+                        </div>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary btn-block">
+                            Proceed to Payment
+                        </button>
                     </form>
                 </div>
 
@@ -482,4 +509,145 @@
         }
     }
 </style>
+
+<!-- Add Razorpay Script -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startDate = document.getElementById('startDate');
+    const endDate = document.getElementById('endDate');
+    const packageGuestCount = document.getElementById('packageGuestCount');
+    const packageBookingForm = document.getElementById('packageBookingForm');
+    const packageType = '{{ package.package_type }}';
+
+    // Set minimum date to today
+    const today = new Date();
+    startDate.min = today.toISOString().split('T')[0];
+
+    // Handle date selection based on package type
+    startDate.addEventListener('change', function() {
+        if (packageType === 'Daycation') {
+            // For daycation, we don't need to handle check-out date
+            return;
+        }
+        
+        if (endDate) {
+            const selectedDate = new Date(this.value);
+            endDate.min = this.value;
+            endDate.value = ''; // Reset check-out date when check-in date changes
+        }
+    });
+
+    // Form submission validation
+    packageBookingForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (!startDate.value || !packageGuestCount.value) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        const selectedDate = new Date(startDate.value);
+        if (selectedDate < today) {
+            alert('Selected date cannot be in the past');
+            return;
+        }
+
+        if (packageType !== 'Daycation' && endDate) {
+            if (!endDate.value) {
+                alert('Please select a check-out date');
+                return;
+            }
+            const checkOutDate = new Date(endDate.value);
+            if (checkOutDate <= selectedDate) {
+                alert('Check-out date must be after check-in date');
+                return;
+            }
+        }
+
+        const guestCount = parseInt(packageGuestCount.value);
+        const maxGuests = parseInt(packageGuestCount.getAttribute('max'));
+        if (guestCount > maxGuests) {
+            alert(`Maximum ${maxGuests} guests allowed for this package`);
+            return;
+        }
+
+        // Submit form data
+        const formData = new FormData(packageBookingForm);
+        if (packageType === 'Daycation') {
+            // For daycation, set check-out date same as check-in date
+            formData.set('check_out', formData.get('check_in'));
+        }
+
+        fetch('{% url "package_booking" package.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.order_id) {
+                // Initialize Razorpay payment
+                const options = {
+                    key: '{{ razorpay_merchant_key }}',
+                    amount: data.amount,
+                    currency: 'INR',
+                    name: '{{ package.package_name }}',
+                    description: 'Package Booking Payment',
+                    order_id: data.order_id,
+                    handler: function (response) {
+                        // Handle successful payment
+                        verifyPayment(response);
+                    },
+                    prefill: {
+                        name: formData.get('guest_name'),
+                        email: formData.get('email'),
+                        contact: formData.get('phone')
+                    },
+                    theme: {
+                        color: '#3498db'
+                    }
+                };
+                const rzp = new Razorpay(options);
+                rzp.open();
+            } else {
+                alert(data.error || 'Something went wrong. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Something went wrong. Please try again.');
+        });
+    });
+
+    function verifyPayment(response) {
+        const verificationData = new FormData();
+        verificationData.append('razorpay_payment_id', response.razorpay_payment_id);
+        verificationData.append('razorpay_order_id', response.razorpay_order_id);
+        verificationData.append('razorpay_signature', response.razorpay_signature);
+
+        fetch('{% url "verify_payment" %}', {
+            method: 'POST',
+            body: verificationData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.href = data.redirect_url;
+            } else {
+                alert('Payment verification failed. Please contact support.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Payment verification failed. Please contact support.');
+        });
+    }
+});
+</script>
 {% endblock %}

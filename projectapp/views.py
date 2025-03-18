@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm, PackageForm, RoomForm
-from .models import UserDB, Resort, ResortImage, Package, Room, GuestUser, Review, Booking, PackageAvailability, BookingPayment, RoomAvailability
+from .models import UserDB, Resort, ResortImage, Package, Room, GuestUser, Review, Booking, PackageAvailability, BookingPayment, RoomAvailability, PackageBooking
 import random
 from django.core.mail import send_mail
 from django.conf import settings
@@ -1871,10 +1871,27 @@ def package_detail(request, package_id):
     related_packages = Package.objects.filter(resort=package.resort, is_active=True).exclude(id=package_id)[:3]
     reviews = Review.objects.filter(package=package)
 
+    # Get guest information if user is logged in
+    guest_info = None
+    if request.user.is_authenticated:
+        try:
+            guest_user = GuestUser.objects.get(email=request.user.email)
+            guest_info = {
+                'name': guest_user.full_name,
+                'email': guest_user.email,
+                'phone': guest_user.mobile_number
+            }
+        except GuestUser.DoesNotExist:
+            pass
+
     context = {
         'package': package,
         'related_packages': related_packages,
         'reviews': reviews,
+        'guest_info': guest_info,
+        'today': timezone.now().date(),
+        'max_date': (timezone.now() + timedelta(days=365)).date(),
+        'razorpay_merchant_key': settings.RAZORPAY_KEY_ID,
     }
     return render(request, 'package_detail.html', context)
 
@@ -1890,32 +1907,144 @@ def package_reviews(request, package_id):
     return render(request, 'package_reviews.html', context)
 
 def package_booking(request, package_id):
-    """Handle package booking"""
+    """Handle package booking and payment initiation"""
     package = get_object_or_404(Package, id=package_id)
-
+    
     if request.method == "POST":
+        # Get form data
         guest_name = request.POST.get('guest_name')
         email = request.POST.get('email')
         phone = request.POST.get('phone')
-        payment_method = request.POST.get('payment_method')
+        check_in = request.POST.get('check_in')
+        check_out = request.POST.get('check_out')
+        guests = request.POST.get('guests')
 
-        if not all([guest_name, email, phone, payment_method]):
-            messages.error(request, "All fields are required.")
-            return redirect('package_detail', package_id=package.id)
+        if not all([guest_name, email, phone, check_in, guests]):
+            return JsonResponse({'error': 'All fields are required.'})
 
-        Booking.objects.create(
+        try:
+            # Convert dates
+            check_in_date = datetime.strptime(check_in, '%Y-%m-%d').date()
+            check_out_date = datetime.strptime(check_out, '%Y-%m-%d').date() if check_out else check_in_date
+            
+            # Validate dates
+            if check_in_date < timezone.now().date():
+                return JsonResponse({'error': 'Check-in date cannot be in the past.'})
+
+            # For daycation packages, ensure check-out is same as check-in
+            if package.package_type == 'Daycation' and check_in_date != check_out_date:
+                return JsonResponse({'error': 'For day packages, check-out date must be the same as check-in date.'})
+            
+            # For staycation packages, ensure check-out is after check-in
+            if package.package_type == 'Staycation' and check_out_date <= check_in_date:
+                return JsonResponse({'error': 'Check-out date must be after check-in date.'})
+
+            # Calculate amount
+            amount = package.get_discounted_price()
+            # For staycation packages, multiply by number of nights
+            if package.package_type == 'Staycation':
+                nights = (check_out_date - check_in_date).days
+                amount *= nights
+
+            amount_in_paise = int(amount * 100)  # Convert to paise for Razorpay
+
+            # Create Razorpay Order
+            razorpay_order = razorpay_client.order.create({
+                'amount': amount_in_paise,
+                'currency': 'INR',
+                'payment_capture': '1'
+            })
+
+            # Store booking data in session
+            request.session['booking_data'] = {
+                'package_id': package_id,
+                'guest_name': guest_name,
+                'email': email,
+                'phone': phone,
+                'check_in': check_in,
+                'check_out': check_out if package.package_type == 'Staycation' else check_in,
+                'guests': guests,
+                'amount': float(amount),
+                'razorpay_order_id': razorpay_order['id']
+            }
+
+            return JsonResponse({
+                'order_id': razorpay_order['id'],
+                'amount': amount_in_paise,
+            })
+
+        except Exception as e:
+            return JsonResponse({'error': str(e)})
+
+    return JsonResponse({'error': 'Invalid request method'})
+
+@require_POST
+def verify_payment(request):
+    """Verify Razorpay payment and confirm booking"""
+    try:
+        # Get payment verification details
+        payment_id = request.POST.get('razorpay_payment_id')
+        order_id = request.POST.get('razorpay_order_id')
+        signature = request.POST.get('razorpay_signature')
+
+        # Get booking data from session
+        booking_data = request.session.get('booking_data')
+        if not booking_data:
+            raise ValueError('Booking data not found')
+
+        # Verify payment signature
+        params_dict = {
+            'razorpay_payment_id': payment_id,
+            'razorpay_order_id': order_id,
+            'razorpay_signature': signature
+        }
+        razorpay_client.utility.verify_payment_signature(params_dict)
+
+        # Get package
+        package = get_object_or_404(Package, id=booking_data['package_id'])
+
+        # Create booking
+        booking = PackageBooking.objects.create(
             package=package,
-            guest_name=guest_name,
-            email=email,
-            phone=phone,
-            payment_method=payment_method,
-            status="Pending"
+            guest_name=booking_data['guest_name'],
+            email=booking_data['email'],
+            phone=booking_data['phone'],
+            check_in=booking_data['check_in'],
+            guests=booking_data['guests'],
+            amount=booking_data['amount'],
+            payment_id=payment_id,
+            order_id=order_id,
+            status='confirmed'
         )
 
-        messages.success(request, "Your booking request has been submitted successfully!")
-        return redirect('package_detail', package_id=package.id)
+        # Clear session data
+        request.session.pop('booking_data', None)
 
-    return redirect('package_detail', package_id=package.id)
+        return JsonResponse({
+            'status': 'success',
+            'redirect_url': reverse('booking_confirmation', kwargs={'booking_id': booking.id})
+        })
+
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
+
+def booking_confirmation(request, booking_id):
+    """Display booking confirmation page"""
+    try:
+        booking = get_object_or_404(PackageBooking, id=booking_id)
+        
+        context = {
+            'booking': booking,
+            'package': booking.package,
+        }
+        return render(request, 'booking/confirmation.html', context)
+        
+    except Exception as e:
+        messages.error(request, f'Error displaying confirmation: {str(e)}')
+        return redirect('guestindex')
 
 # Room Detail, Reviews, Booking & Availability
 def room_detail(request, room_id):
@@ -2093,14 +2222,21 @@ def check_availability(request):
 
     return JsonResponse({'error': 'Invalid request method'})
 
-def start_booking(request, resort_id):
+def start_booking(request, resort_id=None, package_id=None):
     """Initialize the booking process"""
-    resort = get_object_or_404(Resort, id=resort_id)
+    if package_id:
+        package = get_object_or_404(Package, id=package_id)
+        resort = package.resort
+    else:
+        resort = get_object_or_404(Resort, id=resort_id)
+        package = None
+
     packages = Package.objects.filter(resort=resort, is_active=True)
     rooms = Room.objects.filter(resort=resort, current_status='available')
 
     context = {
         'resort': resort,
+        'selected_package': package,
         'packages': packages,
         'rooms': rooms,
         'min_date': timezone.now().date().strftime('%Y-%m-%d'),
@@ -2143,119 +2279,122 @@ def booking_preferences(request, resort_id):
     return render(request, 'booking/preferences.html')
 
 def booking_payment(request, resort_id):
-    """Handle payment process"""
-    if 'booking_data' not in request.session:
+    """Handle payment process for resort or package booking"""
+    if not request.session.get('booking_data'):
+        messages.error(request, 'No booking information found')
         return redirect('start_booking', resort_id=resort_id)
 
-    booking_data = request.session['booking_data']
-    resort = get_object_or_404(Resort, id=resort_id)
+    try:
+        resort = get_object_or_404(Resort, id=resort_id)
+        booking_data = request.session['booking_data']
+        
+        # Get package if selected
+        package = None
+        if booking_data.get('package_id'):
+            package = get_object_or_404(Package, id=booking_data['package_id'])
+        
+        # Calculate total amount
+        total_amount = calculate_booking_amount(booking_data, resort)
+        amount_in_paise = int(total_amount * 100)  # Convert to paise for Razorpay
 
-    # Calculate total amount
-    total_amount = calculate_booking_amount(booking_data, resort)
-    amount_in_paise = int(total_amount * 100)  # Convert to paise for Razorpay
+        if request.method == 'POST':
+            try:
+                # Create booking record
+                booking = create_booking(request.user.guestuser, resort, booking_data, total_amount)
+                
+                # Create Razorpay Order
+                razorpay_order = razorpay_client.order.create({
+                    'amount': amount_in_paise,
+                    'currency': 'INR',
+                    'payment_capture': '1'
+                })
+                
+                # Create payment record
+                payment = BookingPayment.objects.create(
+                    booking=booking,
+                    amount=total_amount,
+                    payment_method='razorpay',
+                    razorpay_order_id=razorpay_order['id'],
+                    payment_status='pending'
+                )
+                
+                # Store order details in session
+                request.session['razorpay_order_id'] = razorpay_order['id']
+                request.session['booking_id'] = booking.id
+                
+                context = {
+                    'booking': booking,
+                    'resort': resort,
+                    'package': package,
+                    'razorpay_order_id': razorpay_order['id'],
+                    'razorpay_merchant_key': settings.RAZORPAY_KEY_ID,
+                    'callback_url': request.build_absolute_uri(reverse('payment_callback')),
+                    'amount': total_amount,
+                    'amount_in_paise': amount_in_paise,
+                    'currency': 'INR',
+                }
+                return render(request, 'booking/payment.html', context)
 
-    if request.method == 'POST':
-        try:
-            # Create booking
-            booking = create_booking(request.user.guestuser, resort, booking_data, total_amount)
-            
-            # Create Razorpay Order
-            razorpay_order = razorpay_client.order.create({
-                'amount': amount_in_paise,
-                'currency': 'INR',
-                'payment_capture': '1'
-            })
-            
-            # Create payment record
-            payment = BookingPayment.objects.create(
-                booking=booking,
-                amount=total_amount,
-                payment_method=request.POST.get('payment_method'),
-                razorpay_order_id=razorpay_order['id'],
-                payment_status='pending'
-            )
-            
-            # Save order ID in session for verification
-            request.session['razorpay_order_id'] = razorpay_order['id']
-            request.session['booking_id'] = booking.id
-            
-            context = {
-                'booking_data': booking_data,
-                'total_amount': total_amount,
-                'razorpay_order_id': razorpay_order['id'],
-                'razorpay_merchant_key': settings.RAZORPAY_KEY_ID,
-                'callback_url': request.build_absolute_uri(reverse('payment_callback')),
-                'amount_in_paise': amount_in_paise,
-                'currency': 'INR',
-                'booking': booking,
-            }
-            return render(request, 'booking/razorpay_payment.html', context)
+            except Exception as e:
+                messages.error(request, f'Error processing payment: {str(e)}')
+                return redirect('start_booking', resort_id=resort_id)
 
-        except Exception as e:
-            messages.error(request, str(e))
-            return redirect('booking_payment', resort_id=resort_id)
+        context = {
+            'resort': resort,
+            'package': package,
+            'booking_data': booking_data,
+            'total_amount': total_amount,
+            'amount_in_paise': amount_in_paise,
+        }
+        return render(request, 'booking/payment.html', context)
 
-    context = {
-        'booking_data': booking_data,
-        'total_amount': total_amount,
-        'payment_methods': BookingPayment.PAYMENT_METHOD
-    }
-    return render(request, 'booking/payment.html', context)
+    except Exception as e:
+        messages.error(request, f'Error: {str(e)}')
+        return redirect('start_booking', resort_id=resort_id)
 
 @require_POST
 def payment_callback(request):
     """Handle Razorpay payment callback"""
-    razorpay_payment_id = request.POST.get('razorpay_payment_id')
-    razorpay_order_id = request.POST.get('razorpay_order_id')
-    razorpay_signature = request.POST.get('razorpay_signature')
-    booking_id = request.session.get('booking_id')
-
     try:
+        payment_id = request.POST.get('razorpay_payment_id')
+        order_id = request.POST.get('razorpay_order_id')
+        signature = request.POST.get('razorpay_signature')
+        booking_id = request.session.get('booking_id')
+
+        if not all([payment_id, order_id, signature, booking_id]):
+            raise ValueError('Missing required payment parameters')
+
         # Verify payment signature
         params_dict = {
-            'razorpay_payment_id': razorpay_payment_id,
-            'razorpay_order_id': razorpay_order_id,
-            'razorpay_signature': razorpay_signature
+            'razorpay_payment_id': payment_id,
+            'razorpay_order_id': order_id,
+            'razorpay_signature': signature
         }
         razorpay_client.utility.verify_payment_signature(params_dict)
 
         # Update booking and payment status
         booking = get_object_or_404(Booking, id=booking_id)
-        payment = BookingPayment.objects.get(razorpay_order_id=razorpay_order_id)
+        payment = BookingPayment.objects.get(razorpay_order_id=order_id)
         
         payment.payment_status = 'success'
-        payment.transaction_id = razorpay_payment_id
+        payment.transaction_id = payment_id
         payment.payment_response = params_dict
         payment.save()
 
-        booking.payment_status = 'paid'
-        booking.booking_status = 'confirmed'
+        booking.status = 'confirmed'
         booking.save()
 
         # Clear session data
-        del request.session['booking_data']
-        del request.session['razorpay_order_id']
-        del request.session['booking_id']
+        request.session.pop('booking_data', None)
+        request.session.pop('razorpay_order_id', None)
+        request.session.pop('booking_id', None)
 
         messages.success(request, 'Payment successful! Your booking is confirmed.')
         return redirect('booking_confirmation', booking_id=booking.id)
 
     except Exception as e:
         messages.error(request, f'Payment verification failed: {str(e)}')
-        return redirect('booking_payment', resort_id=booking.resort.id)
-
-def booking_confirmation(request, booking_id):
-    """Display booking confirmation"""
-    booking = get_object_or_404(Booking, id=booking_id)
-    if booking.guest.user != request.user:
-        messages.error(request, 'Invalid booking access')
-        return redirect('home')
-
-    context = {
-        'booking': booking,
-        'payment': booking.payments.last()
-    }
-    return render(request, 'booking/confirmation.html', context)
+        return redirect('booking_payment', package_id=booking.package.id)
 
 # Helper functions
 def calculate_booking_amount(booking_data, resort):
@@ -2318,3 +2457,4 @@ def process_payment(booking, amount, payment_method):
         return {'status': 'success', 'payment_id': payment.id}
     except Exception as e:
         return {'status': 'failed', 'error': str(e)}
+

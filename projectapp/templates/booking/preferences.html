@@ -15,107 +15,24 @@
                         
                         <!-- Food Preferences -->
                         <div class="mb-4">
-                            <h5 class="mb-3">Food Preference</h5>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <div class="food-preference-card">
-                                        <input type="radio" class="btn-check" name="food_preference" 
-                                               id="veg" value="vegetarian" required>
-                                        <label class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4" 
-                                               for="veg">
-                                            <i class="fas fa-leaf fa-2x mb-2"></i>
-                                            <span>Vegetarian</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="food-preference-card">
-                                        <input type="radio" class="btn-check" name="food_preference" 
-                                               id="non_veg" value="non-vegetarian">
-                                        <label class="btn btn-outline-danger w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4" 
-                                               for="non_veg">
-                                            <i class="fas fa-drumstick-bite fa-2x mb-2"></i>
-                                            <span>Non-Vegetarian</span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="food-preference-card">
-                                        <input type="radio" class="btn-check" name="food_preference" 
-                                               id="both" value="both">
-                                        <label class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center p-4" 
-                                               for="both">
-                                            <i class="fas fa-utensils fa-2x mb-2"></i>
-                                            <span>Both</span>
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
+                            <label for="food_preference" class="form-label">Food Preference</label>
+                            <select class="form-select" id="food_preference" name="food_preference">
+                                <option value="vegetarian">Vegetarian</option>
+                                <option value="non-vegetarian">Non-Vegetarian</option>
+                                <option value="vegan">Vegan</option>
+                                <option value="no-preference">No Preference</option>
+                            </select>
                         </div>
 
                         <!-- Special Requests -->
                         <div class="mb-4">
-                            <h5 class="mb-3">Special Requests</h5>
-                            <div class="form-floating">
-                                <textarea class="form-control" id="special_requests" name="special_requests" 
-                                          style="height: 120px" placeholder="Enter any special requests"></textarea>
-                                <label for="special_requests">Any special requests or preferences?</label>
-                            </div>
-                            <small class="text-muted">
-                                Please let us know if you have any dietary restrictions, accessibility needs, or other special requests.
-                            </small>
+                            <label for="special_requests" class="form-label">Special Requests</label>
+                            <textarea class="form-control" id="special_requests" name="special_requests" rows="4" 
+                                    placeholder="Any special requests or requirements..."></textarea>
                         </div>
 
-                        <!-- Common Preferences -->
-                        <div class="mb-4">
-                            <h5 class="mb-3">Additional Preferences</h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="early_check_in" 
-                                               name="early_check_in">
-                                        <label class="form-check-label" for="early_check_in">
-                                            Request Early Check-in
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="late_check_out" 
-                                               name="late_check_out">
-                                        <label class="form-check-label" for="late_check_out">
-                                            Request Late Check-out
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="airport_pickup" 
-                                               name="airport_pickup">
-                                        <label class="form-check-label" for="airport_pickup">
-                                            Need Airport Pickup
-                                        </label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" id="honeymoon_setup" 
-                                               name="honeymoon_setup">
-                                        <label class="form-check-label" for="honeymoon_setup">
-                                            Honeymoon Special Setup
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-between">
-                            <a href="javascript:history.back()" class="btn btn-outline-secondary btn-lg">
-                                <i class="fas fa-arrow-left me-2"></i>Back
-                            </a>
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                Continue to Payment<i class="fas fa-arrow-right ms-2"></i>
-                            </button>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-primary btn-lg">Continue to Payment</button>
                         </div>
                     </form>
                 </div>
@@ -126,63 +43,9 @@
 
 {% block extra_css %}
 <style>
-    .food-preference-card {
-        height: 100%;
-    }
-
-    .btn-check:checked + .btn {
-        transform: scale(1.05);
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-    }
-
-    .btn-outline-success:hover,
-    .btn-outline-danger:hover,
-    .btn-outline-primary:hover {
-        transform: translateY(-3px);
-    }
-
-    .btn-outline-success,
-    .btn-outline-danger,
-    .btn-outline-primary {
-        transition: all 0.3s ease;
-    }
-
-    .form-check {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        transition: all 0.3s ease;
-    }
-
-    .form-check:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-    }
-
     .card-header {
         background: linear-gradient(45deg, #1a73e8, #0d47a1);
     }
-
-    .form-floating > .form-control:focus ~ label,
-    .form-floating > .form-control:not(:placeholder-shown) ~ label {
-        color: #1a73e8;
-    }
 </style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add animation to form checks when checked
-    const formChecks = document.querySelectorAll('.form-check-input');
-    formChecks.forEach(check => {
-        check.addEventListener('change', function() {
-            if (this.checked) {
-                this.closest('.form-check').style.backgroundColor = 'rgba(26, 115, 232, 0.1)';
-            } else {
-                this.closest('.form-check').style.backgroundColor = '';
-            }
-        });
-    });
-});
-</script>
 {% endblock %}
 {% endblock %} 

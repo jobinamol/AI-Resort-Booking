@@ -1016,3 +1016,24 @@ class PackageAvailability(models.Model):
 
     def __str__(self):
         return f"{self.package.package_name} - {self.date} ({self.available_slots} slots available)"
+
+class PackageBooking(models.Model):
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='bookings')
+    guest_name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    check_in = models.DateField()
+    guests = models.IntegerField()
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_id = models.CharField(max_length=100)
+    order_id = models.CharField(max_length=100)
+    status = models.CharField(max_length=20, choices=[
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled')
+    ], default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.guest_name}'s booking for {self.package.package_name}"
