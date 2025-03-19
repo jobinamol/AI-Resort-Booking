@@ -18,40 +18,63 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p><strong>Booking ID:</strong> #{{ booking.id }}</p>
-                                <p><strong>Package:</strong> {{ package.package_name }}</p>
-                                <p><strong>Guest Name:</strong> {{ booking.guest_name }}</p>
-                                <p><strong>Email:</strong> {{ booking.email }}</p>
+                                {% if booking.package %}
+                                    <p><strong>Package:</strong> {{ booking.package.package_name }}</p>
+                                {% endif %}
+                                <p><strong>Guest Name:</strong> {{ booking.guest.full_name }}</p>
+                                <p><strong>Email:</strong> {{ booking.guest.email }}</p>
+                                <p><strong>Phone:</strong> {{ booking.guest.mobile_number }}</p>
                             </div>
                             <div class="col-md-6">
-                                <p><strong>Check-in Date:</strong> {{ booking.check_in|date:"F d, Y" }}</p>
-                                <p><strong>Number of Guests:</strong> {{ booking.guests }}</p>
-                                <p><strong>Amount Paid:</strong> ₹{{ booking.amount }}</p>
-                                <p><strong>Status:</strong> <span class="badge bg-success">{{ booking.status|title }}</span></p>
+                                <p><strong>Check-in:</strong> {{ booking.check_in|date:"F d, Y" }}</p>
+                                <p><strong>Check-out:</strong> {{ booking.check_out|date:"F d, Y" }}</p>
+                                <p><strong>Guests:</strong> {{ booking.adults }} Adult(s){% if booking.children %}, {{ booking.children }} Child(ren){% endif %}</p>
+                                <p><strong>Amount Paid:</strong> ₹{{ booking.total_amount }}</p>
+                                <p><strong>Status:</strong> <span class="badge bg-success">{{ booking.booking_status|title }}</span></p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="package-details mt-4">
-                        <h4 class="mb-3">Package Details</h4>
+                    <!-- Resort Details -->
+                    <div class="resort-details mt-4">
+                        <h4 class="mb-3">Resort Information</h4>
                         <div class="row">
-                            <div class="col-md-4">
-                                <img src="{{ package.image.url }}" alt="{{ package.package_name }}" class="img-fluid rounded">
-                            </div>
-                            <div class="col-md-8">
-                                <h5>{{ package.package_name }}</h5>
-                                <p>{{ package.description|truncatewords:50 }}</p>
-                                <p><strong>Duration:</strong> {{ package.get_duration_display }}</p>
-                                <p><strong>Resort:</strong> {{ package.resort.resort_name }}</p>
+                            <div class="col-md-12">
+                                <p><strong>Resort Name:</strong> {{ resort.resort_name }}</p>
+                                <p><strong>Address:</strong> {{ resort.resort_address }}</p>
+                                <p><strong>Contact:</strong> {{ resort.resort_contact }}</p>
+                                {% if resort.check_in_time %}
+                                    <p><strong>Check-in Time:</strong> {{ resort.check_in_time|time:"H:i" }}</p>
+                                {% endif %}
+                                {% if resort.check_out_time %}
+                                    <p><strong>Check-out Time:</strong> {{ resort.check_out_time|time:"H:i" }}</p>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
 
-                    <div class="text-center mt-4">
-                        <a href="{% url 'package_detail' package.id %}" class="btn btn-outline-primary me-2">
-                            <i class="fas fa-arrow-left"></i> Back to Package
+                    <!-- QR Code Section -->
+                    <div class="qr-code-section text-center mt-4">
+                        <h5>Scan QR Code for Check-in</h5>
+                        <div class="qr-code-container my-3">
+                            {% if qr_image_base64 %}
+                                <img src="data:image/png;base64,{{ qr_image_base64 }}" 
+                                     alt="Booking QR Code" class="img-fluid">
+                            {% else %}
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ qr_data }}" 
+                                     alt="Booking QR Code" class="img-fluid">
+                            {% endif %}
+                        </div>
+                        <p class="text-muted small">Present this QR code during check-in for quick verification</p>
+                    </div>
+
+                    <!-- Download Section -->
+                    <div class="download-section text-center mt-4">
+                        <a href="#" class="btn btn-outline-primary me-2" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Print Confirmation
                         </a>
-                        <a href="#" class="btn btn-primary" onclick="window.print()">
-                            <i class="fas fa-print"></i> Print Confirmation
+                        <a href="{% url 'guest_profile_view' %}" class="btn btn-primary">
+                            <i class="fas fa-user me-2"></i>View Bookings
                         </a>
                     </div>
                 </div>
@@ -60,22 +83,41 @@
     </div>
 </div>
 
+{% block extra_css %}
 <style>
-    .booking-details, .package-details {
-        background-color: #f8f9fa;
-        padding: 1.5rem;
-        border-radius: 8px;
-        margin-bottom: 1.5rem;
-    }
-
     @media print {
-        .btn {
+        .download-section {
             display: none;
         }
-        
         .card {
-            box-shadow: none !important;
+            border: none;
+            box-shadow: none;
         }
     }
+    .qr-code-container {
+        display: inline-block;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+    .badge {
+        padding: 0.5em 1em;
+    }
+    .booking-details, .resort-details {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .booking-details h4, .resort-details h4 {
+        color: #1a73e8;
+        margin-bottom: 1.5rem;
+    }
+    .text-success {
+        color: #28a745 !important;
+    }
 </style>
+{% endblock %}
+
 {% endblock %}

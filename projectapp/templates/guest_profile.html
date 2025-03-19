@@ -183,8 +183,8 @@
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
                                     <h5 class="card-title mb-0">{{ booking.resort.name }}</h5>
-                                    <span class="status-badge status-{{ booking.status|lower }}">
-                                        {{ booking.status }}
+                                    <span class="status-badge status-{{ booking.booking_status|lower }}">
+                                        {{ booking.get_booking_status_display }}
                                     </span>
                                 </div>
                                 <p class="card-text text-muted mb-2">
@@ -196,24 +196,58 @@
                                     {{ booking.guests }} Guests
                                 </p>
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="h5 mb-0">₹{{ booking.total_amount }}</span>
-                                    <a href="{% url 'booking_detail' booking.id %}" class="btn btn-sm btn-outline-primary">
-                                        View Details
-                                    </a>
+                                    <span class="h5 mb-0">₹{{ booking.amount }}</span>
+                                    <div class="btn-group">
+                                        <button type="button" class="btn btn-sm btn-outline-primary view-qr" 
+                                                data-bs-toggle="modal" data-bs-target="#qrModal"
+                                                data-booking-id="{{ booking.id }}"
+                                                data-guest-name="{{ booking.guest_name }}"
+                                                data-check-in="{{ booking.check_in|date:'Y-m-d' }}"
+                                                data-guests="{{ booking.guests }}"
+                                                data-verification="{{ booking.payment_id|slice:'-6:' }}">
+                                            <i class="fas fa-qrcode"></i> View QR
+                                        </button>
+                                        <a href="{% url 'booking_confirmation' booking.id %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-info-circle"></i> Details
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="col-12 text-center py-5">
-                        <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
-                        <h4>No Bookings Yet</h4>
-                        <p class="text-muted">Start exploring our resorts and make your first booking!</p>
-                        <a href="{% url 'explore_page' %}" class="btn btn-primary mt-3">
-                            <i class="fas fa-search me-2"></i>Explore Resorts
-                        </a>
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            You don't have any bookings yet.
+                        </div>
                     </div>
                     {% endfor %}
+                </div>
+            </div>
+
+            <!-- QR Code Modal -->
+            <div class="modal fade" id="qrModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Booking QR Code</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <div class="qr-code-container my-3">
+                                <img id="qrCodeImage" src="" alt="Booking QR Code" class="img-fluid">
+                            </div>
+                            <p class="text-muted small">Present this QR code during check-in for quick verification</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="window.print()">
+                                <i class="fas fa-print me-2"></i>Print QR Code
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -286,6 +320,72 @@
                 });
             });
         });
+
+        document.querySelectorAll('.view-qr').forEach(button => {
+            button.addEventListener('click', function() {
+                const qrData = {
+                    booking_id: this.dataset.bookingId,
+                    guest_name: this.dataset.guestName,
+                    check_in: this.dataset.checkIn,
+                    guests: this.dataset.guests,
+                    verification_code: this.dataset.verification
+                };
+                
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(JSON.stringify(qrData))}`;
+                document.getElementById('qrCodeImage').src = qrUrl;
+            });
+        });
+
+        // Print only QR code when printing from modal
+        if (window.matchMedia) {
+            const mediaQueryList = window.matchMedia('print');
+            mediaQueryList.addListener(function(mql) {
+                if (mql.matches) {
+                    document.body.classList.add('printing-qr');
+                } else {
+                    document.body.classList.remove('printing-qr');
+                }
+            });
+        }
     </script>
+
+    <style>
+    @media print {
+        body:not(.printing-qr) .modal {
+            display: none !important;
+        }
+        body.printing-qr {
+            visibility: hidden;
+        }
+        body.printing-qr .modal {
+            visibility: visible;
+            position: absolute;
+            left: 0;
+            top: 0;
+        }
+        body.printing-qr .modal-footer {
+            display: none;
+        }
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+    }
+    .status-pending { background-color: #ffc107; color: #000; }
+    .status-confirmed { background-color: #28a745; color: #fff; }
+    .status-checked_in { background-color: #17a2b8; color: #fff; }
+    .status-completed { background-color: #6c757d; color: #fff; }
+    .status-cancelled { background-color: #dc3545; color: #fff; }
+
+    .qr-code-container {
+        display: inline-block;
+        padding: 10px;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+    }
+    </style>
 </body>
 </html>

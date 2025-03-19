@@ -514,10 +514,10 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const packageBookingForm = document.getElementById('packageBookingForm');
     const startDate = document.getElementById('startDate');
     const endDate = document.getElementById('endDate');
     const packageGuestCount = document.getElementById('packageGuestCount');
-    const packageBookingForm = document.getElementById('packageBookingForm');
     const packageType = '{{ package.package_type }}';
 
     // Set minimum date to today
@@ -538,10 +538,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Form submission validation
+    // Form submission and payment handling
     packageBookingForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
+        // Basic form validation
         if (!startDate.value || !packageGuestCount.value) {
             alert('Please fill in all required fields');
             return;
@@ -572,13 +573,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Submit form data
+        // Submit form data to create order
         const formData = new FormData(packageBookingForm);
-        if (packageType === 'Daycation') {
-            // For daycation, set check-out date same as check-in date
-            formData.set('check_out', formData.get('check_in'));
-        }
-
         fetch('{% url "package_booking" package.id %}', {
             method: 'POST',
             body: formData,
@@ -588,12 +584,12 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => response.json())
         .then(data => {
-            if (data.order_id) {
+            if (data.status === 'success') {
                 // Initialize Razorpay payment
                 const options = {
-                    key: '{{ razorpay_merchant_key }}',
+                    key: data.key_id,
                     amount: data.amount,
-                    currency: 'INR',
+                    currency: data.currency,
                     name: '{{ package.package_name }}',
                     description: 'Package Booking Payment',
                     order_id: data.order_id,
@@ -640,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.status === 'success') {
                 window.location.href = data.redirect_url;
             } else {
-                alert('Payment verification failed. Please contact support.');
+                alert(data.message || 'Payment verification failed. Please contact support.');
             }
         })
         .catch(error => {

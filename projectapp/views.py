@@ -12,7 +12,7 @@ from django.utils.crypto import get_random_string
 from django.core.cache import cache
 from django.urls import reverse
 from django.utils import timezone
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from django.core.exceptions import ValidationError
 from django.http import JsonResponse
 from django.db.models import Q, Count
@@ -23,9 +23,17 @@ from functools import wraps
 from django.db.models import Q, Count, F
 from django.views.decorators.http import require_POST
 import razorpay
+from django.views.decorators.csrf import csrf_exempt
+import time
+import urllib.parse
+import qrcode
+import base64
+from io import BytesIO
 
 # Initialize Razorpay client
-razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+razorpay_client = razorpay.Client(
+    auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+)
 
 # Create your views here.
 def index(request):
@@ -1889,7 +1897,7 @@ def package_detail(request, package_id):
         'related_packages': related_packages,
         'reviews': reviews,
         'guest_info': guest_info,
-        'today': timezone.now().date(),
+        'today': timezone.localdate(),
         'max_date': (timezone.now() + timedelta(days=365)).date(),
         'razorpay_merchant_key': settings.RAZORPAY_KEY_ID,
     }
@@ -1907,54 +1915,44 @@ def package_reviews(request, package_id):
     return render(request, 'package_reviews.html', context)
 
 def package_booking(request, package_id):
-    """Handle package booking and payment initiation"""
     package = get_object_or_404(Package, id=package_id)
-    
-    if request.method == "POST":
-        # Get form data
-        guest_name = request.POST.get('guest_name')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        check_in = request.POST.get('check_in')
-        check_out = request.POST.get('check_out')
-        guests = request.POST.get('guests')
-
-        if not all([guest_name, email, phone, check_in, guests]):
-            return JsonResponse({'error': 'All fields are required.'})
-
+    if request.method == 'POST':
         try:
-            # Convert dates
-            check_in_date = datetime.strptime(check_in, '%Y-%m-%d').date()
-            check_out_date = datetime.strptime(check_out, '%Y-%m-%d').date() if check_out else check_in_date
+            # Get form data
+            guest_name = request.POST.get('guest_name')
+            email = request.POST.get('email')
+            phone = request.POST.get('phone')
+            check_in = request.POST.get('check_in')
+            guests = int(request.POST.get('guests', 1))
             
-            # Validate dates
-            if check_in_date < timezone.now().date():
-                return JsonResponse({'error': 'Check-in date cannot be in the past.'})
+            # Validate required fields
+            if not all([guest_name, email, phone, check_in, guests]):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'All fields are required'
+                }, status=400)
 
-            # For daycation packages, ensure check-out is same as check-in
-            if package.package_type == 'Daycation' and check_in_date != check_out_date:
-                return JsonResponse({'error': 'For day packages, check-out date must be the same as check-in date.'})
-            
-            # For staycation packages, ensure check-out is after check-in
-            if package.package_type == 'Staycation' and check_out_date <= check_in_date:
-                return JsonResponse({'error': 'Check-out date must be after check-in date.'})
-
-            # Calculate amount
-            amount = package.get_discounted_price()
-            # For staycation packages, multiply by number of nights
-            if package.package_type == 'Staycation':
-                nights = (check_out_date - check_in_date).days
-                amount *= nights
-
-            amount_in_paise = int(amount * 100)  # Convert to paise for Razorpay
+            # Calculate amount (convert to paise)
+            amount = int(package.get_discounted_price() * guests * 100)
 
             # Create Razorpay Order
-            razorpay_order = razorpay_client.order.create({
-                'amount': amount_in_paise,
+            order_data = {
+                'amount': amount,
                 'currency': 'INR',
-                'payment_capture': '1'
-            })
-
+                'receipt': f'order_rcptid_{package_id}_{int(time.time())}',
+                'payment_capture': 1,
+                'notes': {
+                    'package_id': package_id,
+                    'guest_name': guest_name,
+                    'email': email,
+                    'phone': phone,
+                    'check_in': check_in,
+                    'guests': guests
+                }
+            }
+            
+            order = razorpay_client.order.create(data=order_data)
+            
             # Store booking data in session
             request.session['booking_data'] = {
                 'package_id': package_id,
@@ -1962,89 +1960,178 @@ def package_booking(request, package_id):
                 'email': email,
                 'phone': phone,
                 'check_in': check_in,
-                'check_out': check_out if package.package_type == 'Staycation' else check_in,
                 'guests': guests,
-                'amount': float(amount),
-                'razorpay_order_id': razorpay_order['id']
+                'amount': amount,
+                'order_id': order['id']
             }
+            
+            return JsonResponse({
+                'status': 'success',
+                'key_id': settings.RAZORPAY_KEY_ID,
+                'amount': amount,
+                'currency': 'INR',
+                'order_id': order['id'],
+                'package_name': package.package_name,
+                'guest_name': guest_name,
+                'email': email,
+                'phone': phone
+            })
+            
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+            
+    return render(request, 'package_detail.html', {'package': package})
+
+@csrf_exempt
+def verify_payment(request):
+    if request.method == 'POST':
+        try:
+            # Get payment verification data
+            payment_id = request.POST.get('razorpay_payment_id')
+            order_id = request.POST.get('razorpay_order_id')
+            signature = request.POST.get('razorpay_signature')
+            
+            # Get booking data from session
+            booking_data = request.session.get('booking_data')
+            if not booking_data:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Booking data not found'
+                }, status=400)
+
+            # Verify payment signature
+            params_dict = {
+                'razorpay_payment_id': payment_id,
+                'razorpay_order_id': order_id,
+                'razorpay_signature': signature
+            }
+            
+            try:
+                razorpay_client.utility.verify_payment_signature(params_dict)
+            except Exception as e:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Invalid payment signature'
+                }, status=400)
+
+            # Get the package
+            package = get_object_or_404(Package, id=booking_data['package_id'])
+            
+            # Create the guest user if not exists
+            guest_user, created = GuestUser.objects.get_or_create(
+                email=booking_data['email'],
+                defaults={
+                    'full_name': booking_data['guest_name'],
+                    'mobile_number': booking_data['phone']
+                }
+            )
+
+            # Create booking
+            booking = Booking.objects.create(
+                guest=guest_user,
+                package=package,
+                resort=package.resort,
+                check_in=datetime.strptime(booking_data['check_in'], '%Y-%m-%d').date(),
+                check_out=datetime.strptime(booking_data['check_in'], '%Y-%m-%d').date(),  # For day packages, same as check-in
+                adults=booking_data['guests'],
+                children=0,
+                total_amount=booking_data['amount'] / 100,  # Convert back from paise
+                booking_status='confirmed',
+                payment_status='paid'
+            )
+
+            # Create payment record
+            payment = BookingPayment.objects.create(
+                booking=booking,
+                amount=booking_data['amount'] / 100,
+                payment_method='razorpay',
+                transaction_id=payment_id,
+                razorpay_order_id=order_id,
+                payment_status='success',
+                payment_response=params_dict
+            )
+
+            # Clear session data
+            if 'booking_data' in request.session:
+                del request.session['booking_data']
 
             return JsonResponse({
-                'order_id': razorpay_order['id'],
-                'amount': amount_in_paise,
+                'status': 'success',
+                'message': 'Payment verified successfully',
+                'redirect_url': reverse('booking_confirmation', args=[booking.id])
             })
 
         except Exception as e:
-            return JsonResponse({'error': str(e)})
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
 
-    return JsonResponse({'error': 'Invalid request method'})
-
-@require_POST
-def verify_payment(request):
-    """Verify Razorpay payment and confirm booking"""
-    try:
-        # Get payment verification details
-        payment_id = request.POST.get('razorpay_payment_id')
-        order_id = request.POST.get('razorpay_order_id')
-        signature = request.POST.get('razorpay_signature')
-
-        # Get booking data from session
-        booking_data = request.session.get('booking_data')
-        if not booking_data:
-            raise ValueError('Booking data not found')
-
-        # Verify payment signature
-        params_dict = {
-            'razorpay_payment_id': payment_id,
-            'razorpay_order_id': order_id,
-            'razorpay_signature': signature
-        }
-        razorpay_client.utility.verify_payment_signature(params_dict)
-
-        # Get package
-        package = get_object_or_404(Package, id=booking_data['package_id'])
-
-        # Create booking
-        booking = PackageBooking.objects.create(
-            package=package,
-            guest_name=booking_data['guest_name'],
-            email=booking_data['email'],
-            phone=booking_data['phone'],
-            check_in=booking_data['check_in'],
-            guests=booking_data['guests'],
-            amount=booking_data['amount'],
-            payment_id=payment_id,
-            order_id=order_id,
-            status='confirmed'
-        )
-
-        # Clear session data
-        request.session.pop('booking_data', None)
-
-        return JsonResponse({
-            'status': 'success',
-            'redirect_url': reverse('booking_confirmation', kwargs={'booking_id': booking.id})
-        })
-
-    except Exception as e:
-        return JsonResponse({
-            'status': 'error',
-            'message': str(e)
-        }, status=400)
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
 
 def booking_confirmation(request, booking_id):
-    """Display booking confirmation page"""
+    """Display booking confirmation and generate QR code"""
     try:
-        booking = get_object_or_404(PackageBooking, id=booking_id)
+        booking = get_object_or_404(Booking, id=booking_id)
+        
+        # Create QR code data with comprehensive booking information
+        qr_data = {
+            'booking_id': booking.id,
+            'guest_name': booking.guest.full_name,
+            'email': booking.guest.email,
+            'check_in': booking.check_in.strftime('%Y-%m-%d'),
+            'check_out': booking.check_out.strftime('%Y-%m-%d'),
+            'adults': booking.adults,
+            'children': booking.children,
+            'total_amount': str(booking.total_amount),
+            'booking_status': booking.booking_status,
+            'verification_code': booking.payment.transaction_id[-6:] if booking.payment else '',
+            'resort_name': booking.resort.resort_name,
+            'package_name': booking.package.package_name if booking.package else '',
+            'timestamp': timezone.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+        
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(json.dumps(qr_data))
+        qr.make(fit=True)
+
+        # Create QR code image
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+        
+        # Convert QR code to base64 string
+        buffer = BytesIO()
+        qr_image.save(buffer, format="PNG")
+        qr_image_base64 = base64.b64encode(buffer.getvalue()).decode()
+        
+        # URL encode the QR data for the template
+        qr_data_url = urllib.parse.quote(json.dumps(qr_data))
         
         context = {
             'booking': booking,
+            'qr_data': qr_data_url,
+            'qr_image_base64': qr_image_base64,
+            'resort': booking.resort,
             'package': booking.package,
+            'payment': booking.payment if hasattr(booking, 'payment') else None,
         }
+        
         return render(request, 'booking/confirmation.html', context)
         
     except Exception as e:
-        messages.error(request, f'Error displaying confirmation: {str(e)}')
-        return redirect('guestindex')
+        messages.error(request, f'Error generating booking confirmation: {str(e)}')
+        return redirect('guest_profile_view')
 
 # Room Detail, Reviews, Booking & Availability
 def room_detail(request, room_id):
@@ -2457,4 +2544,69 @@ def process_payment(booking, amount, payment_method):
         return {'status': 'success', 'payment_id': payment.id}
     except Exception as e:
         return {'status': 'failed', 'error': str(e)}
+
+@csrf_exempt
+def verify_booking_qr(request):
+    """Handle QR code scanning and verification for bookings"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            booking_data = json.loads(urllib.parse.unquote(data.get('qr_data', '')))
+            
+            # Get booking details
+            booking = get_object_or_404(Booking, id=booking_data['booking_id'])
+            
+            # Verify the booking
+            if (booking.guest_name == booking_data['guest_name'] and
+                booking.check_in.strftime('%Y-%m-%d') == booking_data['check_in'] and
+                str(booking.guests) == str(booking_data['guests']) and
+                booking.payment_id[-6:] == booking_data['verification_code']):
+                
+                # Update booking status if not already checked in
+                if booking.booking_status == 'confirmed':
+                    booking.booking_status = 'checked_in'
+                    booking.save()
+                    
+                    return JsonResponse({
+                        'status': 'success',
+                        'message': 'Booking verified successfully',
+                        'booking': {
+                            'id': booking.id,
+                            'guest_name': booking.guest_name,
+                            'check_in': booking.check_in.strftime('%Y-%m-%d'),
+                            'guests': booking.guests,
+                            'status': booking.booking_status
+                        }
+                    })
+                else:
+                    return JsonResponse({
+                        'status': 'error',
+                        'message': f'Invalid booking status: {booking.get_booking_status_display()}'
+                    }, status=400)
+            else:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Invalid booking details'
+                }, status=400)
+                
+        except (json.JSONDecodeError, KeyError) as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Invalid QR code data: {str(e)}'
+            }, status=400)
+        except Booking.DoesNotExist:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Booking not found'
+            }, status=404)
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error verifying booking: {str(e)}'
+            }, status=500)
+            
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
 
