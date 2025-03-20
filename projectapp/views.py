@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm
 from django.contrib.auth.decorators import login_required
 from .forms import CustomUserCreationForm, PackageForm, RoomForm
-from .models import UserDB, Resort, ResortImage, Package, Room, GuestUser, Review, Booking, PackageAvailability, BookingPayment, RoomAvailability, PackageBooking
+from .models import UserDB, Resort, ResortImage, Package, Room, GuestUser, Review, Booking, PackageAvailability, BookingPayment, RoomAvailability, PackageBooking, Membership
 import random
 from django.core.mail import send_mail
 from django.conf import settings
@@ -3248,6 +3248,122 @@ LuxAI Resorts Team""",
             'status': 'error',
             'message': f'Error cancelling booking: {str(e)}'
         }, status=500)
+
+def membership_view(request):
+    context = {
+        'razorpay_key': settings.RAZORPAY_KEY_ID
+    }
+    return render(request, 'membership.html', context)
+
+@login_required
+def process_membership(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        plan_type = data.get('plan_type')
+        amount = data.get('amount')
+        
+        if not plan_type or not amount:
+            return JsonResponse({'status': 'error', 'message': 'Missing required fields'}, status=400)
+        
+        # Initialize Razorpay client
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        
+        # Create Razorpay order
+        order_data = {
+            'amount': int(float(amount) * 100),  # Convert to paise
+            'currency': 'INR',
+            'payment_capture': 1,
+            'notes': {
+                'plan_type': plan_type,
+                'user_id': str(request.user.id)
+            }
+        }
+        
+        order = client.order.create(data=order_data)
+        
+        # Store order details in session
+        request.session['membership_order'] = {
+            'order_id': order['id'],
+            'plan_type': plan_type,
+            'amount': amount
+        }
+        
+        return JsonResponse({
+            'status': 'success',
+            'order_id': order['id'],
+            'message': 'Order created successfully'
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@login_required
+def process_membership_payment(request):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        payment_id = data.get('razorpay_payment_id')
+        order_id = data.get('razorpay_order_id')
+        signature = data.get('razorpay_signature')
+        
+        # Get order details from session
+        order_details = request.session.get('membership_order')
+        if not order_details:
+            return JsonResponse({'status': 'error', 'message': 'No order details found'}, status=400)
+        
+        # Initialize Razorpay client
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        
+        # Verify payment signature
+        params_dict = {
+            'razorpay_payment_id': payment_id,
+            'razorpay_order_id': order_id,
+            'razorpay_signature': signature
+        }
+        
+        try:
+            client.utility.verify_payment_signature(params_dict)
+        except Exception:
+            return JsonResponse({'status': 'error', 'message': 'Invalid payment signature'}, status=400)
+        
+        # Create membership
+        membership = Membership.objects.create(
+            user=request.user,
+            plan_type=order_details['plan_type'],
+            amount=order_details['amount'],
+            status='active',
+            start_date=timezone.now(),
+            end_date=timezone.now() + timedelta(days=30)  # 30-day membership
+        )
+        
+        # Clear session data
+        del request.session['membership_order']
+        
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Payment processed successfully',
+            'redirect_url': reverse('membership_payment_success')
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
+
+@login_required
+def membership_payment_success(request):
+    return render(request, 'membership_success.html')
+
+@login_required
+def membership_payment_failure(request):
+    return render(request, 'membership_failure.html')
 
 
 

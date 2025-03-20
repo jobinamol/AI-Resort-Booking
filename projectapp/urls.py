@@ -113,4 +113,9 @@ urlpatterns = [
     path('booking/payment/process/', views.process_payment, name='process_payment'),
     path('check-availability/', views.check_availability, name='check_availability'),
 
+    path('membership/', views.membership_view, name='membership'),
+    path('membership/process/', views.process_membership, name='process_membership'),
+    path('membership/payment/process/', views.process_membership_payment, name='process_membership_payment'),
+    path('membership/payment/success/', views.membership_payment_success, name='membership_payment_success'),
+    path('membership/payment/failure/', views.membership_payment_failure, name='membership_payment_failure'),
 ]

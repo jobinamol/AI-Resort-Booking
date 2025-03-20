@@ -8,6 +8,7 @@ from decimal import Decimal
 from django.db.models import Q
 from django.contrib.auth.hashers import make_password, check_password
 import os
+from django.conf import settings
 
 
 class UserDB(AbstractUser):
@@ -1145,4 +1146,45 @@ class PackageRecommendation(models.Model):
                 return False
 
         return True
+
+class Membership(models.Model):
+    PLAN_CHOICES = [
+        ('standard', 'Standard'),
+        ('premium', 'Premium'),
+        ('luxury', 'Luxury'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('expired', 'Expired'),
+        ('cancelled', 'Cancelled'),
+    ]
+    
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    plan_type = models.CharField(max_length=20, choices=PLAN_CHOICES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+    start_date = models.DateTimeField()
+    end_date = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"{self.user.username}'s {self.plan_type} Membership"
+    
+    def is_active(self):
+        return self.status == 'active' and self.end_date > timezone.now()
+    
+    def days_remaining(self):
+        if not self.is_active():
+            return 0
+        return (self.end_date - timezone.now()).days
+    
+    def cancel(self):
+        self.status = 'cancelled'
+        self.end_date = timezone.now()
+        self.save()
 

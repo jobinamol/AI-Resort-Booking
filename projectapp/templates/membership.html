@@ -1,0 +1,374 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuxAI Membership - Exclusive Benefits</title>
+    
+    <!-- Core CSS -->
+    <link rel="stylesheet" href="{% static 'css/open-iconic-bootstrap.min.css' %}">
+    <link rel="stylesheet" href="{% static 'css/animate.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <style>
+        .membership-hero {
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('{% static "images/bg_1.jpg" %}') center/cover;
+            padding: 150px 0 100px;
+            color: white;
+        }
+        
+        .membership-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+            border: none;
+        }
+        
+        .membership-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .membership-card.premium {
+            background: linear-gradient(45deg, #1a237e, #0d47a1);
+            color: white;
+        }
+        
+        .price-tag {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a73e8;
+        }
+        
+        .premium .price-tag {
+            color: #ffd700;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feature-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        .premium .feature-list li {
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .feature-list li i {
+            color: #34a853;
+            margin-right: 10px;
+        }
+        
+        .premium .feature-list li i {
+            color: #ffd700;
+        }
+        
+        .benefits-section {
+            background: #f8f9fa;
+            padding: 80px 0;
+        }
+        
+        .benefit-card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .benefit-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .benefit-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #00c6ff, #0072ff);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+        }
+        
+        .benefit-icon i {
+            font-size: 35px;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'guestindex' %}">Lux<span>AI</span></a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav">
+                <span class="oi oi-menu"></span> Menu
+            </button>
+            <div class="collapse navbar-collapse" id="ftco-nav">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item"><a href="{% url 'guestindex' %}" class="nav-link">Home</a></li>
+                    <li class="nav-item"><a href="{% url 'explore_page' %}" class="nav-link">Explore</a></li>
+                    <li class="nav-item active"><a href="{% url 'membership' %}" class="nav-link">Membership</a></li>
+                    <li class="nav-item"><a href="{% url 'contact' %}" class="nav-link">Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="membership-hero text-center">
+        <div class="container">
+            <!-- Back Button -->
+            <div class="text-start mb-4">
+                <a href="{% url 'guestindex' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-2"></i>Back to Home
+                </a>
+            </div>
+            <h1 class="display-4 mb-4">Exclusive Membership Benefits</h1>
+            <p class="lead mb-4">Join our elite community and unlock premium experiences</p>
+            <a href="#pricing" class="btn btn-primary btn-lg px-5 py-3">View Membership Plans</a>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section py-5" id="pricing">
+        <div class="container">
+            <div class="row">
+                <!-- Standard Plan -->
+                <div class="col-md-4 mb-4">
+                    <div class="membership-card p-5">
+                        <h3 class="mb-4">Standard</h3>
+                        <div class="price-tag mb-4">₹999<small>/month</small></div>
+                        <ul class="feature-list mb-4">
+                            <li><i class="icon-check"></i> Access to basic amenities</li>
+                            <li><i class="icon-check"></i> 5% discount on bookings</li>
+                            <li><i class="icon-check"></i> Standard room upgrades</li>
+                            <li><i class="icon-check"></i> Welcome drink</li>
+                            <li><i class="icon-check"></i> Basic concierge service</li>
+                        </ul>
+                        <form action="{% url 'process_membership' %}" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="plan_type" value="standard">
+                            <input type="hidden" name="amount" value="999">
+                            <button type="submit" class="btn btn-outline-primary btn-lg w-100">Choose Plan</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Premium Plan -->
+                <div class="col-md-4 mb-4">
+                    <div class="membership-card premium p-5">
+                        <h3 class="mb-4">Premium</h3>
+                        <div class="price-tag mb-4">₹2999<small>/month</small></div>
+                        <ul class="feature-list mb-4">
+                            <li><i class="icon-check"></i> All Standard benefits</li>
+                            <li><i class="icon-check"></i> 15% discount on bookings</li>
+                            <li><i class="icon-check"></i> Priority room upgrades</li>
+                            <li><i class="icon-check"></i> Complimentary breakfast</li>
+                            <li><i class="icon-check"></i> Premium concierge service</li>
+                        </ul>
+                        <form action="{% url 'process_membership' %}" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="plan_type" value="premium">
+                            <input type="hidden" name="amount" value="2999">
+                            <button type="submit" class="btn btn-warning btn-lg w-100">Choose Plan</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Luxury Plan -->
+                <div class="col-md-4 mb-4">
+                    <div class="membership-card p-5">
+                        <h3 class="mb-4">Luxury</h3>
+                        <div class="price-tag mb-4">₹4999<small>/month</small></div>
+                        <ul class="feature-list mb-4">
+                            <li><i class="icon-check"></i> All Premium benefits</li>
+                            <li><i class="icon-check"></i> 25% discount on bookings</li>
+                            <li><i class="icon-check"></i> Guaranteed upgrades</li>
+                            <li><i class="icon-check"></i> All-inclusive dining</li>
+                            <li><i class="icon-check"></i> Personal butler service</li>
+                        </ul>
+                        <form action="{% url 'process_membership' %}" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="plan_type" value="luxury">
+                            <input type="hidden" name="amount" value="4999">
+                            <button type="submit" class="btn btn-outline-primary btn-lg w-100">Choose Plan</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benefits Section -->
+    <section class="benefits-section">
+        <div class="container">
+            <h2 class="text-center mb-5">Exclusive Member Benefits</h2>
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">
+                            <i class="icon-star"></i>
+                        </div>
+                        <h4>Priority Access</h4>
+                        <p>Early access to special promotions and seasonal offers</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">
+                            <i class="icon-gift"></i>
+                        </div>
+                        <h4>Special Rewards</h4>
+                        <p>Earn points on every stay and redeem for exclusive rewards</p>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <div class="benefit-card">
+                        <div class="benefit-icon">
+                            <i class="icon-clock-o"></i>
+                        </div>
+                        <h4>Flexible Check-in</h4>
+                        <p>Early check-in and late check-out privileges</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="ftco-footer ftco-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <p>Copyright © {% now 'Y' %} LuxAI Resorts. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{% static 'js/jquery.min.js' %}"></script>
+    <script src="{% static 'js/bootstrap.min.js' %}"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+
+    <!-- Payment Modal -->
+    <div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="paymentModalLabel">Complete Your Membership</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="selected-plan-details mb-4">
+                        <h6>Selected Plan: <span id="selectedPlanName"></span></h6>
+                        <p class="mb-2">Amount: ₹<span id="selectedPlanAmount"></span></p>
+                    </div>
+                    <div id="razorpay-button"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add this before closing body tag -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('form[action="{% url "process_membership" %}"]');
+        const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+        
+        forms.forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const planType = this.querySelector('input[name="plan_type"]').value;
+                const amount = this.querySelector('input[name="amount"]').value;
+                
+                // Update modal content
+                document.getElementById('selectedPlanName').textContent = planType.charAt(0).toUpperCase() + planType.slice(1);
+                document.getElementById('selectedPlanAmount').textContent = amount;
+
+                // Create Razorpay order
+                fetch('{% url "process_membership" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({
+                        plan_type: planType,
+                        amount: amount
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Initialize Razorpay
+                        const options = {
+                            key: '{{ razorpay_key }}', // Your Razorpay Key
+                            amount: amount * 100, // Amount in paise
+                            currency: 'INR',
+                            name: 'LuxAI Resorts',
+                            description: planType + ' Membership Plan',
+                            order_id: data.order_id,
+                            handler: function (response) {
+                                // Handle successful payment
+                                fetch('{% url "process_membership_payment" %}', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': '{{ csrf_token }}'
+                                    },
+                                    body: JSON.stringify({
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_signature: response.razorpay_signature
+                                    })
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.status === 'success') {
+                                        window.location.href = data.redirect_url;
+                                    } else {
+                                        alert(data.message);
+                                    }
+                                });
+                            },
+                            prefill: {
+                                name: '{{ request.user.name }}',
+                                email: '{{ request.user.email }}',
+                                contact: '{{ request.user.mobile_number }}'
+                            },
+                            theme: {
+                                color: '#1a73e8'
+                            }
+                        };
+                        const rzp = new Razorpay(options);
+                        rzp.open();
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Payment processing failed. Please try again.');
+                });
+                
+                // Show payment modal
+                paymentModal.show();
+            });
+        });
+    });
+    </script>
+</body>
+</html> 

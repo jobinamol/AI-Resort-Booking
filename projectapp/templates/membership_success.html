@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <div class="bg-white p-5 rounded shadow">
+                    <div class="success-icon mb-4">
+                        <i class="icon-check-circle text-success" style="font-size: 5rem;"></i>
+                    </div>
+                    <h2 class="mb-4">Payment Successful!</h2>
+                    <p class="lead mb-4">Thank you for becoming a member of LuxAI Resorts. Your membership has been activated successfully.</p>
+                    <div class="membership-details mb-4">
+                        <p>You now have access to exclusive benefits and privileges.</p>
+                        <p>Your membership will be automatically renewed after 30 days.</p>
+                    </div>
+                    <div class="action-buttons">
+                        <a href="{% url 'guestindex' %}" class="btn btn-primary me-3">Go to Homepage</a>
+                        <a href="{% url 'membership' %}" class="btn btn-outline-primary">View Membership Details</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %} 
