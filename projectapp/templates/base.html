@@ -27,6 +27,9 @@
     <!-- Page Specific CSS -->
     {% block extra_css %}{% endblock %}
 
+    <!-- SweetAlert2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+
     <style>
         :root {
             --primary-color: #1a73e8;
@@ -439,6 +442,9 @@
             return new bootstrap.Tooltip(tooltipTriggerEl)
         });
     </script>
+
+    <!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <!-- Page Specific Scripts -->
     {% block extra_js %}{% endblock %}

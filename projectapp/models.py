@@ -1037,3 +1037,112 @@ class PackageBooking(models.Model):
 
     def __str__(self):
         return f"{self.guest_name}'s booking for {self.package.package_name}"
+
+class UserInterestEnquiry(models.Model):
+    INTEREST_CHOICES = [
+        ('Relaxation & Wellness', 'Relaxation & Wellness'),
+        ('Outdoor Adventure', 'Outdoor Adventure'),
+        ('Luxury & Pampering', 'Luxury & Pampering'),
+        ('Cultural Exploration', 'Cultural Exploration'),
+        ('Eco-Friendly Travel', 'Eco-Friendly Travel')
+    ]
+
+    BUDGET_CHOICES = [
+        ('2000-5000', '₹2,000 - ₹5,000'),
+        ('5000-10000', '₹5,000 - ₹10,000'),
+        ('10000-20000', '₹10,000 - ₹20,000'),
+        ('20000+', 'Above ₹20,000')
+    ]
+
+    DURATION_PREFERENCE = [
+        ('day', 'Day Trip (4-8 hours)'),
+        ('weekend', 'Weekend (1-2 days)'),
+        ('week', 'Week Long (3-7 days)'),
+        ('flexible', 'Flexible')
+    ]
+
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15, blank=True)
+    interests = models.JSONField(help_text="List of selected interests")
+    budget_range = models.CharField(max_length=20, choices=BUDGET_CHOICES)
+    preferred_duration = models.CharField(max_length=20, choices=DURATION_PREFERENCE)
+    travel_date = models.DateField(null=True, blank=True)
+    number_of_people = models.PositiveIntegerField(default=1)
+    special_requirements = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    recommendations = models.JSONField(null=True, blank=True, help_text="Stored package recommendations")
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'User Interest Enquiry'
+        verbose_name_plural = 'User Interest Enquiries'
+
+    def __str__(self):
+        return f"{self.name}'s Enquiry - {self.created_at.strftime('%Y-%m-%d')}"
+
+class PackageRecommendation(models.Model):
+    INTEREST_CATEGORIES = [
+        ('Relaxation & Wellness', 'Relaxation & Wellness'),
+        ('Outdoor Adventure', 'Outdoor Adventure'),
+        ('Luxury & Pampering', 'Luxury & Pampering'),
+        ('Cultural Exploration', 'Cultural Exploration'),
+        ('Eco-Friendly Travel', 'Eco-Friendly Travel')
+    ]
+
+    package = models.ForeignKey(Package, on_delete=models.CASCADE, related_name='recommendations')
+    interest_category = models.CharField(max_length=50, choices=INTEREST_CATEGORIES)
+    confidence_score = models.DecimalField(max_digits=3, decimal_places=2, default=0.0)
+    is_featured = models.BooleanField(default=False)
+    min_budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    max_budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    recommended_duration = models.CharField(
+        max_length=20,
+        choices=[
+            ('day', 'Day Trip (4-8 hours)'),
+            ('weekend', 'Weekend (1-2 days)'),
+            ('week', 'Week Long (3-7 days)'),
+            ('flexible', 'Flexible')
+        ]
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-confidence_score']
+        verbose_name = 'Package Recommendation'
+        verbose_name_plural = 'Package Recommendations'
+
+    def __str__(self):
+        return f"{self.package.package_name} - {self.interest_category} ({self.confidence_score})"
+
+    @staticmethod
+    def get_recommendations_for_interests(interests, budget_range=None, duration=None, limit=3):
+        """Get static recommendations based on user interests and preferences."""
+        recommendations = PackageRecommendation.objects.filter(
+            interest_category__in=interests,
+            package__is_active=True
+        )
+
+        if budget_range and budget_range != '20000+':
+            max_budget = int(budget_range.split('-')[1])
+            recommendations = recommendations.filter(package__price__lte=max_budget)
+
+        if duration and duration != 'flexible':
+            recommendations = recommendations.filter(recommended_duration=duration)
+
+        return recommendations.order_by('-confidence_score', '-package__average_rating')[:limit]
+
+    def matches_user_preferences(self, budget_range=None, duration=None):
+        """Check if the recommendation matches user preferences."""
+        if budget_range and budget_range != '20000+':
+            max_budget = int(budget_range.split('-')[1])
+            if self.package.price > max_budget:
+                return False
+
+        if duration and duration != 'flexible':
+            if self.recommended_duration != duration:
+                return False
+
+        return True
+

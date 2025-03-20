@@ -14,7 +14,7 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import datetime, timedelta, date
 from django.core.exceptions import ValidationError
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
 import json
@@ -1916,6 +1916,7 @@ def package_reviews(request, package_id):
 
 def package_booking(request, package_id):
     package = get_object_or_404(Package, id=package_id)
+
     if request.method == 'POST':
         try:
             # Get form data
@@ -1924,63 +1925,106 @@ def package_booking(request, package_id):
             phone = request.POST.get('phone')
             check_in = request.POST.get('check_in')
             guests = int(request.POST.get('guests', 1))
-            
+            special_requests = request.POST.get('special_requests', '')
+
             # Validate required fields
-            if not all([guest_name, email, phone, check_in, guests]):
+            if not all([guest_name, email, phone, check_in]):
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'All fields are required'
+                    'message': 'Please fill all required fields'
                 }, status=400)
 
-            # Calculate amount (convert to paise)
-            amount = int(package.get_discounted_price() * guests * 100)
+            try:
+                # Get or create guest user
+                guest_user = GuestUser.objects.get(email=email)
+                if guest_user.mobile_number != phone:
+                    guest_user.mobile_number = phone
+                    guest_user.save()
+            except GuestUser.DoesNotExist:
+                guest_user = GuestUser.objects.create(
+                    email=email,
+                    full_name=guest_name,
+                    mobile_number=phone,
+                    password=make_password(get_random_string(12))
+                )
 
-            # Create Razorpay Order
+            # Calculate amount in paise
+            amount = int(package.get_discounted_price() * guests * 100)  # Convert to paise
+
+            # Create Razorpay Order with proper metadata
             order_data = {
                 'amount': amount,
                 'currency': 'INR',
                 'receipt': f'order_rcptid_{package_id}_{int(time.time())}',
                 'payment_capture': 1,
                 'notes': {
-                    'package_id': package_id,
-                    'guest_name': guest_name,
-                    'email': email,
-                    'phone': phone,
+                    'package_id': str(package_id),
+                    'guest_id': str(guest_user.id),
                     'check_in': check_in,
-                    'guests': guests
+                    'guests': str(guests),
+                    'package_type': package.package_type,
+                    'email': email,
+                    'phone': phone
                 }
             }
             
-            order = razorpay_client.order.create(data=order_data)
+            try:
+                order = razorpay_client.order.create(data=order_data)
+            except Exception as e:
+                print(f"Razorpay Error: {str(e)}")  # For debugging
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Payment gateway error. Please try again.'
+                }, status=400)
             
             # Store booking data in session
             request.session['booking_data'] = {
                 'package_id': package_id,
+                'guest_id': guest_user.id,
                 'guest_name': guest_name,
                 'email': email,
                 'phone': phone,
                 'check_in': check_in,
                 'guests': guests,
-                'amount': amount,
-                'order_id': order['id']
+                'amount': amount,  # Store amount in paise
+                'order_id': order['id'],
+                'special_requests': special_requests
             }
             
+            # Prepare response with all necessary payment details
             return JsonResponse({
                 'status': 'success',
                 'key_id': settings.RAZORPAY_KEY_ID,
-                'amount': amount,
+                'amount': amount,  # Amount in paise
                 'currency': 'INR',
                 'order_id': order['id'],
+                'callback_url': request.build_absolute_uri(reverse('verify_payment')),
                 'package_name': package.package_name,
-                'guest_name': guest_name,
-                'email': email,
-                'phone': phone
+                'prefill': {
+                    'name': guest_name,
+                    'email': email,
+                    'contact': phone
+                },
+                'notes': {
+                    'package_id': str(package_id),
+                    'guest_id': str(guest_user.id)
+                },
+                'theme': {
+                    'color': '#3399cc'
+                }
             })
             
-        except Exception as e:
+        except GuestUser.DoesNotExist:
             return JsonResponse({
                 'status': 'error',
-                'message': str(e)
+                'message': 'Guest user not found'
+            }, status=400)
+            
+        except Exception as e:
+            print(f"Error in package_booking: {str(e)}")  # For debugging
+            return JsonResponse({
+                'status': 'error',
+                'message': 'An error occurred. Please try again.'
             }, status=400)
             
     return render(request, 'package_detail.html', {'package': package})
@@ -1994,6 +2038,14 @@ def verify_payment(request):
             order_id = request.POST.get('razorpay_order_id')
             signature = request.POST.get('razorpay_signature')
             
+            # Create clean payment response dictionary
+            payment_response = {
+                'payment_id': payment_id,
+                'order_id': order_id,
+                'signature': signature,
+                'status': 'success'
+            }
+
             # Get booking data from session
             booking_data = request.session.get('booking_data')
             if not booking_data:
@@ -2002,57 +2054,101 @@ def verify_payment(request):
                     'message': 'Booking data not found'
                 }, status=400)
 
-            # Verify payment signature
-            params_dict = {
-                'razorpay_payment_id': payment_id,
-                'razorpay_order_id': order_id,
-                'razorpay_signature': signature
-            }
-            
             try:
-                razorpay_client.utility.verify_payment_signature(params_dict)
+                # Get or create guest user
+                guest_user = GuestUser.objects.get(email=booking_data['email'])
+                if guest_user.mobile_number != booking_data['phone']:
+                    guest_user.mobile_number = booking_data['phone']
+                    guest_user.save()
+            except GuestUser.DoesNotExist:
+                # Create new guest user with hashed password
+                guest_user = GuestUser.objects.create(
+                    email=booking_data['email'],
+                    full_name=booking_data['guest_name'],
+                    mobile_number=booking_data['phone'],
+                    password=make_password(get_random_string(12))
+                )
+
+            # Verify payment signature
+            try:
+                razorpay_client.utility.verify_payment_signature({
+                    'razorpay_payment_id': payment_id,
+                    'razorpay_order_id': order_id,
+                    'razorpay_signature': signature
+                })
             except Exception as e:
                 return JsonResponse({
                     'status': 'error',
-                    'message': 'Invalid payment signature'
+                    'message': 'Payment verification failed'
                 }, status=400)
 
-            # Get the package
-            package = get_object_or_404(Package, id=booking_data['package_id'])
+            # Get package and create booking
+            package = Package.objects.get(id=booking_data['package_id'])
             
-            # Create the guest user if not exists
-            guest_user, created = GuestUser.objects.get_or_create(
-                email=booking_data['email'],
-                defaults={
-                    'full_name': booking_data['guest_name'],
-                    'mobile_number': booking_data['phone']
-                }
-            )
-
             # Create booking
-            booking = Booking.objects.create(
-                guest=guest_user,
+            booking = PackageBooking.objects.create(
                 package=package,
-                resort=package.resort,
+                guest=guest_user,
                 check_in=datetime.strptime(booking_data['check_in'], '%Y-%m-%d').date(),
-                check_out=datetime.strptime(booking_data['check_in'], '%Y-%m-%d').date(),  # For day packages, same as check-in
-                adults=booking_data['guests'],
-                children=0,
-                total_amount=booking_data['amount'] / 100,  # Convert back from paise
-                booking_status='confirmed',
-                payment_status='paid'
+                guests=booking_data['guests'],
+                amount=booking_data['amount'] / 100,  # Convert from paise to rupees
+                status='confirmed',
+                email=booking_data['email'],
+                phone=booking_data['phone'],
+                special_requests=booking_data.get('special_requests', '')
             )
 
-            # Create payment record
+            # Create payment record with sanitized data
             payment = BookingPayment.objects.create(
                 booking=booking,
-                amount=booking_data['amount'] / 100,
+                amount=booking_data['amount'] / 100,  # Convert from paise to rupees
                 payment_method='razorpay',
                 transaction_id=payment_id,
                 razorpay_order_id=order_id,
+                razorpay_payment_id=payment_id,
+                razorpay_signature=signature,
                 payment_status='success',
-                payment_response=params_dict
+                payment_response=payment_response  # Use clean payment response
             )
+
+            # Generate QR code and send confirmation email
+            try:
+                # Create QR code data
+                qr_data = {
+                    'booking_id': booking.id,
+                    'guest_name': guest_user.full_name,
+                    'check_in': booking_data['check_in'],
+                    'guests': booking_data['guests'],
+                    'amount': str(booking.amount),
+                    'verification_code': payment_id[-6:]
+                }
+
+                # Send confirmation email
+                send_mail(
+                    subject=f"Booking Confirmation - {package.package_name}",
+                    message=f"""Dear {guest_user.full_name},
+
+Thank you for booking {package.package_name} at {package.resort.resort_name}.
+
+Booking Details:
+- Package: {package.package_name}
+- Date: {booking_data['check_in']}
+- Guests: {booking_data['guests']}
+- Amount Paid: ₹{booking.amount}
+- Booking ID: {booking.id}
+- Verification Code: {payment_id[-6:]}
+
+Your booking is confirmed. Please keep this email for your records.
+
+Best regards,
+LuxAI Resorts Team""",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[guest_user.email],
+                    fail_silently=True
+                )
+            except Exception as e:
+                print(f"Error in confirmation process: {str(e)}")
+                # Continue execution as this is not critical
 
             # Clear session data
             if 'booking_data' in request.session:
@@ -2060,7 +2156,7 @@ def verify_payment(request):
 
             return JsonResponse({
                 'status': 'success',
-                'message': 'Payment verified successfully',
+                'message': 'Payment verified and booking confirmed',
                 'redirect_url': reverse('booking_confirmation', args=[booking.id])
             })
 
@@ -2076,27 +2172,17 @@ def verify_payment(request):
     }, status=405)
 
 def booking_confirmation(request, booking_id):
-    """Display booking confirmation and generate QR code"""
+    """Display booking confirmation details"""
     try:
-        booking = get_object_or_404(Booking, id=booking_id)
-        
-        # Create QR code data with comprehensive booking information
-        qr_data = {
-            'booking_id': booking.id,
-            'guest_name': booking.guest.full_name,
-            'email': booking.guest.email,
-            'check_in': booking.check_in.strftime('%Y-%m-%d'),
-            'check_out': booking.check_out.strftime('%Y-%m-%d'),
-            'adults': booking.adults,
-            'children': booking.children,
-            'total_amount': str(booking.total_amount),
-            'booking_status': booking.booking_status,
-            'verification_code': booking.payment.transaction_id[-6:] if booking.payment else '',
-            'resort_name': booking.resort.resort_name,
-            'package_name': booking.package.package_name if booking.package else '',
-            'timestamp': timezone.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        
+        # Try to get PackageBooking first
+        try:
+            booking = PackageBooking.objects.get(id=booking_id)
+            is_package = True
+        except PackageBooking.DoesNotExist:
+            # If not found, try to get regular Booking
+            booking = Booking.objects.get(id=booking_id)
+            is_package = False
+
         # Generate QR code
         qr = qrcode.QRCode(
             version=1,
@@ -2104,34 +2190,75 @@ def booking_confirmation(request, booking_id):
             box_size=10,
             border=4,
         )
+
+        # Create QR code data
+        qr_data = {
+            'booking_id': booking.id,
+            'guest_name': booking.guest.full_name,
+            'check_in': booking.check_in.strftime('%Y-%m-%d'),
+            'guests': booking.guests,
+            'amount': str(booking.amount),
+            'verification_code': booking.payment.razorpay_payment_id[-6:] if hasattr(booking, 'payment') else ''
+        }
+
         qr.add_data(json.dumps(qr_data))
         qr.make(fit=True)
 
         # Create QR code image
         qr_image = qr.make_image(fill_color="black", back_color="white")
         
-        # Convert QR code to base64 string
+        # Convert QR code to base64
         buffer = BytesIO()
-        qr_image.save(buffer, format="PNG")
+        qr_image.save(buffer, format='PNG')
         qr_image_base64 = base64.b64encode(buffer.getvalue()).decode()
-        
-        # URL encode the QR data for the template
-        qr_data_url = urllib.parse.quote(json.dumps(qr_data))
-        
+
         context = {
             'booking': booking,
-            'qr_data': qr_data_url,
-            'qr_image_base64': qr_image_base64,
-            'resort': booking.resort,
-            'package': booking.package,
-            'payment': booking.payment if hasattr(booking, 'payment') else None,
+            'is_package': is_package,
+            'qr_code': qr_image_base64,
+            'verification_code': qr_data['verification_code']
         }
         
-        return render(request, 'booking/confirmation.html', context)
-        
+        return render(request, 'booking_confirmation.html', context)
+
+    except (PackageBooking.DoesNotExist, Booking.DoesNotExist):
+        messages.error(request, 'Booking not found')
+        return redirect('index')
     except Exception as e:
-        messages.error(request, f'Error generating booking confirmation: {str(e)}')
-        return redirect('guest_profile_view')
+        messages.error(request, f'Error displaying booking confirmation: {str(e)}')
+        return redirect('index')
+
+def booking_status(request, booking_id):
+    """Check booking status"""
+    try:
+        # Try to get PackageBooking first
+        try:
+            booking = PackageBooking.objects.get(id=booking_id)
+            booking_type = 'package'
+        except PackageBooking.DoesNotExist:
+            # If not found, try to get regular Booking
+            booking = Booking.objects.get(id=booking_id)
+            booking_type = 'regular'
+
+        status_data = {
+            'booking_id': booking.id,
+            'status': booking.status if booking_type == 'package' else booking.booking_status,
+            'payment_status': booking.payment.payment_status if hasattr(booking, 'payment') else 'unknown',
+            'booking_type': booking_type
+        }
+
+        return JsonResponse(status_data)
+
+    except (PackageBooking.DoesNotExist, Booking.DoesNotExist):
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Booking not found'
+        }, status=404)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=400)
 
 # Room Detail, Reviews, Booking & Availability
 def room_detail(request, room_id):
@@ -2609,4 +2736,619 @@ def verify_booking_qr(request):
         'status': 'error',
         'message': 'Invalid request method'
     }, status=405)
+
+@login_required
+def booking_history(request):
+    """Display booking history for the logged-in user"""
+    try:
+        # Get the guest user
+        guest_user = request.user.guestuser if hasattr(request.user, 'guestuser') else None
+        if not guest_user:
+            messages.error(request, 'Guest profile not found')
+            return redirect('index')
+
+        # Get all types of bookings
+        regular_bookings = Booking.objects.filter(
+            guest=guest_user
+        ).select_related(
+            'resort', 'package', 'room'
+        ).order_by('-created_at')
+
+        package_bookings = PackageBooking.objects.filter(
+            Q(guest=guest_user) | Q(email=request.user.email)
+        ).select_related(
+            'package', 'package__resort'
+        ).order_by('-created_at')
+
+        # Combine and sort all bookings by date
+        all_bookings = []
+        
+        # Add regular bookings
+        for booking in regular_bookings:
+            booking_type = 'room' if booking.room else 'resort'
+            if booking.package:
+                booking_type = 'package'
+                
+            all_bookings.append({
+                'id': booking.id,
+                'type': booking_type,
+                'date': booking.created_at,
+                'check_in': booking.check_in,
+                'check_out': booking.check_out,
+                'amount': booking.total_amount,
+                'status': booking.booking_status,
+                'payment_status': booking.payment_status,
+                'resort_name': booking.resort.resort_name,
+                'booking_ref': f"B{booking.id:06d}",
+                'details': {
+                    'room': booking.room.room_number if booking.room else None,
+                    'package': booking.package.package_name if booking.package else None,
+                    'guests': booking.adults + booking.children,
+                    'nights': (booking.check_out - booking.check_in).days,
+                    'special_requests': booking.special_requests,
+                },
+                'obj': booking
+            })
+
+        # Add package bookings
+        for booking in package_bookings:
+            all_bookings.append({
+                'id': booking.id,
+                'type': 'package',
+                'date': booking.created_at,
+                'check_in': booking.check_in,
+                'amount': booking.amount,
+                'status': booking.status,
+                'payment_status': booking.payment.payment_status if hasattr(booking, 'payment') else 'unknown',
+                'resort_name': booking.package.resort.resort_name,
+                'booking_ref': f"P{booking.id:06d}",
+                'details': {
+                    'package': booking.package.package_name,
+                    'guests': booking.guests,
+                    'special_requests': booking.special_requests,
+                },
+                'obj': booking
+            })
+
+        # Sort all bookings by date
+        all_bookings.sort(key=lambda x: x['date'], reverse=True)
+
+        # Group bookings by month and year
+        grouped_bookings = {}
+        for booking in all_bookings:
+            month_year = booking['date'].strftime('%B %Y')
+            if month_year not in grouped_bookings:
+                grouped_bookings[month_year] = []
+            grouped_bookings[month_year].append(booking)
+
+        # Calculate statistics
+        total_bookings = len(all_bookings)
+        active_bookings = sum(1 for b in all_bookings if b['status'] in ['confirmed', 'pending'])
+        completed_bookings = sum(1 for b in all_bookings if b['status'] == 'completed')
+        cancelled_bookings = sum(1 for b in all_bookings if b['status'] == 'cancelled')
+        total_spent = sum(float(b['amount']) for b in all_bookings if b['status'] != 'cancelled')
+
+        context = {
+            'grouped_bookings': grouped_bookings,
+            'stats': {
+                'total_bookings': total_bookings,
+                'active_bookings': active_bookings,
+                'completed_bookings': completed_bookings,
+                'cancelled_bookings': cancelled_bookings,
+                'total_spent': total_spent,
+            }
+        }
+        
+        return render(request, 'booking_history.html', context)
+        
+    except Exception as e:
+        messages.error(request, f'Error fetching booking history: {str(e)}')
+        return redirect('index')
+
+# Payment verification for package bookings
+@csrf_exempt
+def verify_package_payment(request):
+    if request.method == 'POST':
+        try:
+            # Get payment verification data
+            payment_id = request.POST.get('razorpay_payment_id')
+            order_id = request.POST.get('razorpay_order_id')
+            signature = request.POST.get('razorpay_signature')
+
+            # Verify payment data exists
+            if not all([payment_id, order_id, signature]):
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Missing payment data'
+                }, status=400)
+
+            # Get booking data from session
+            booking_data = request.session.get('booking_data')
+            if not booking_data:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Booking data not found'
+                }, status=400)
+
+            # Create clean payment response
+            payment_response = {
+                'razorpay_payment_id': payment_id,
+                'razorpay_order_id': order_id,
+                'razorpay_signature': signature
+            }
+
+            try:
+                # Verify payment signature
+                razorpay_client.utility.verify_payment_signature(payment_response)
+            except Exception as e:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Payment verification failed'
+                }, status=400)
+
+            try:
+                # Get or create guest user
+                guest_user = GuestUser.objects.get(email=booking_data['email'])
+                guest_user.mobile_number = booking_data['phone']
+                guest_user.save()
+            except GuestUser.DoesNotExist:
+                guest_user = GuestUser.objects.create(
+                    email=booking_data['email'],
+                    full_name=booking_data['guest_name'],
+                    mobile_number=booking_data['phone'],
+                    password=make_password(get_random_string(12))
+                )
+
+            # Get package
+            package = Package.objects.get(id=booking_data['package_id'])
+
+            # Create booking
+            booking = PackageBooking.objects.create(
+                package=package,
+                guest=guest_user,
+                check_in=datetime.strptime(booking_data['check_in'], '%Y-%m-%d').date(),
+                guests=booking_data['guests'],
+                amount=booking_data['amount'] / 100,  # Convert from paise to rupees
+                status='confirmed',
+                email=booking_data['email'],
+                phone=booking_data['phone'],
+                special_requests=booking_data.get('special_requests', '')
+            )
+
+            # Create payment record
+            payment = BookingPayment.objects.create(
+                booking=booking,
+                amount=booking_data['amount'] / 100,  # Convert from paise to rupees
+                payment_method='razorpay',
+                transaction_id=payment_id,
+                razorpay_order_id=order_id,
+                razorpay_payment_id=payment_id,
+                razorpay_signature=signature,
+                payment_status='success',
+                payment_response=payment_response
+            )
+
+            # Generate QR code
+            qr = qrcode.QRCode(
+                version=1,
+                error_correction=qrcode.constants.ERROR_CORRECT_L,
+                box_size=10,
+                border=4,
+            )
+
+            # Create QR code data
+            qr_data = {
+                'booking_id': booking.id,
+                'guest_name': guest_user.full_name,
+                'check_in': booking_data['check_in'],
+                'guests': booking_data['guests'],
+                'amount': str(booking.amount),
+                'verification_code': payment_id[-6:]
+            }
+
+            qr.add_data(json.dumps(qr_data))
+            qr.make(fit=True)
+
+            # Create QR code image
+            qr_image = qr.make_image(fill_color="black", back_color="white")
+            
+            # Convert QR code to base64
+            buffer = BytesIO()
+            qr_image.save(buffer, format='PNG')
+            qr_image_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+            # Send confirmation email
+            try:
+                send_mail(
+                    subject=f"Booking Confirmation - {package.package_name}",
+                    message=f"""Dear {guest_user.full_name},
+
+Thank you for booking {package.package_name} at {package.resort.resort_name}.
+
+Booking Details:
+- Package: {package.package_name}
+- Date: {booking_data['check_in']}
+- Guests: {booking_data['guests']}
+- Amount Paid: ₹{booking.amount}
+- Booking ID: {booking.id}
+- Verification Code: {payment_id[-6:]}
+
+Your booking is confirmed. Please keep this email for your records.
+
+Best regards,
+LuxAI Resorts Team""",
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[guest_user.email],
+                    fail_silently=True
+                )
+            except Exception as e:
+                print(f"Error sending confirmation email: {str(e)}")
+
+            # Clear session data
+            request.session.pop('booking_data', None)
+
+            return JsonResponse({
+                'status': 'success',
+                'message': 'Payment verified and booking confirmed',
+                'booking_id': booking.id,
+                'redirect_url': reverse('booking_confirmation', args=[booking.id])
+            })
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+
+@csrf_exempt
+def payment_callback(request):
+    """Handle payment callback from Razorpay"""
+    if request.method == 'POST':
+        try:
+            # Get payment data
+            payment_id = request.POST.get('razorpay_payment_id')
+            order_id = request.POST.get('razorpay_order_id')
+            signature = request.POST.get('razorpay_signature')
+
+            # Verify payment signature
+            try:
+                razorpay_client.utility.verify_payment_signature({
+                    'razorpay_payment_id': payment_id,
+                    'razorpay_order_id': order_id,
+                    'razorpay_signature': signature
+                })
+            except Exception as e:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Payment verification failed'
+                }, status=400)
+
+            # Get booking by order ID
+            try:
+                payment = BookingPayment.objects.get(razorpay_order_id=order_id)
+                booking = payment.booking
+
+                # Update payment status
+                payment.payment_status = 'success'
+                payment.razorpay_payment_id = payment_id
+                payment.razorpay_signature = signature
+                payment.save()
+
+                # Update booking status
+                if isinstance(booking, PackageBooking):
+                    booking.status = 'confirmed'
+                else:
+                    booking.booking_status = 'confirmed'
+                booking.save()
+
+                # Send confirmation email
+                try:
+                    guest_email = booking.guest.email if hasattr(booking, 'guest') else booking.email
+                    guest_name = booking.guest.full_name if hasattr(booking, 'guest') else booking.guest_name
+                    
+                    send_mail(
+                        subject="Booking Confirmation - LuxAI Resorts",
+                        message=f"""Dear {guest_name},
+
+Your booking has been confirmed and payment has been received successfully.
+
+Booking Details:
+- Booking ID: {booking.id}
+- Amount Paid: ₹{booking.amount}
+- Check-in Date: {booking.check_in.strftime('%Y-%m-%d')}
+- Number of Guests: {booking.guests}
+- Payment ID: {payment_id}
+- Verification Code: {payment_id[-6:]}
+
+You can view your booking details in your booking history.
+
+Thank you for choosing LuxAI Resorts!
+
+Best regards,
+LuxAI Resorts Team""",
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[guest_email],
+                        fail_silently=True
+                    )
+                except Exception as e:
+                    print(f"Error sending confirmation email: {str(e)}")
+
+                # Store success message in session for display after redirect
+                request.session['payment_success'] = True
+                request.session['booking_id'] = booking.id
+
+                return JsonResponse({
+                    'status': 'success',
+                    'message': 'Payment processed successfully',
+                    'redirect_url': reverse('payment_confirmation', kwargs={'order_id': order_id})
+                })
+
+            except BookingPayment.DoesNotExist:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'Booking payment not found'
+                }, status=404)
+
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': str(e)
+            }, status=400)
+
+    return JsonResponse({
+        'status': 'error',
+        'message': 'Invalid request method'
+    }, status=405)
+
+def payment_confirmation(request, order_id):
+    """Handle payment confirmation and display confirmation page"""
+    try:
+        # Try to find payment by order ID
+        payment = BookingPayment.objects.get(razorpay_order_id=order_id)
+        booking = payment.booking
+
+        # Check if it's a package booking or regular booking
+        is_package = isinstance(booking, PackageBooking)
+
+        # Generate QR code
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+
+        # Create QR code data
+        qr_data = {
+            'booking_id': booking.id,
+            'guest_name': booking.guest.full_name if hasattr(booking, 'guest') else booking.guest_name,
+            'check_in': booking.check_in.strftime('%Y-%m-%d'),
+            'guests': booking.guests,
+            'amount': str(booking.amount),
+            'verification_code': payment.razorpay_payment_id[-6:] if payment.razorpay_payment_id else ''
+        }
+
+        qr.add_data(json.dumps(qr_data))
+        qr.make(fit=True)
+
+        # Create QR code image
+        qr_image = qr.make_image(fill_color="black", back_color="white")
+        
+        # Convert QR code to base64
+        buffer = BytesIO()
+        qr_image.save(buffer, format='PNG')
+        qr_image_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+        # Check for payment success message in session
+        payment_success = request.session.pop('payment_success', False)
+        
+        context = {
+            'booking': booking,
+            'payment': payment,
+            'is_package': is_package,
+            'qr_code': qr_image_base64,
+            'verification_code': qr_data['verification_code'],
+            'payment_success': payment_success,
+            'booking_history_url': reverse('booking_history'),
+            'download_invoice_url': reverse('download_invoice', kwargs={'booking_id': booking.id}) if hasattr(booking, 'id') else None
+        }
+        
+        return render(request, 'payment_confirmation.html', context)
+
+    except BookingPayment.DoesNotExist:
+        messages.error(request, 'Payment not found')
+        return redirect('index')
+    except Exception as e:
+        messages.error(request, f'Error displaying payment confirmation: {str(e)}')
+        return redirect('index')
+
+@login_required
+def download_invoice(request, booking_id):
+    """Generate and download invoice for the booking"""
+    try:
+        # Try to find booking
+        try:
+            booking = PackageBooking.objects.get(id=booking_id)
+        except PackageBooking.DoesNotExist:
+            booking = Booking.objects.get(id=booking_id)
+
+        # Verify user has access to this booking
+        if hasattr(booking, 'guest'):
+            if booking.guest.email != request.user.email:
+                raise PermissionError("You don't have permission to access this invoice")
+        else:
+            if booking.email != request.user.email:
+                raise PermissionError("You don't have permission to access this invoice")
+
+        # Generate invoice logic here
+        # This is a placeholder - you'll need to implement actual invoice generation
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="invoice_{booking_id}.pdf"'
+        
+        # Add invoice generation logic here
+        
+        return response
+
+    except (Booking.DoesNotExist, PackageBooking.DoesNotExist):
+        messages.error(request, 'Booking not found')
+        return redirect('booking_history')
+    except PermissionError as e:
+        messages.error(request, str(e))
+        return redirect('booking_history')
+    except Exception as e:
+        messages.error(request, f'Error generating invoice: {str(e)}')
+        return redirect('booking_history')
+
+@login_required
+def booking_detail(request, booking_id):
+    """Display detailed information about a specific booking"""
+    try:
+        # Try to find the booking
+        try:
+            booking = Booking.objects.select_related(
+                'resort', 'package', 'room', 'guest'
+            ).get(id=booking_id)
+            is_package_booking = False
+        except Booking.DoesNotExist:
+            booking = PackageBooking.objects.select_related(
+                'package', 'package__resort', 'guest'
+            ).get(id=booking_id)
+            is_package_booking = True
+
+        # Verify user has access to this booking
+        if hasattr(booking, 'guest'):
+            if booking.guest.email != request.user.email:
+                raise PermissionError("You don't have permission to view this booking")
+        else:
+            if booking.email != request.user.email:
+                raise PermissionError("You don't have permission to view this booking")
+
+        # Get payment information
+        try:
+            payment = BookingPayment.objects.get(booking=booking)
+        except BookingPayment.DoesNotExist:
+            payment = None
+
+        context = {
+            'booking': booking,
+            'is_package_booking': is_package_booking,
+            'payment': payment,
+            'can_cancel': booking.status in ['pending', 'confirmed'] and 
+                         booking.check_in > timezone.now().date()
+        }
+        
+        return render(request, 'booking_detail.html', context)
+
+    except (Booking.DoesNotExist, PackageBooking.DoesNotExist):
+        messages.error(request, 'Booking not found')
+        return redirect('booking_history')
+    except PermissionError as e:
+        messages.error(request, str(e))
+        return redirect('booking_history')
+    except Exception as e:
+        messages.error(request, f'Error retrieving booking details: {str(e)}')
+        return redirect('booking_history')
+
+@login_required
+@require_POST
+def cancel_booking(request, booking_id):
+    """Cancel a booking"""
+    try:
+        # Try to find the booking
+        try:
+            booking = Booking.objects.get(id=booking_id)
+            is_package_booking = False
+        except Booking.DoesNotExist:
+            booking = PackageBooking.objects.get(id=booking_id)
+            is_package_booking = True
+
+        # Verify user has access to this booking
+        if hasattr(booking, 'guest'):
+            if booking.guest.email != request.user.email:
+                raise PermissionError("You don't have permission to cancel this booking")
+        else:
+            if booking.email != request.user.email:
+                raise PermissionError("You don't have permission to cancel this booking")
+
+        # Check if booking can be cancelled
+        if booking.check_in <= timezone.now().date():
+            return JsonResponse({
+                'status': 'error',
+                'message': 'Cannot cancel a booking on or after check-in date'
+            }, status=400)
+
+        if booking.status not in ['pending', 'confirmed']:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Cannot cancel a booking with status: {booking.status}'
+            }, status=400)
+
+        # Update booking status
+        if is_package_booking:
+            booking.status = 'cancelled'
+        else:
+            booking.booking_status = 'cancelled'
+        booking.save()
+
+        # Handle refund if applicable
+        payment = BookingPayment.objects.filter(booking=booking).first()
+        if payment and payment.payment_status in ['success', 'paid']:
+            # Implement refund logic here
+            pass
+
+        # Send cancellation email
+        try:
+            guest_email = booking.guest.email if hasattr(booking, 'guest') else booking.email
+            guest_name = booking.guest.full_name if hasattr(booking, 'guest') else booking.guest_name
+            
+            send_mail(
+                subject="Booking Cancellation - LuxAI Resorts",
+                message=f"""Dear {guest_name},
+
+Your booking has been cancelled successfully.
+
+Booking Details:
+- Booking ID: {booking.id}
+- Check-in Date: {booking.check_in.strftime('%Y-%m-%d')}
+
+If you paid for this booking, a refund will be processed according to our cancellation policy.
+
+Thank you for choosing LuxAI Resorts.
+
+Best regards,
+LuxAI Resorts Team""",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[guest_email],
+                fail_silently=True
+            )
+        except Exception as e:
+            print(f"Error sending cancellation email: {str(e)}")
+
+        return JsonResponse({
+            'status': 'success',
+            'message': 'Booking cancelled successfully'
+        })
+
+    except (Booking.DoesNotExist, PackageBooking.DoesNotExist):
+        return JsonResponse({
+            'status': 'error',
+            'message': 'Booking not found'
+        }, status=404)
+    except PermissionError as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': str(e)
+        }, status=403)
+    except Exception as e:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Error cancelling booking: {str(e)}'
+        }, status=500)
+
+
 

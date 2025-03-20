@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Booking History{% endblock %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <!-- Booking Statistics -->
+    <div class="row mb-5">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body text-center">
+                    <h3 class="display-4 mb-0">{{ total_bookings }}</h3>
+                    <p class="mb-0">Total Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body text-center">
+                    <h3 class="display-4 mb-0">{{ active_bookings }}</h3>
+                    <p class="mb-0">Active Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body text-center">
+                    <h3 class="display-4 mb-0">{{ completed_bookings }}</h3>
+                    <p class="mb-0">Completed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body text-center">
+                    <h3 class="display-4 mb-0">{{ cancelled_bookings }}</h3>
+                    <p class="mb-0">Cancelled</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking History -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h4 class="mb-0">Your Booking History</h4>
+        </div>
+        <div class="card-body p-0">
+            {% if grouped_bookings %}
+                <div class="accordion" id="bookingAccordion">
+                    {% for month, bookings in grouped_bookings.items %}
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                                <button class="accordion-button {% if not forloop.first %}collapsed{% endif %}" 
+                                        type="button" data-bs-toggle="collapse" 
+                                        data-bs-target="#collapse{{ forloop.counter }}" 
+                                        aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" 
+                                        aria-controls="collapse{{ forloop.counter }}">
+                                    {{ month }} ({{ bookings|length }} bookings)
+                                </button>
+                            </h2>
+                            <div id="collapse{{ forloop.counter }}" 
+                                 class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" 
+                                 aria-labelledby="heading{{ forloop.counter }}" 
+                                 data-bs-parent="#bookingAccordion">
+                                <div class="accordion-body p-0">
+                                    <div class="list-group list-group-flush">
+                                        {% for booking in bookings %}
+                                            <div class="list-group-item">
+                                                <div class="row align-items-center">
+                                                    <div class="col-md-3">
+                                                        <h6 class="mb-1">
+                                                            {% if booking.package %}
+                                                                {{ booking.package.package_name }}
+                                                            {% elif booking.room %}
+                                                                {{ booking.room.room_type }}
+                                                            {% else %}
+                                                                {{ booking.resort.resort_name }}
+                                                            {% endif %}
+                                                        </h6>
+                                                        <small class="text-muted">
+                                                            Booking #{{ booking.id }}
+                                                        </small>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fas fa-calendar-alt text-primary me-2"></i>
+                                                            <div>
+                                                                <div class="small">Check-in</div>
+                                                                <strong>{{ booking.check_in|date:"M d, Y" }}</strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="fas fa-users text-info me-2"></i>
+                                                            <div>
+                                                                <div class="small">Guests</div>
+                                                                <strong>
+                                                                    {% if booking.adults %}
+                                                                        {{ booking.adults|add:booking.children }}
+                                                                    {% else %}
+                                                                        {{ booking.guests }}
+                                                                    {% endif %}
+                                                                </strong>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-2">
+                                                        <span class="badge bg-{{ booking.booking_status|default:booking.status|lower }}">
+                                                            {{ booking.booking_status|default:booking.status|title }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="col-md-2 text-end">
+                                                        <a href="{% url 'booking_confirmation' booking.id %}" 
+                                                           class="btn btn-sm btn-outline-primary">
+                                                            View Details
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <img src="{% static 'images/no-bookings.svg' %}" alt="No bookings" class="mb-4" style="max-width: 200px;">
+                    <h5>No Bookings Found</h5>
+                    <p class="text-muted">You haven't made any bookings yet.</p>
+                    <a href="{% url 'explore_page' %}" class="btn btn-primary">
+                        Explore Resorts & Packages
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+    .badge.bg-confirmed { background-color: #28a745 !important; }
+    .badge.bg-pending { background-color: #ffc107 !important; color: #000 !important; }
+    .badge.bg-cancelled { background-color: #dc3545 !important; }
+    .badge.bg-completed { background-color: #17a2b8 !important; }
+    
+    .list-group-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+    }
+    
+    .card {
+        transition: transform 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+    }
+
+    .container {
+        margin-top: 80px;
+    }
+</style>
+{% endblock %} 

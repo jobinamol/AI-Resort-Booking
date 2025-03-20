@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-body p-5">
+                    <!-- Success Header -->
+                    <div class="text-center mb-5">
+                        <div class="display-1 text-success mb-3">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <h1 class="h2 mb-3">Booking Confirmed!</h1>
+                        <p class="text-muted">Thank you for choosing {{ booking.resort.resort_name }}</p>
+                    </div>
+
+                    <!-- Booking Details -->
+                    <div class="booking-details">
+                        <h3 class="mb-4">Booking Details</h3>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted">Booking ID</label>
+                                    <p class="h5">{{ booking.id }}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted">Package</label>
+                                    <p class="h5">{{ booking.package.package_name }}</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted">Package Type</label>
+                                    <p class="h5">{{ booking.package.package_type }}</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted">Guest Name</label>
+                                    <p class="h5">{{ booking.guest.full_name }}</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted">
+                                        {% if is_daycation %}Date{% else %}Check-in Date{% endif %}
+                                    </label>
+                                    <p class="h5">{{ booking.check_in|date:"F d, Y" }}</p>
+                                </div>
+                            </div>
+
+                            {% if not is_daycation %}
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted">Check-out Date</label>
+                                    <p class="h5">{{ booking.check_out|date:"F d, Y" }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted">Number of Guests</label>
+                                    <p class="h5">{{ booking.adults }} Adults{% if booking.children %}, {{ booking.children }} Children{% endif %}</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted">Amount Paid</label>
+                                    <p class="h5">₹{{ booking.total_amount }}</p>
+                                </div>
+                            </div>
+
+                            {% if booking.payment %}
+                            <div class="col-md-6">
+                                <div class="detail-item">
+                                    <label class="text-muted">Transaction ID</label>
+                                    <p class="h5">{{ booking.payment.transaction_id }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- QR Code -->
+                    <div class="text-center mt-5">
+                        <h4 class="mb-3">Booking QR Code</h4>
+                        <div class="qr-code-container mb-3">
+                            <img src="data:image/png;base64,{{ qr_code }}" alt="Booking QR Code" class="img-fluid">
+                        </div>
+                        <p class="text-muted mb-1">Verification Code</p>
+                        <p class="h4">{{ verification_code }}</p>
+                        <small class="text-muted d-block mt-2">Show this QR code at the resort for check-in</small>
+                    </div>
+
+                    <!-- Resort Information -->
+                    <div class="resort-info mt-5">
+                        <h4 class="mb-3">Resort Information</h4>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5>{{ booking.resort.resort_name }}</h5>
+                                <p class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>{{ booking.resort.resort_address }}</p>
+                                <p class="mb-2"><i class="fas fa-phone me-2"></i>{{ booking.resort.resort_contact }}</p>
+                                <p class="mb-0"><i class="fas fa-envelope me-2"></i>{{ booking.resort.resort_email }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="text-center mt-5">
+                        <a href="{% url 'guest_profile_view' %}" class="btn btn-primary me-2">
+                            <i class="fas fa-user me-2"></i>View My Bookings
+                        </a>
+                        <button onclick="window.print()" class="btn btn-outline-primary">
+                            <i class="fas fa-print me-2"></i>Print Confirmation
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .detail-item {
+        margin-bottom: 1.5rem;
+    }
+    
+    .detail-item label {
+        font-size: 0.875rem;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+    
+    .detail-item p {
+        margin-bottom: 0;
+    }
+    
+    .qr-code-container {
+        display: inline-block;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .qr-code-container img {
+        max-width: 200px;
+    }
+    
+    @media print {
+        .btn {
+            display: none !important;
+        }
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,295 @@
+{% extends 'guestindex.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5 mt-5">
+    <h2 class="mb-4">My Bookings</h2>
+
+    <!-- Booking Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Bookings</h5>
+                    <h3 class="mb-0">4</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Active Bookings</h5>
+                    <h3 class="mb-0">2</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Completed</h5>
+                    <h3 class="mb-0">1</h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Spent</h5>
+                    <h3 class="mb-0">₹65,000</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Booking List -->
+    <div class="card shadow">
+        <div class="card-header bg-white">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h4 class="mb-0">Booking History</h4>
+                </div>
+                <div class="col-auto">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary filter-btn active" data-filter="all">All</button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="package">Packages</button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="room">Rooms</button>
+                        <button type="button" class="btn btn-outline-primary filter-btn" data-filter="resort">Resort</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <!-- Current Month -->
+            <div class="booking-month">
+                <h5 class="bg-light p-3 mb-0">May 2024</h5>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item booking-item" data-type="package">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h5 class="mb-1">Luxury Resort & Spa</h5>
+                                <p class="small text-muted mb-0">
+                                    Ref: LUX24050001
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-1">
+                                    <span class="badge bg-primary">Package</span>
+                                    Honeymoon Special Package
+                                </p>
+                                <p class="small text-muted mb-0">
+                                    Check-in: May 15, 2024 (5 nights)
+                                </p>
+                            </div>
+                            <div class="col-md-2">
+                                <p class="mb-1">₹25,000</p>
+                                <p class="small mb-0">
+                                    <span class="badge bg-warning">Pending</span>
+                                </p>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-warning">Pending</span>
+                            </div>
+                            <div class="col-md-1">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-eye"></i> View Details</a></li>
+                                        <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-times"></i> Cancel Booking</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Previous Month -->
+            <div class="booking-month">
+                <h5 class="bg-light p-3 mb-0">April 2024</h5>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item booking-item" data-type="room">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h5 class="mb-1">Seaside Resort</h5>
+                                <p class="small text-muted mb-0">
+                                    Ref: SEA24040002
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-1">
+                                    <span class="badge bg-info">Room</span>
+                                    Deluxe Ocean View Room
+                                </p>
+                                <p class="small text-muted mb-0">
+                                    Check-in: Apr 20, 2024 (3 nights)
+                                </p>
+                            </div>
+                            <div class="col-md-2">
+                                <p class="mb-1">₹15,000</p>
+                                <p class="small mb-0">
+                                    <span class="badge bg-success">Paid</span>
+                                </p>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-success">Confirmed</span>
+                            </div>
+                            <div class="col-md-1">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-eye"></i> View Details</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-invoice"></i> Download Invoice</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="list-group-item booking-item" data-type="resort">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h5 class="mb-1">Mountain View Resort</h5>
+                                <p class="small text-muted mb-0">
+                                    Ref: MVR24040003
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-1">
+                                    <span class="badge bg-secondary">Resort</span>
+                                    Full Resort Booking
+                                </p>
+                                <p class="small text-muted mb-0">
+                                    Check-in: Apr 10, 2024 (2 nights)
+                                </p>
+                            </div>
+                            <div class="col-md-2">
+                                <p class="mb-1">₹18,000</p>
+                                <p class="small mb-0">
+                                    <span class="badge bg-success">Paid</span>
+                                </p>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-info">Completed</span>
+                            </div>
+                            <div class="col-md-1">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-eye"></i> View Details</a></li>
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-invoice"></i> Download Invoice</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- March 2024 -->
+            <div class="booking-month">
+                <h5 class="bg-light p-3 mb-0">March 2024</h5>
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item booking-item" data-type="package">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <h5 class="mb-1">Forest Retreat</h5>
+                                <p class="small text-muted mb-0">
+                                    Ref: FR24030004
+                                </p>
+                            </div>
+                            <div class="col-md-4">
+                                <p class="mb-1">
+                                    <span class="badge bg-primary">Package</span>
+                                    Adventure Weekend Package
+                                </p>
+                                <p class="small text-muted mb-0">
+                                    Check-in: Mar 15, 2024 (2 nights)
+                                </p>
+                            </div>
+                            <div class="col-md-2">
+                                <p class="mb-1">₹12,000</p>
+                                <p class="small mb-0">
+                                    <span class="badge bg-success">Paid</span>
+                                </p>
+                            </div>
+                            <div class="col-md-2">
+                                <span class="badge bg-danger">Cancelled</span>
+                            </div>
+                            <div class="col-md-1">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#"><i class="fas fa-eye"></i> View Details</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .booking-item {
+        transition: all 0.3s ease;
+    }
+    .booking-item:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+    .filter-btn.active {
+        background-color: var(--primary);
+        color: white;
+        border-color: var(--primary);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Booking type filter
+    document.querySelectorAll('.filter-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const filterType = this.dataset.filter;
+            
+            // Update active button state
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Filter booking items
+            document.querySelectorAll('.booking-item').forEach(item => {
+                if (filterType === 'all' || item.dataset.type === filterType) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Hide empty months
+            document.querySelectorAll('.booking-month').forEach(month => {
+                const visibleBookings = month.querySelectorAll('.booking-item[style="display: block"]').length;
+                month.style.display = visibleBookings > 0 ? 'block' : 'none';
+            });
+        });
+    });
+
+    // Show alert for actions that are not implemented
+    document.querySelectorAll('.dropdown-item').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            alert('This action is not implemented in the static demo.');
+        });
+    });
+</script>
+{% endblock %} 

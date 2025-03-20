@@ -89,9 +89,15 @@ urlpatterns = [
     path('package/<int:package_id>/book/', views.package_booking, name='package_booking'),
 
     # Payment Processing
-    path('payment/verify/', views.verify_payment, name='verify_payment'),
-    path('booking/<int:booking_id>/confirmation/', views.booking_confirmation, name='booking_confirmation'),
+    path('payment/verify/', views.verify_package_payment, name='verify_payment'),
+    path('payment/callback/', views.payment_callback, name='payment_callback'),
+    path('payment/confirmation/<str:order_id>/', views.payment_confirmation, name='payment_confirmation'),
+    
+    # Booking Management
+    path('booking/confirmation/<int:booking_id>/', views.booking_confirmation, name='booking_confirmation'),
+    path('booking/history/', views.booking_history, name='booking_history'),
     path('booking/verify-qr/', views.verify_booking_qr, name='verify_booking_qr'),
+    path('booking/status/<str:booking_id>/', views.booking_status, name='booking_status'),
 
     # Room Details, Reviews & Booking
     path('room/<int:room_id>/', views.room_detail, name='room_detail'),
@@ -105,7 +111,6 @@ urlpatterns = [
     path('booking/preferences/<int:resort_id>/', views.booking_preferences, name='booking_preferences'),
     path('booking/payment/<int:resort_id>/', views.booking_payment, name='booking_payment'),
     path('booking/payment/process/', views.process_payment, name='process_payment'),
-    path('booking/payment/callback/', views.payment_callback, name='payment_callback'),
     path('check-availability/', views.check_availability, name='check_availability'),
 
 ]

@@ -123,3 +123,4 @@ class RoomForm(forms.ModelForm):
             raise forms.ValidationError("Room number already exists")
         
         return room_number
+

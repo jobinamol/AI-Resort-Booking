@@ -174,10 +174,11 @@
                 <!-- Booking Widget -->
                 <div class="booking-widget">
                     <h3>Book This Package</h3>
-                    <form action="{% url 'package_booking' package.id %}" method="POST" class="booking-form" id="packageBookingForm">
+                    <form id="booking-form" class="booking-form" action="{% url 'package_booking' package.id %}" method="POST">
                         {% csrf_token %}
                         <input type="hidden" name="package_id" value="{{ package.id }}">
                         <input type="hidden" name="package_type" value="{{ package.package_type }}">
+                        <input type="hidden" name="razorpay_key" value="{{ razorpay_merchant_key }}">
                         
                         <div class="form-group mb-3">
                             <label>Select Date</label>
@@ -225,7 +226,7 @@
                             <a href="{% url 'user_login' %}?next={{ request.path }}" class="alert-link">Login</a> to auto-fill your details.
                         </div>
                         {% endif %}
-                        <button type="submit" class="btn btn-primary btn-block">
+                        <button type="submit" class="btn btn-primary w-100" id="proceed-to-payment">
                             Proceed to Payment
                         </button>
                     </form>
@@ -514,11 +515,13 @@
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const packageBookingForm = document.getElementById('packageBookingForm');
+    const bookingForm = document.getElementById('booking-form');
     const startDate = document.getElementById('startDate');
     const endDate = document.getElementById('endDate');
     const packageGuestCount = document.getElementById('packageGuestCount');
     const packageType = '{{ package.package_type }}';
+    const proceedButton = document.getElementById('proceed-to-payment');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
     // Set minimum date to today
     const today = new Date();
@@ -527,7 +530,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle date selection based on package type
     startDate.addEventListener('change', function() {
         if (packageType === 'Daycation') {
-            // For daycation, we don't need to handle check-out date
             return;
         }
         
@@ -539,29 +541,45 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Form submission and payment handling
-    packageBookingForm.addEventListener('submit', function(e) {
+    bookingForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         // Basic form validation
         if (!startDate.value || !packageGuestCount.value) {
-            alert('Please fill in all required fields');
+            Swal.fire({
+                icon: 'error',
+                title: 'Missing Information',
+                text: 'Please fill in all required fields'
+            });
             return;
         }
 
         const selectedDate = new Date(startDate.value);
         if (selectedDate < today) {
-            alert('Selected date cannot be in the past');
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Date',
+                text: 'Selected date cannot be in the past'
+            });
             return;
         }
 
         if (packageType !== 'Daycation' && endDate) {
             if (!endDate.value) {
-                alert('Please select a check-out date');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Missing Information',
+                    text: 'Please select a check-out date'
+                });
                 return;
             }
             const checkOutDate = new Date(endDate.value);
             if (checkOutDate <= selectedDate) {
-                alert('Check-out date must be after check-in date');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Invalid Date',
+                    text: 'Check-out date must be after check-in date'
+                });
                 return;
             }
         }
@@ -569,81 +587,145 @@ document.addEventListener('DOMContentLoaded', function() {
         const guestCount = parseInt(packageGuestCount.value);
         const maxGuests = parseInt(packageGuestCount.getAttribute('max'));
         if (guestCount > maxGuests) {
-            alert(`Maximum ${maxGuests} guests allowed for this package`);
+            Swal.fire({
+                icon: 'error',
+                title: 'Too Many Guests',
+                text: `Maximum ${maxGuests} guests allowed for this package`
+            });
             return;
         }
 
-        // Submit form data to create order
-        const formData = new FormData(packageBookingForm);
-        fetch('{% url "package_booking" package.id %}', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
+        try {
+            // Show loading state
+            proceedButton.disabled = true;
+            proceedButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            
+            // Get form data
+            const formData = new FormData(bookingForm);
+            
+            // Make the booking request
+            const response = await fetch('{% url "package_booking" package.id %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': csrfToken
+                }
+            });
+            
+            const data = await response.json();
+            
             if (data.status === 'success') {
                 // Initialize Razorpay payment
                 const options = {
-                    key: data.key_id,
+                    key: '{{ razorpay_merchant_key }}',
                     amount: data.amount,
                     currency: data.currency,
-                    name: '{{ package.package_name }}',
-                    description: 'Package Booking Payment',
+                    name: '{{ package.resort.resort_name }}',
+                    description: '{{ package.package_name }} Booking',
                     order_id: data.order_id,
-                    handler: function (response) {
-                        // Handle successful payment
-                        verifyPayment(response);
-                    },
                     prefill: {
                         name: formData.get('guest_name'),
                         email: formData.get('email'),
                         contact: formData.get('phone')
                     },
+                    notes: {
+                        package_id: '{{ package.id }}',
+                        check_in: formData.get('check_in'),
+                        guests: formData.get('guests')
+                    },
+                    handler: async function(response) {
+                        try {
+                            // Show processing message
+                            Swal.fire({
+                                title: 'Processing Payment',
+                                text: 'Please wait while we verify your payment...',
+                                allowOutsideClick: false,
+                                showConfirmButton: false,
+                                didOpen: () => {
+                                    Swal.showLoading();
+                                }
+                            });
+
+                            // Verify payment
+                            const verificationData = new FormData();
+                            verificationData.append('razorpay_payment_id', response.razorpay_payment_id);
+                            verificationData.append('razorpay_order_id', response.razorpay_order_id);
+                            verificationData.append('razorpay_signature', response.razorpay_signature);
+
+                            const verifyResponse = await fetch('{% url "verify_payment" %}', {
+                                method: 'POST',
+                                body: verificationData,
+                                headers: {
+                                    'X-CSRFToken': csrfToken
+                                }
+                            });
+
+                            const verifyData = await verifyResponse.json();
+
+                            if (verifyData.status === 'success') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Payment Successful',
+                                    text: 'Your booking has been confirmed!',
+                                    showConfirmButton: false,
+                                    timer: 2000
+                                }).then(() => {
+                                    window.location.href = verifyData.redirect_url;
+                                });
+                            } else {
+                                throw new Error(verifyData.message || 'Payment verification failed');
+                            }
+                        } catch (error) {
+                            console.error('Payment verification error:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Payment Verification Failed',
+                                text: error.message || 'Please contact support.',
+                                confirmButtonText: 'OK'
+                            });
+                        } finally {
+                            proceedButton.disabled = false;
+                            proceedButton.innerHTML = 'Proceed to Payment';
+                        }
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            proceedButton.disabled = false;
+                            proceedButton.innerHTML = 'Proceed to Payment';
+                        }
+                    },
                     theme: {
-                        color: '#3498db'
+                        color: '#3399cc'
                     }
                 };
+
                 const rzp = new Razorpay(options);
+                rzp.on('payment.failed', function(response) {
+                    proceedButton.disabled = false;
+                    proceedButton.innerHTML = 'Proceed to Payment';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Payment Failed',
+                        text: response.error.description || 'Payment could not be processed. Please try again.',
+                        confirmButtonText: 'Try Again'
+                    });
+                });
                 rzp.open();
             } else {
-                alert(data.error || 'Something went wrong. Please try again.');
+                throw new Error(data.message || 'Failed to create booking');
             }
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error:', error);
-            alert('Something went wrong. Please try again.');
-        });
+            proceedButton.disabled = false;
+            proceedButton.innerHTML = 'Proceed to Payment';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Something went wrong. Please try again.',
+                confirmButtonText: 'OK'
+            });
+        }
     });
-
-    function verifyPayment(response) {
-        const verificationData = new FormData();
-        verificationData.append('razorpay_payment_id', response.razorpay_payment_id);
-        verificationData.append('razorpay_order_id', response.razorpay_order_id);
-        verificationData.append('razorpay_signature', response.razorpay_signature);
-
-        fetch('{% url "verify_payment" %}', {
-            method: 'POST',
-            body: verificationData,
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.status === 'success') {
-                window.location.href = data.redirect_url;
-            } else {
-                alert(data.message || 'Payment verification failed. Please contact support.');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Payment verification failed. Please contact support.');
-        });
-    }
 });
 </script>
 {% endblock %}

@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-white">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4 class="mb-0">Booking Details</h4>
+                        </div>
+                        <div class="col-auto">
+                            <span class="badge {% if booking.status == 'confirmed' %}bg-success{% elif booking.status == 'pending' %}bg-warning{% elif booking.status == 'cancelled' %}bg-danger{% else %}bg-info{% endif %}">
+                                {{ booking.status|title }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Booking Information</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Booking ID:</th>
+                                    <td>{{ booking.id }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Booking Date:</th>
+                                    <td>{{ booking.created_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Booking Type:</th>
+                                    <td>
+                                        {% if is_package_booking %}
+                                            Package Booking
+                                        {% else %}
+                                            {% if booking.room %}Room Booking{% else %}Resort Booking{% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Guest Information</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Name:</th>
+                                    <td>{{ booking.guest.full_name|default:booking.guest_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td>{{ booking.guest.email|default:booking.email }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Phone:</th>
+                                    <td>{{ booking.guest.mobile_number|default:booking.phone }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Stay Details</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Check-in:</th>
+                                    <td>{{ booking.check_in|date:"F d, Y" }}</td>
+                                </tr>
+                                {% if not is_package_booking %}
+                                <tr>
+                                    <th>Check-out:</th>
+                                    <td>{{ booking.check_out|date:"F d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Duration:</th>
+                                    <td>{{ booking.total_nights }} night(s)</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <th>Guests:</th>
+                                    <td>
+                                        {% if is_package_booking %}
+                                            {{ booking.guests }} guest(s)
+                                        {% else %}
+                                            {{ booking.adults }} adult(s){% if booking.children %}, {{ booking.children }} child(ren){% endif %}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Resort Information</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Resort:</th>
+                                    <td>
+                                        {% if is_package_booking %}
+                                            {{ booking.package.resort.resort_name }}
+                                        {% else %}
+                                            {{ booking.resort.resort_name }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% if is_package_booking %}
+                                <tr>
+                                    <th>Package:</th>
+                                    <td>{{ booking.package.package_name }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if booking.room %}
+                                <tr>
+                                    <th>Room:</th>
+                                    <td>Room #{{ booking.room.room_number }} ({{ booking.room.get_room_type_display }})</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if booking.special_requests %}
+                    <div class="mb-4">
+                        <h5>Special Requests</h5>
+                        <p class="mb-0">{{ booking.special_requests }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if payment %}
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">Payment Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Amount:</th>
+                                    <td>₹{{ payment.amount|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Status:</th>
+                                    <td>
+                                        <span class="badge {% if payment.payment_status == 'success' or payment.payment_status == 'paid' %}bg-success{% else %}bg-warning{% endif %}">
+                                            {{ payment.payment_status|title }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Method:</th>
+                                    <td>{{ payment.payment_method|title }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Transaction ID:</th>
+                                    <td>{{ payment.transaction_id }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">Actions</h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if booking.status == 'confirmed' %}
+                        <a href="{% url 'download_invoice' booking.id %}" class="btn btn-primary">
+                            <i class="fas fa-file-invoice"></i> Download Invoice
+                        </a>
+                        {% endif %}
+                        
+                        {% if can_cancel %}
+                        <button class="btn btn-danger" onclick="cancelBooking({{ booking.id }})">
+                            <i class="fas fa-times"></i> Cancel Booking
+                        </button>
+                        {% endif %}
+                        
+                        <a href="{% url 'booking_history' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Booking History
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if booking.status == 'confirmed' %}
+            <div class="card shadow">
+                <div class="card-header bg-white">
+                    <h4 class="mb-0">Check-in QR Code</h4>
+                </div>
+                <div class="card-body text-center">
+                    <img src="data:image/png;base64,{{ qr_code }}" class="img-fluid mb-3" alt="Check-in QR Code">
+                    <p class="small text-muted mb-0">Show this QR code at reception during check-in</p>
+                    {% if verification_code %}
+                    <p class="small text-muted">Verification Code: <code>{{ verification_code }}</code></p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function cancelBooking(bookingId) {
+        if (confirm('Are you sure you want to cancel this booking?')) {
+            fetch(`/booking/${bookingId}/cancel/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    location.reload();
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while cancelling the booking.');
+            });
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %} 

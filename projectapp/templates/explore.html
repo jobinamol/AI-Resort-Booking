@@ -1,625 +1,290 @@
+{% extends 'guestindex.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Discover luxury resorts, exclusive packages, and premium rooms at LuxAI Resorts. Find your perfect stay with our advanced search and filtering options.">
-    <title>Explore - LuxAI Resorts</title>
 
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+{% block content %}
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <h1 class="display-4 mb-3">Discover Your Perfect Stay</h1>
+            <p class="lead mb-0">Explore our handpicked collection of luxury resorts and exclusive packages</p>
+        </div>
+    </section>
 
-    <!-- Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Playfair+Display:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Search Section -->
+    <section class="container">
+        <div class="search-section">
+            <form method="GET" class="row g-3" id="searchForm">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" name="q" class="form-control border-start-0" 
+                               placeholder="Search resorts, packages, or rooms..." value="{{ query }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select name="category" class="form-select">
+                        <option value="">All Categories</option>
+                        <option value="Staycation" {% if category_filter == "Staycation" %}selected{% endif %}>Staycation</option>
+                        <option value="Daycation" {% if category_filter == "Daycation" %}selected{% endif %}>Daycation</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="resort_type" class="form-select">
+                        <option value="">All Types</option>
+                        {% for type, label in resort_types %}
+                            <option value="{{ type }}" {% if resort_type == type %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
 
-    <!-- Core CSS -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
-    <!-- Custom CSS -->
-    <style>
-        :root {
-            --primary-color: #1a73e8;
-            --secondary-color: #34a853;
-            --accent-color: #fbbc04;
-            --dark-color: #202124;
-            --light-color: #f8f9fa;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: var(--light-color);
-            position: relative;
-            min-height: 100vh;
-        }
-
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Playfair Display', serif;
-        }
-
-        .navbar {
-            background: rgba(255, 255, 255, 0.95) !important;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-
-        .navbar-brand {
-            font-family: 'Playfair Display', serif;
-            font-weight: 700;
-            font-size: 1.8rem;
-        }
-
-        .navbar-brand span {
-            color: var(--primary-color);
-        }
-
-        .nav-link {
-            font-weight: 500;
-            position: relative;
-            padding: 0.5rem 1rem;
-            transition: color 0.3s ease;
-        }
-
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            width: 0;
-            height: 2px;
-            background: var(--primary-color);
-            transition: all 0.3s ease;
-            transform: translateX(-50%);
-        }
-
-        .nav-link:hover::after,
-        .nav-link.active::after {
-            width: 80%;
-        }
-
-        .hero-section {
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('{% static "images/bg_1.jpg" %}') center/cover;
-            padding: 120px 0 60px;
-            color: white;
-            text-align: center;
-            margin-top: 76px;
-        }
-
-        .search-section {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            margin-top: -30px;
-            padding: 30px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .resort-card {
-            border: none;
-            border-radius: 15px;
-            overflow: hidden;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            height: 100%;
-        }
-
-        .resort-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-        }
-
-        .resort-card .card-img-top {
-            height: 250px;
-            object-fit: cover;
-        }
-
-        .resort-card .card-body {
-            padding: 1.5rem;
-        }
-
-        .resort-type-badge {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            background: rgba(255,255,255,0.9);
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: 500;
-            font-size: 0.9rem;
-        }
-
-        .rating-stars {
-            color: var(--accent-color);
-        }
-
-        .price-tag {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: var(--primary-color);
-        }
-
-        .filters-section {
-            background: var(--light-color);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-        }
-
-        .sort-buttons .btn {
-            padding: 8px 20px;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-
-        .sort-buttons .btn.active {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .featured-badge {
-            position: absolute;
-            top: 15px;
-            left: 15px;
-            background: var(--primary-color);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: 500;
-            font-size: 0.9rem;
-            z-index: 1;
-        }
-
-        .amenities-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 15px;
-        }
-
-        .amenity-badge {
-            background: var(--light-color);
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
-            color: var(--dark-color);
-        }
-
-        .no-results {
-            text-align: center;
-            padding: 60px 0;
-        }
-
-        .no-results i {
-            font-size: 4rem;
-            color: var(--secondary-color);
-            margin-bottom: 20px;
-        }
-
-        .footer {
-            background: var(--dark-color);
-            color: white;
-            padding: 4rem 0 2rem;
-            margin-top: 4rem;
-        }
-
-        .footer-brand {
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem;
-            margin-bottom: 1rem;
-        }
-
-        .footer-links {
-            list-style: none;
-            padding: 0;
-        }
-
-        .footer-links li {
-            margin-bottom: 0.5rem;
-        }
-
-        .footer-links a {
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer-links a:hover {
-            color: white;
-        }
-
-        .social-links {
-            font-size: 1.5rem;
-        }
-
-        .social-links a {
-            color: rgba(255, 255, 255, 0.8);
-            margin-right: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .social-links a:hover {
-            color: white;
-            transform: translateY(-3px);
-        }
-
-        @media (max-width: 768px) {
-            .search-section {
-                margin-top: 0;
-                border-radius: 0;
-            }
+    <!-- Guest Interest Form Section -->
+    <section class="container mt-5">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h4 class="card-title mb-4">Tell Us Your Interests</h4>
+                        <form id="interestForm" class="needs-validation" novalidate>
+                            <div class="mb-3">
+                                <label class="form-label">What type of experience are you looking for?</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="relaxation" id="relaxation">
+                                        <label class="form-check-label" for="relaxation">Relaxation</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="adventure" id="adventure">
+                                        <label class="form-check-label" for="adventure">Adventure</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="romantic" id="romantic">
+                                        <label class="form-check-label" for="romantic">Romantic</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" value="family" id="family">
+                                        <label class="form-check-label" for="family">Family</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="budget" class="form-label">Your Budget Range</label>
+                                <select class="form-select" id="budget" required>
+                                    <option value="">Select budget range</option>
+                                    <option value="economy">₹5,000 - ₹10,000</option>
+                                    <option value="mid">₹10,000 - ₹20,000</option>
+                                    <option value="luxury">₹20,000+</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="duration" class="form-label">Preferred Stay Duration</label>
+                                <select class="form-select" id="duration" required>
+                                    <option value="">Select duration</option>
+                                    <option value="weekend">Weekend Getaway (2-3 days)</option>
+                                    <option value="short">Short Stay (4-5 days)</option>
+                                    <option value="long">Extended Stay (6+ days)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">Find My Perfect Package</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
             
-            .resort-card .card-img-top {
-                height: 200px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'index' %}">Lux<span>AI</span></a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'index' %}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="{% url 'explore_page' %}">Explore</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'about' %}">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'contact' %}">Contact</a>
-                    </li>
-                    {% if user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="profileDropdown" role="button" 
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                {% if user.profile_image %}
-                                    <img src="{{ user.profile_image.url }}" alt="Profile" 
-                                         class="rounded-circle" style="width: 30px; height: 30px; object-fit: cover;">
-                                {% else %}
-                                    <img src="{% static 'images/default-profile.png' %}" alt="Profile" 
-                                         class="rounded-circle" style="width: 30px; height: 30px; object-fit: cover;">
-                                {% endif %}
-                                <span class="ms-2">{{ user.name }}</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="profileDropdown">
-                                <li><a class="dropdown-item" href="{% url 'view_profile' %}">Profile</a></li>
-                                <li><a class="dropdown-item" href="{% url 'settings' %}">Settings</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'user_logout' %}">Logout</a></li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a href="{% url 'user_login' %}" class="nav-link login-btn">Login</a>
-                        </li>
-                    {% endif %}
-                </ul>
+            <div class="col-md-6">
+                <div class="recommended-packages">
+                    <h4 class="mb-4">Recommended for You</h4>
+                    <!-- Package 1 -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="{% static 'images/room-1.jpg' %}" class="img-fluid rounded-start h-100" style="object-fit: cover;" alt="Luxury Suite Package">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="card-title mb-1">Luxury Suite Package</h5>
+                                        <span class="badge bg-success">Best Value</span>
+                                    </div>
+                                    <p class="card-text text-muted small mb-2">3 Days | All Inclusive</p>
+                                    <p class="card-text">Perfect for couples seeking a romantic getaway with spa treatments and fine dining experiences.</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="price-tag">₹15,000</span>
+                                        <button class="btn btn-outline-primary btn-sm">View Details</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Package 2 -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <img src="{% static 'images/room-2.jpg' %}" class="img-fluid rounded-start h-100" style="object-fit: cover;" alt="Family Adventure Package">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="card-title mb-1">Family Adventure Package</h5>
+                                        <span class="badge bg-primary">Popular</span>
+                                    </div>
+                                    <p class="card-text text-muted small mb-2">5 Days | Activities Included</p>
+                                    <p class="card-text">Exciting family vacation with adventure activities, kids' club access, and family dining options.</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="price-tag">₹25,000</span>
+                                        <button class="btn btn-outline-primary btn-sm">View Details</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </nav>
+    </section>
 
-    <!-- Messages -->
-    {% if messages %}
-    <div class="messages-container position-fixed top-0 end-0 p-3" style="z-index: 1050;">
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Main Content -->
-    <main>
-        <!-- Hero Section -->
-        <section class="hero-section">
-            <div class="container">
-                <h1 class="display-4 mb-3">Discover Your Perfect Stay</h1>
-                <p class="lead mb-0">Explore our handpicked collection of luxury resorts and exclusive packages</p>
-            </div>
-        </section>
-
-        <!-- Search Section -->
-        <section class="container">
-            <div class="search-section">
-                <form method="GET" class="row g-3" id="searchForm">
-                    <div class="col-md-5">
-                        <div class="input-group">
-                            <span class="input-group-text bg-white border-end-0">
-                                <i class="fas fa-search text-muted"></i>
-                            </span>
-                            <input type="text" name="q" class="form-control border-start-0" 
-                                   placeholder="Search resorts, packages, or rooms..." value="{{ query }}">
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <select name="category" class="form-select">
-                            <option value="">All Categories</option>
-                            <option value="Staycation" {% if category_filter == "Staycation" %}selected{% endif %}>Staycation</option>
-                            <option value="Daycation" {% if category_filter == "Daycation" %}selected{% endif %}>Daycation</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <select name="resort_type" class="form-select">
-                            <option value="">All Types</option>
-                            {% for type, label in resort_types %}
-                                <option value="{{ type }}" {% if resort_type == type %}selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search me-2"></i>Search
-                        </button>
-                    </div>
-                </form>
-
-            </div>
-        </section>
-
-        <!-- Results Section -->
-        <section class="container py-5">
-            <!-- Filters and Sort -->
-            <div class="filters-section">
-                <div class="row align-items-center">
-                    <div class="col-md-6">
-                        <h5 class="mb-0">Found {{ resorts.count|add:packages.count|add:rooms.count }} results</h5>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="sort-buttons text-md-end">
-                            <a href="?sort=price{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" 
-                               class="btn btn-outline-primary {% if sort_by == 'price' %}active{% endif %}">
-                               <i class="fas fa-dollar-sign me-1"></i>Price
-                            </a>
-                            <a href="?sort=rating{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" 
-                               class="btn btn-outline-primary {% if sort_by == 'rating' %}active{% endif %}">
-                               <i class="fas fa-star me-1"></i>Rating
-                            </a>
-                            <a href="?sort=date{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" 
-                               class="btn btn-outline-primary {% if sort_by == 'date' %}active{% endif %}">
-                               <i class="fas fa-calendar me-1"></i>Latest
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Resorts Grid -->
-            {% if resorts %}
-            <div class="resorts-section mb-5">
-                <h3 class="section-title mb-4">Featured Resorts</h3>
-                <div class="row g-4">
-                    {% for resort in resorts %}
-                    <div class="col-md-4">
-                        <div class="card resort-card">
-                            {% if resort.featured %}
-                                <div class="featured-badge">
-                                    <i class="fas fa-crown me-1"></i>Featured
-                                </div>
-                            {% endif %}
-                            <div class="resort-type-badge">{{ resort.get_resort_type_display }}</div>
-                            <img src="{% if resort.main_image %}{{ resort.main_image.image.url }}{% else %}{% static 'images/room-1.jpg' %}{% endif %}" 
-                                 class="card-img-top" alt="{{ resort.resort_name }}">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ resort.resort_name }}</h5>
-                                <p class="card-text text-muted">{{ resort.resort_description|truncatechars:100 }}</p>
-                                
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="rating-stars">
-                                        {% with ''|center:resort.average_rating|make_list as stars %}
-                                        {% for _ in stars %}
-                                            <i class="fas fa-star"></i>
-                                        {% endfor %}
-                                        {% endwith %}
-                                        <span class="ms-1 text-muted">({{ resort.total_reviews }})</span>
-                                    </div>
-                                    <span class="price-tag">From ₹{{ resort.min_price|floatformat:0 }}</span>
-                                </div>
-
-                                <div class="amenities-list">
-                                    {% if resort.has_pool %}
-                                        <span class="amenity-badge"><i class="fas fa-swimming-pool me-1"></i>Pool</span>
-                                    {% endif %}
-                                    {% if resort.has_spa %}
-                                        <span class="amenity-badge"><i class="fas fa-spa me-1"></i>Spa</span>
-                                    {% endif %}
-                                    {% if resort.has_wifi %}
-                                        <span class="amenity-badge"><i class="fas fa-wifi me-1"></i>WiFi</span>
-                                    {% endif %}
-                                </div>
-
-                                <a href="{% url 'resort_detail' resort.id %}" class="btn btn-outline-primary w-100 mt-3">
-                                    View Details
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Packages Grid -->
-            {% if packages %}
-            <div class="packages-section mb-5">
-                <h3 class="section-title mb-4">Available Packages</h3>
-                <div class="row g-4">
-                    {% for package in packages %}
-                    <div class="col-md-4">
-                        <div class="card resort-card">
-                            {% if package.featured %}
-                                <div class="featured-badge">
-                                    <i class="fas fa-star me-1"></i>Featured
-                                </div>
-                            {% endif %}
-                            <img src="{% if package.image %}{{ package.image.url }}{% else %}{% static 'images/room-2.jpg' %}{% endif %}" 
-                                 class="card-img-top" alt="{{ package.package_name }}">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="card-title mb-0">{{ package.package_name }}</h5>
-                                    <span class="badge bg-primary">{{ package.package_type }}</span>
-                                </div>
-                                <p class="card-text text-muted">{{ package.description|truncatechars:100 }}</p>
-                                
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="rating-stars">
-                                        {% with ''|center:package.average_rating|make_list as stars %}
-                                        {% for _ in stars %}
-                                            <i class="fas fa-star"></i>
-                                        {% endfor %}
-                                        {% endwith %}
-                                    </div>
-                                    <div class="price-tag">
-                                        {% if package.discount_percentage > 0 %}
-                                            <small class="text-muted text-decoration-line-through">₹{{ package.price }}</small>
-                                        {% endif %}
-                                        <span class="ms-2">₹{{ package.get_discounted_price }}</span>
-                                    </div>
-                                </div>
-
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <small class="text-muted">
-                                        <i class="fas fa-clock me-1"></i>{{ package.get_duration_display }}
-                                    </small>
-                                    <small class="text-muted">
-                                        <i class="fas fa-user me-1"></i>Up to {{ package.max_guests }} guests
-                                    </small>
-                                </div>
-
-                                <a href="{% url 'package_detail' package.id %}" class="btn btn-primary w-100 mt-3">
-                                    Book Now
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- No Results Message -->
-            {% if not resorts and not packages and not rooms %}
-            <div class="no-results">
-                <i class="fas fa-search mb-3"></i>
-                <h4>No Results Found</h4>
-                <p class="text-muted">Try adjusting your search criteria or explore our featured options.</p>
-                <a href="{% url 'explore_page' %}" class="btn btn-primary mt-3">
-                    View All Properties
-                </a>
-            </div>
-            {% endif %}
-        </section>
-    </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <h2 class="footer-brand">LuxAI</h2>
-                    <p class="mb-4">Experience luxury redefined with our AI-powered hospitality. Discover comfort, elegance, and innovation in every stay.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="fab fa-facebook"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin"></i></a>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h5 class="mb-3">Quick Links</h5>
-                    <ul class="footer-links">
-                        <li><a href="{% url 'index' %}">Home</a></li>
-                        <li><a href="{% url 'explore_page' %}">Explore</a></li>
-                        <li><a href="{% url 'about' %}">About Us</a></li>
-                        <li><a href="{% url 'contact' %}">Contact</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-md-6 mb-4">
-                    <h5 class="mb-3">Our Services</h5>
-                    <ul class="footer-links">
-                        <li><a href="#">Luxury Stays</a></li>
-                        <li><a href="#">Dining Experience</a></li>
-                        <li><a href="#">Spa & Wellness</a></li>
-                        <li><a href="#">Events & Meetings</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <h5 class="mb-3">Newsletter</h5>
-                    <p class="mb-3">Subscribe to our newsletter for exclusive offers and updates.</p>
-                    <form class="newsletter-form">
-                        <div class="input-group mb-3">
-                            <input type="email" class="form-control" placeholder="Your email">
-                            <button class="btn btn-primary" type="submit">Subscribe</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-            <hr class="mt-4 mb-3 border-light">
+    <!-- Results Section -->
+    <section class="container py-5">
+        <!-- Filters and Sort -->
+        <div class="filters-section">
             <div class="row align-items-center">
-                <div class="col-md-6 text-center text-md-start">
-                    <p class="mb-0">&copy; {% now "Y" %} LuxAI Resorts. All rights reserved.</p>
+                <div class="col-md-6">
+                    <h5 class="mb-0">Found {{ resorts.count|add:packages.count|add:rooms.count }} results</h5>
                 </div>
-                <div class="col-md-6 text-center text-md-end mt-3 mt-md-0">
-                    <a href="#" class="text-light me-3">Privacy Policy</a>
-                    <a href="#" class="text-light me-3">Terms of Service</a>
-                    <a href="#" class="text-light">Cookie Policy</a>
+                <div class="col-md-6">
+                    <div class="sort-buttons text-md-end">
+                        <a href="?sort=price{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" 
+                           class="btn btn-outline-primary {% if sort_by == 'price' %}active{% endif %}">
+                           <i class="fas fa-dollar-sign me-1"></i>Price
+                        </a>
+                        <a href="?sort=rating{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" 
+                           class="btn btn-outline-primary {% if sort_by == 'rating' %}active{% endif %}">
+                           <i class="fas fa-star me-1"></i>Rating
+                        </a>
+                        <a href="?sort=date{% if query %}&q={{ query }}{% endif %}{% if category_filter %}&category={{ category_filter }}{% endif %}" 
+                           class="btn btn-outline-primary {% if sort_by == 'date' %}active{% endif %}">
+                           <i class="fas fa-calendar me-1"></i>Latest
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-    </footer>
 
-    <!-- Core Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- Custom Scripts -->
-    <script>
-        // Navbar scroll behavior
-        window.addEventListener('scroll', function() {
-            const navbar = document.querySelector('.navbar');
-            if (window.scrollY > 50) {
-                navbar.style.padding = '0.5rem 1rem';
-            } else {
-                navbar.style.padding = '1rem';
-            }
+        <!-- Resorts Grid -->
+        {% if resorts %}
+        <div class="resorts-section mb-5">
+            <h3 class="section-title mb-4">Featured Resorts</h3>
+            <div class="row g-4">
+                {% for resort in resorts %}
+                <div class="col-md-4">
+                    <div class="card resort-card">
+                        {% if resort.featured %}
+                            <div class="featured-badge">
+                                <i class="fas fa-crown me-1"></i>Featured
+                            </div>
+                        {% endif %}
+                        <div class="resort-type-badge">{{ resort.get_resort_type_display }}</div>
+                        <img src="{% if resort.main_image %}{{ resort.main_image.image.url }}{% else %}{% static 'images/room-1.jpg' %}{% endif %}" 
+                             class="card-img-top" alt="{{ resort.resort_name }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ resort.resort_name }}</h5>
+                            <p class="card-text text-muted">{{ resort.resort_description|truncatechars:100 }}</p>
+                            
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="rating-stars">
+                                    {% with ''|center:resort.average_rating|make_list as stars %}
+                                    {% for _ in stars %}
+                                        <i class="fas fa-star"></i>
+                                    {% endfor %}
+                                    {% endwith %}
+                                    <span class="ms-1 text-muted">({{ resort.total_reviews }})</span>
+                                </div>
+                                <span class="price-tag">From ₹{{ resort.min_price|floatformat:0 }}</span>
+                            </div>
+
+                            <div class="amenities-list">
+                                {% if resort.has_pool %}
+                                    <span class="amenity-badge"><i class="fas fa-swimming-pool me-1"></i>Pool</span>
+                                {% endif %}
+                                {% if resort.has_spa %}
+                                    <span class="amenity-badge"><i class="fas fa-spa me-1"></i>Spa</span>
+                                {% endif %}
+                                {% if resort.has_wifi %}
+                                    <span class="amenity-badge"><i class="fas fa-wifi me-1"></i>WiFi</span>
+                                {% endif %}
+                            </div>
+
+                            <a href="{% url 'resort_detail' resort.id %}" class="btn btn-outline-primary w-100 mt-3">
+                                View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- No Results Message -->
+        {% if not resorts and not packages and not rooms %}
+        <div class="no-results">
+            <i class="fas fa-search mb-3"></i>
+            <h4>No Results Found</h4>
+            <p class="text-muted">Try adjusting your search criteria or explore our featured options.</p>
+            <a href="{% url 'explore_page' %}" class="btn btn-primary mt-3">
+                View All Properties
+            </a>
+        </div>
+        {% endif %}
+    </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Handle Interest Form Submission
+    document.getElementById('interestForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Get selected interests
+        const interests = Array.from(document.querySelectorAll('input[type="checkbox"]:checked'))
+            .map(checkbox => checkbox.value);
+        
+        // Get other form values
+        const budget = document.getElementById('budget').value;
+        const duration = document.getElementById('duration').value;
+        
+        // Show success message
+        const successAlert = document.createElement('div');
+        successAlert.className = 'alert alert-success alert-dismissible fade show';
+        successAlert.innerHTML = `
+            <strong>Thank you for sharing your preferences!</strong><br>
+            We've updated your recommended packages based on your interests.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+        
+        // Insert the alert before the form
+        this.parentElement.insertBefore(successAlert, this);
+        
+        // Scroll to recommended packages
+        document.querySelector('.recommended-packages').scrollIntoView({ 
+            behavior: 'smooth',
+            block: 'start'
         });
-
-        // Auto-hide messages after 5 seconds
-        setTimeout(function() {
-            $('.alert').fadeOut('slow');
+        
+        // Auto-hide the alert after 5 seconds
+        setTimeout(() => {
+            successAlert.remove();
         }, 5000);
-
-        // Live search functionality
-        const searchForm = document.getElementById('searchForm');
-        const searchInput = searchForm.querySelector('input[name="q"]');
-        let searchTimeout;
-
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                searchForm.submit();
-            }, 500);
-        });
-
-        // Initialize tooltips
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    </script>
-</body>
-</html>
+    });
+</script>
+{% endblock %}
